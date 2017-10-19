@@ -1,0 +1,158 @@
+@startuml
+package aquisitor {
+    package constant {
+        enum State {
+            +STARTED
+            +STOPED
+            +IDLE
+            +WORKING
+        }
+
+        enum ErrorType {
+            +WARNING
+            +ERROR
+            +CRITICAL
+            +FATAL
+        }
+    }
+
+    package notification {
+        interface NotificationCaster {
+            +cast(String from, Object data) : Object
+        }
+
+        class Notification {
+            +String to
+            +String from
+            +Object data
+
+            +cast(NotificationCaster caster) : Object
+        }
+
+        class NotificationBuilder {
+            -Notification notification
+
+            +from(String from) : NotificationBuilder
+            +to(String to) : NotificationBuilder
+            +with(Object data) : NotificationBuilder
+            +build() : Notification
+        }
+    }
+
+    package core {
+        interface Service {
+            -- control --
+            +start(ServiceNotificationQueue notificationQueue)
+            +configure(Json properties)
+            +process(Notification[] notifications)
+            +stop()
+            -- properties --
+            +getName() : String
+            +getState() : State
+        }
+
+        class ServiceNotificationQueue {
+            -Map<String, Notification> notifications
+
+            +notify(String service_name, byte[] data)
+            +getNotifications(String target) : Notification[]
+        }
+
+        class Core {
+            -Map<String, Service> services
+            -Json properties
+
+            +start(String args[])
+            +process()
+            +stop()
+        }
+    }
+
+    package module {
+        interface Module {
+            -- control --
+            +start(ModuleNotificationQueue notifier)
+            +configure(Json properties) : long
+            +process()
+            +stop()
+            -- session --
+            +startSession(long session_id)
+            +stopSession()
+            -- properties --
+            +getName() : String
+            +getNotificationCaster() : NotificationCaster
+            +moduleState() : State
+        }
+
+        ModuleNotificationCaster <|-- NotificationCaster
+        class ModuleNotificationCaster {
+            +cast(String from, Object data) : Object
+            -castFromNetwork(Object data) : Object
+            -castFromSystem(Object data) : Object
+        }
+
+        class ModuleNotificationQueue {
+            -Map<String, Notification> data_notifications
+            -Map<String, Notification> error_notifications
+            
+            +notifyError(ErrorType type, String message)
+            +getErrorNotifications() : Notification[]
+            +notifyData(byte[] data)
+            +getDataNotifications() : Notification[]
+        }
+
+        Service <|-- Manager
+        class Manager {
+            -Map<String, Module> modules
+            -long session_id
+
+            -- implementation --
+            +start(ServiceNotificationQueue notifier)
+            +configure(Json properties)
+            +process(Notification[] notifications)
+            +stop()
+            +getName() : String
+            +getState() : State
+            -- session --
+            -startSession(long session_id)
+            -checkModule(String module)
+            -stopSession()
+        }
+    }
+
+    package network {
+        Service <|-- Network
+        class Network {
+            -- implementation --
+            +start(ServiceNotificationQueue notifier)
+            +configure(Json properties)
+            +process(Notification[] notifications)
+            +stop()
+            +getName() : String
+            +getState() : State
+
+            -- network --
+            -extractMessages() : NetMessage[]
+        }
+
+        class NetMessage {
+            +String target
+            +String order
+            +byte[] args
+        }
+    }
+
+    package api {
+        Service <|-- API
+        class API {
+            -- implementation --
+            +start(ServiceNotificationQueue notifier)
+            +configure(Json properties)
+            +process(Notification[] notifications)
+            +stop()
+            +getName() : String
+            +getState() : State
+        }
+    }
+}
+@enduml

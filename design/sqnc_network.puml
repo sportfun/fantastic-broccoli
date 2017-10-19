@@ -1,0 +1,57 @@
+@startuml
+box "Software" #LightGreen
+    participant Server
+end box
+box "Acquisitor" #LightBlue
+    participant Network
+    participant Controler
+    participant Modules
+end box
+box "Generic parts" #Orange
+    participant Service
+    participant Module
+end box
+
+== Server Event : New session ==
+Server->Network: (client_id:new_session:session_id)
+    Network->Modules: New session ID
+        alt session ID already exist
+            Modules->Modules: Update session ID
+        else
+            loop for each module
+                Modules->Module: Start session
+            end
+        end
+== Server Event : Stop session ==
+Server->Network: (client_id:end_session:session_id)
+    Network->Modules: End session ID
+        Modules->Modules: Clean session ID
+        loop for each module
+            Modules->Module: End session
+        end
+== Server Order : Link system ==
+Server->Network: (NULL:link:client_id)
+    Network->Controler: Save client_id
+    Network<-Controler: Return saving state
+Server<-Network: (client_id:link:success_state)
+== Server Order : Status ==
+Server->Network: (client_id:status)
+    Network->Controler: Get services status
+        loop for each service
+            Controler->Service: Get status
+            Controler<-Service: Return service status
+        end
+    Network<-Controler: Return services status
+Server<-Network: (client_id:status:services_status)
+== Acquisitor Event : Data ==
+Modules<-Module: Module data
+Network<-Modules: Send data, module name and session id
+Server<-Network: (client_id:data:session_id:module_name:value)
+== Acquisitor Event : Failure ==
+Controler<-Service: Error catched
+Network<-Controler: Send error
+Server<-Network: (client_id:exception:code:message)
+== Acquisitor Order : Link ==
+Network<-Controler: Send link request to server
+Server<-Network: (NULL:link_request:ip_address)
+@enduml

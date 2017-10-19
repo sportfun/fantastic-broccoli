@@ -1,0 +1,35 @@
+@startuml
+title Sequence - Notification
+box "Software" #LightGreen
+    participant Server
+end box
+box "Acquisitor" #LightBlue
+    participant Network
+    participant NotificationQueue
+    participant Controler
+end box
+box "Generic parts" #Orange
+    participant Service
+end box
+
+== Example with status service order ==
+Server->Network: Server->Network: (client_id:status)
+    ...
+    Controler->Network: Process service
+        Network->Network: Read and parse network buffer
+        Network->NotificationQueue: Add notification for Controler
+    Controler->NotificationQueue: Get message for Controler
+    Controler<-NotificationQueue: Return notifications
+    loop for each service
+        Controler->Service: Get status
+        Controler<-Service: Return service status
+        Controler->Controler: Save status
+    end
+    Controler->NotificationQueue: Add notification for Network (status)
+    ...
+    Controler->Network: Process service
+        Network->NotificationQueue: Get message for Network
+        Network<-NotificationQueue: Return notifications
+Server<-Network: (client_id:status:services_status)
+
+@enduml
