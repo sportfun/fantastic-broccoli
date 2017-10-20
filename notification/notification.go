@@ -5,23 +5,27 @@ type Destination string
 type Object interface{}
 
 type Notification struct {
-	_from Origin
-	_to   Destination
-	_content Object
+	from    Origin
+	to      Destination
+	content Object
 }
 
-func (n *Notification) From() Origin  {
-	return n._from
+func NewNotification(from Origin, to Destination, content Object) *Notification {
+	return &Notification{from, to, content}
 }
 
-func (n *Notification) To() Destination  {
-	return n._to
+func (n *Notification) From() Origin {
+	return n.from
 }
 
-func (n *Notification) Content() Object  {
-	return n._content
+func (n *Notification) To() Destination {
+	return n.to
 }
 
-func (n *Notification) cast(c Caster) (Object, error) {
-	return c.cast(n._from, n._content)
+func (n *Notification) Content() Object {
+	return n.content
+}
+
+func (n *Notification) Cast(c Caster) (Object, error) {
+	return c.cast(n.from, n.content)
 }

@@ -5,17 +5,17 @@ type Builder struct {
 }
 
 func (b *Builder) From(o Origin) *Builder  {
-	b._from = o
+	b.from = o
 	return b
 }
 
 func (b *Builder) To(d Destination) *Builder  {
-	b._to = d
+	b.to = d
 	return b
 }
 
 func (b *Builder) With(o Object) *Builder  {
-	b._content = o
+	b.content = o
 	return b
 }
 

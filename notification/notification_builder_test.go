@@ -2,26 +2,23 @@ package notification
 
 import (
 	"testing"
+	"fantastic-broccoli/utils"
 )
+
+// -- Unit test
 
 func TestBuilderFrom(t *testing.T) {
 	b := Builder{}
 	b.From("Origin")
 
-	if b._from != "Origin" {
-		t.Errorf("Expected 'Origin' (%s)", b._from)
-		t.Fail()
-	}
+	utils.AssertEquals(t, Origin("Origin"), b.from)
 }
 
 func TestBuilderTo(t *testing.T) {
 	b := Builder{}
 	b.To("Destination")
 
-	if b._to != "Destination" {
-		t.Errorf("Expected 'Destination' (%s)", b._to)
-		t.Fail()
-	}
+	utils.AssertEquals(t, Destination("Destination"), b.to)
 }
 
 func TestBuilderWith(t *testing.T) {
@@ -33,10 +30,7 @@ func TestBuilderWith(t *testing.T) {
 	}{"a", 0, false}
 	b.With(o)
 
-	if b._content != o {
-		t.Errorf("Expected '%v' (%v)", o, b._content)
-		t.Fail()
-	}
+	utils.AssertEquals(t, o, b.content)
 }
 
 func TestBuilderBuild(t *testing.T) {
@@ -52,22 +46,64 @@ func TestBuilderBuild(t *testing.T) {
 	d4 := Notification{"Destination", "Origin", struct{}{}}
 
 	n := b.From("Origin").To("Destination").With(o).Build()
-	if n != d1 {
-		t.Errorf("Expected '%v' (%v)", d1, n)
-	}
+	utils.AssertEquals(t, d1, n)
 
 	n = b.From("").Build()
-	if n != d2 {
-		t.Errorf("Expected '%v' (%v)", d2, n)
-	}
+	utils.AssertEquals(t, d2, n)
 
 	n = b.From("Destination").To("Origin").Build()
-	if n != d3 {
-		t.Errorf("Expected '%v' (%v)", d3, n)
-	}
+	utils.AssertEquals(t, d3, n)
 
 	n = b.With(struct{}{}).Build()
-	if n != d4 {
-		t.Errorf("Expected '%v' (%v)", d4, n)
+	utils.AssertEquals(t, d4, n)
+}
+
+// -- Benchmark
+
+func BenchmarkBuilderAll(b *testing.B) {
+	bd := Builder{}
+	ori := Origin("Origin")
+	des := Destination("Destination")
+	o := struct {
+		a string
+		b int
+		c bool
+	}{"a", 0, false}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		n := bd.From(ori).To(des).With(o).Build()
+		n.Content()
+	}
+}
+
+func BenchmarkBuilderBuild(b *testing.B) {
+	bd := Builder{}
+	bd.From("Origin").To("Destination").With(struct {
+		a string
+		b int
+		c bool
+	}{"a", 0, false})
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		n := bd.Build()
+		n.Content()
+	}
+}
+
+func BenchmarkBuilderNotificationOnly(b *testing.B) {
+	ori := Origin("Origin")
+	des := Destination("Destination")
+	o := struct {
+		a string
+		b int
+		c bool
+	}{"a", 0, false}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		n := Notification{ori, des, o}
+		n.Content()
 	}
 }
