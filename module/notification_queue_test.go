@@ -15,7 +15,7 @@ func TestNotificationQueue_NotifyError(t *testing.T) {
 		q.NotifyError(model.FATAL, "Message")
 	}
 
-	utils.AssertEquals(t, 0xFF, len(q._errors))
+	utils.AssertEquals(t, 0xFF, len(q.errors))
 }
 
 // -- Benchmark

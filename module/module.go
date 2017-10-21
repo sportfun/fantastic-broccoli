@@ -5,13 +5,15 @@ import (
 	"fantastic-broccoli/notification"
 )
 
+type Name string
+
 type Module interface {
-	Start(q NotificationQueue) error
-	Configure(p model.Properties) error
+	Start(queue NotificationQueue) error
+	Configure(properties model.Properties) error
 	Process() error
 	Stop() error
 
-	Name() string
+	Name() Name
 	NotificationCaster() notification.Caster
 	State() model.State
 }

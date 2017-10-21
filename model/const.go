@@ -17,3 +17,7 @@ const (
 	CRITICAL ErrorType = 0x004
 	FATAL    ErrorType = 0x008
 )
+
+const (
+	MODULE_MANAGER = "ModuleManager"
+)
