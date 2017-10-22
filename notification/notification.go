@@ -25,7 +25,3 @@ func (n *Notification) To() Destination {
 func (n *Notification) Content() Object {
 	return n.content
 }
-
-func (n *Notification) Cast(c Caster) (Object, error) {
-	return c.cast(n.from, n.content)
-}

@@ -1,13 +1,13 @@
-package model
+package fantastic_broccoli
 
 type Path string
 type Name string
 
 type Properties struct {
-	Modules []Module
+	Modules []ModuleDefinition
 }
 
-type Module struct {
+type ModuleDefinition struct {
 	Name Name
 	Path Path
 }
