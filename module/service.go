@@ -36,7 +36,7 @@ func (m *Service) Configure(props *Properties) error {
 			// TODO: Error management (Plugin loading)
 		}
 
-		ex, err := p.Lookup("Export")
+		ex, err := p.Lookup("ExportModule")
 		if err != nil {
 			// TODO: Error management (Symbol loading)
 		}
@@ -93,7 +93,7 @@ func (m *Service) Stop() error {
 }
 
 func (m *Service) Name() Name {
-	return MODULE_MANAGER
+	return MODULE_SERVICE
 }
 
 func (m *Service) State() State {

@@ -1,8 +1,5 @@
 package fantastic_broccoli
 
-type Path string
-type Name string
-
 type Properties struct {
 	Modules []ModuleDefinition
 }

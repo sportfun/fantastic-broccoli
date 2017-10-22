@@ -35,7 +35,7 @@ func (m *Service) Stop() error {
 }
 
 func (m *Service) Name() Name {
-	return MODULE_MANAGER
+	return MODULE_SERVICE
 }
 
 func (m *Service) State() State {

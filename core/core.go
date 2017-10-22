@@ -31,10 +31,18 @@ func (c *Core) Configure(p *Properties, l *zap.Logger) {
 }
 
 func (c *Core) Run() {
-
+	for _, s := range c.services {
+		s.Process()
+		n := c.notifications.Notifications(CORE)
+		for _, v := range n {
+			// TODO: Interpret notification
+			v.To()
+		}
+	}
 }
 
 func services(c *Core) {
+	c.services = []Service{}
 	c.services = append(c.services, new(network.Service))
 	c.services = append(c.services, new(module.Service))
 }
