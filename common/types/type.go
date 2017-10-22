@@ -1,4 +1,4 @@
-package fantastic_broccoli
+package types
 
 type Path string
 type Name string

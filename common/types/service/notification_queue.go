@@ -1,6 +1,9 @@
-package core
+package service
 
-import "fantastic-broccoli/notification"
+import (
+	"fantastic-broccoli/common/types"
+	"fantastic-broccoli/common/types/notification"
+)
 
 type NotificationQueue struct {
 	notifications map[string][]notification.Notification
@@ -11,7 +14,7 @@ func (q *NotificationQueue) Notify(n notification.Notification) {
 	q.notifications[k] = append(q.notifications[k], n)
 }
 
-func (q *NotificationQueue) Notifications(n Name) []notification.Notification {
+func (q *NotificationQueue) Notifications(n types.Name) []notification.Notification {
 	k := string(n)
 	arr, ok := q.notifications[k]
 

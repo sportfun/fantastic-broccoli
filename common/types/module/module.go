@@ -1,19 +1,20 @@
 package module
 
 import (
-	. "fantastic-broccoli"
+	"fantastic-broccoli/model"
+	"fantastic-broccoli/common/types"
 	"go.uber.org/zap"
 )
 
 type Module interface {
 	Start(queue *NotificationQueue, logger *zap.Logger) error
-	Configure(properties *Properties) error
+	Configure(properties *model.Properties) error
 	Process() error
 	Stop() error
 
 	StartSession() error
 	StopSession() error
 
-	Name() Name
-	State() State
+	Name() types.Name
+	State() types.State
 }

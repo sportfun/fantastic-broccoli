@@ -2,7 +2,7 @@ package module
 
 import (
 	"testing"
-	. "fantastic-broccoli"
+	"fantastic-broccoli/const"
 	"fantastic-broccoli/utils"
 )
 
@@ -12,7 +12,7 @@ func TestNotificationQueue_NotifyError(t *testing.T) {
 	q := NotificationQueue{}
 
 	for i := 0; i < 0xFF; i++ {
-		q.NotifyError(FATAL, "Message")
+		q.NotifyError(_const.FATAL, "Message")
 	}
 
 	utils.AssertEquals(t, 0xFF, len(q.errors))
@@ -28,7 +28,7 @@ func BenchmarkNotificationQueue(b *testing.B) {
 		if i%2 == 0 {
 			q.NotifyData("ModuleName", "Value")
 		} else {
-			q.NotifyError(ERROR, "Message")
+			q.NotifyError(_const.ERROR, "Message")
 		}
 	}
 }

@@ -1,35 +1,38 @@
 package module
 
 import (
-	. "fantastic-broccoli"
-	"fantastic-broccoli/core"
-	"plugin"
+	"fantastic-broccoli/common/types"
+	"fantastic-broccoli/common/types/module"
+	"fantastic-broccoli/common/types/service"
+	"fantastic-broccoli/const"
+	"fantastic-broccoli/model"
 	"go.uber.org/zap"
+	"plugin"
 )
 
 type Service struct {
-	modules   map[Name]Module
+	modules   map[types.Name]module.Module
 	sessionId int
-	state     State
+	state     types.State
 
-	messages      NotificationQueue
-	notifications *core.NotificationQueue
+	messages      module.NotificationQueue
+	notifications *service.NotificationQueue
 	logger        *zap.Logger
 }
 
-func (m *Service) Start(q *core.NotificationQueue, l *zap.Logger) error {
-	m.modules = map[Name]Module{}
+func (m *Service) Start(q *service.NotificationQueue, l *zap.Logger) error {
+	m.modules = map[types.Name]module.Module{}
 	m.sessionId = -1
-	m.state = STARTED
+	m.state = _const.STARTED
 
-	m.messages = NotificationQueue{}
+	m.messages = module.NotificationQueue{}
 	m.notifications = q
 	m.logger = l
 
 	return nil
 }
 
-func (m *Service) Configure(props *Properties) error {
+func (m *Service) Configure(props *model.Properties) error {
 	for _, e := range props.Modules {
 		p, err := plugin.Open(string(e.Path))
 		if err != nil {
@@ -41,8 +44,8 @@ func (m *Service) Configure(props *Properties) error {
 			// TODO: Error management (Symbol loading)
 		}
 
-		mod := ex.(func() (Module))()
-		m.modules[Name(e.Name)] = mod
+		mod := ex.(func() (module.Module))()
+		m.modules[e.Name] = mod
 
 		if err = mod.Start(&m.messages, m.logger); err != nil {
 			// TODO: Error management (Module starting)
@@ -92,10 +95,10 @@ func (m *Service) Stop() error {
 	return nil
 }
 
-func (m *Service) Name() Name {
-	return MODULE_SERVICE
+func (m *Service) Name() types.Name {
+	return "Module"
 }
 
-func (m *Service) State() State {
+func (m *Service) State() types.State {
 	return m.state
 }

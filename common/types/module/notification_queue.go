@@ -1,8 +1,9 @@
 package module
 
 import (
-	. "fantastic-broccoli"
-	"fantastic-broccoli/notification"
+	"fantastic-broccoli/common/types"
+	"fantastic-broccoli/common/types/notification"
+	"fmt"
 )
 
 type NotificationQueue struct {
@@ -11,7 +12,7 @@ type NotificationQueue struct {
 }
 
 type ErrorObject struct {
-	ErrorType ErrorType
+	ErrorType types.ErrorType
 	Message   string
 }
 
@@ -20,8 +21,8 @@ type DataObject struct {
 	Value string
 }
 
-func (q *NotificationQueue) NotifyError(t ErrorType, m string) {
-	q.errors = append(q.errors, *notification.NewNotification("", "", ErrorObject{t, m}))
+func (q *NotificationQueue) NotifyError(t types.ErrorType, f string, p ...interface{}) {
+	q.errors = append(q.errors, *notification.NewNotification("", "", ErrorObject{t, fmt.Sprintf(f, p)}))
 }
 
 func (q *NotificationQueue) NotificationsError() []notification.Notification {
@@ -30,8 +31,8 @@ func (q *NotificationQueue) NotificationsError() []notification.Notification {
 	return arr
 }
 
-func (q *NotificationQueue) NotifyData(f notification.Origin, v string) {
-	q.data = append(q.data, *notification.NewNotification("", "", DataObject{f, v}))
+func (q *NotificationQueue) NotifyData(o notification.Origin, f string, p ...interface{}) {
+	q.data = append(q.data, *notification.NewNotification("", "", DataObject{o, fmt.Sprintf(f, p)}))
 }
 
 func (q *NotificationQueue) NotificationsData() []notification.Notification {
