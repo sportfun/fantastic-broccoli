@@ -15,6 +15,7 @@ type Core struct {
 	state         types.State
 	notifications service.NotificationQueue
 	logger        *zap.Logger
+	properties    *model.Properties
 }
 
 func (c *Core) Configure(p *model.Properties, l *zap.Logger) {
@@ -24,18 +25,15 @@ func (c *Core) Configure(p *model.Properties, l *zap.Logger) {
 
 	l.Info("Start services")
 	for _, s := range c.services {
-		l.Debug("Start service", zap.String("service", string(s.Name())))
-		c.serviceErrorHandler(START, s.Start(&c.notifications, l))
-
-		l.Debug("Configure service", zap.String("service", string(s.Name())))
-		c.serviceErrorHandler(CONFIGURE, s.Configure(p))
+		c.serviceErrorHandler(ModuleStart, s.Start(&c.notifications, l))
+		c.serviceErrorHandler(ModuleConfigure, s.Configure(p))
 	}
 	l.Info("Services successfully started")
 }
 
 func (c *Core) Run() {
 	for _, s := range c.services {
-		c.serviceErrorHandler(PROCESS, s.Process())
+		c.serviceErrorHandler(ModuleProcess, s.Process())
 		for _, n := range c.notifications.Notifications(_const.CORE) {
 			c.notificationHandler(n)
 		}
@@ -44,7 +42,7 @@ func (c *Core) Run() {
 
 func (c *Core) Stop() {
 	for _, s := range c.services {
-		c.serviceErrorHandler(STOP, s.Stop())
+		c.serviceErrorHandler(ModuleStop, s.Stop())
 	}
 	c.state = _const.STOPPED
 }

@@ -1,27 +1,27 @@
 package core
 
-type ServiceState int
+type ErrorType int
 
 const (
-	START     ServiceState = iota
-	CONFIGURE
-	PROCESS
-	STOP
+	ModuleStart     ErrorType = iota
+	ModuleConfigure
+	ModuleProcess
+	ModuleStop
 )
 
-func (c *Core) serviceErrorHandler(s ServiceState, e error) {
+func (c *Core) serviceErrorHandler(t ErrorType, e error) {
 	if e == nil {
 		return
 	}
 
-	switch s {
-	case START:
+	switch t {
+	case ModuleStart:
 		startErrorHandler(c, e)
-	case CONFIGURE:
+	case ModuleConfigure:
 		configureErrorHandler(c, e)
-	case PROCESS:
+	case ModuleProcess:
 		processErrorHandler(c, e)
-	case STOP:
+	case ModuleStop:
 		processErrorHandler(c, e)
 	}
 }

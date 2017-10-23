@@ -1,24 +1,24 @@
 package notification
 
-type Origin string
-type Destination string
+import "fantastic-broccoli/common/types"
+
 type Object interface{}
 
 type Notification struct {
-	from    Origin
-	to      Destination
+	from    types.Name
+	to      types.Name
 	content Object
 }
 
-func NewNotification(from Origin, to Destination, content Object) *Notification {
+func NewNotification(from types.Name, to types.Name, content Object) *Notification {
 	return &Notification{from, to, content}
 }
 
-func (n *Notification) From() Origin {
+func (n *Notification) From() types.Name {
 	return n.from
 }
 
-func (n *Notification) To() Destination {
+func (n *Notification) To() types.Name {
 	return n.to
 }
 
