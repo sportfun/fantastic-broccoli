@@ -12,8 +12,8 @@ type NotificationQueue struct {
 }
 
 type ErrorObject struct {
-	ErrorType types.ErrorLevel
-	Message   string
+	ErrorLevel types.ErrorLevel
+	Message    string
 }
 
 type DataObject struct {

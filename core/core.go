@@ -23,18 +23,18 @@ func (c *Core) Configure(p *model.Properties, l *zap.Logger) {
 	c.notifications = service.NotificationQueue{}
 	c.logger = l
 
-	l.Info("Start services")
+	l.Info("start services")
 	for _, s := range c.services {
 		c.serviceErrorHandler(ModuleStart, s.Start(&c.notifications, l))
 		c.serviceErrorHandler(ModuleConfigure, s.Configure(p))
 	}
-	l.Info("Services successfully started")
+	l.Info("services successfully started")
 }
 
 func (c *Core) Run() {
 	for _, s := range c.services {
 		c.serviceErrorHandler(ModuleProcess, s.Process())
-		for _, n := range c.notifications.Notifications(_const.CORE) {
+		for _, n := range c.notifications.Notifications(_const.Core) {
 			c.notificationHandler(n)
 		}
 	}

@@ -11,10 +11,10 @@ import (
 
 func (c *Core) notificationHandler(n *notification.Notification) {
 	switch types.Name(n.From()) {
-	case _const.NETWORK_SERVICE:
+	case _const.NetworkService:
 		netNotificationHandler(c, n)
 	default:
-		c.logger.Warn("Unhandled notification",
+		c.logger.Warn("unhandled notification",
 			zap.String("where", string(n.To())),
 			zap.String("from", string(n.From())),
 			zap.String("message", fmt.Sprintf("%v", n.Content())))
@@ -26,10 +26,10 @@ func netNotificationHandler(c *Core, n *notification.Notification) {
 
 	switch m.Command() {
 	case "link":
-		c.notifications.Notify(notification.NewNotification(_const.CORE, _const.NETWORK_SERVICE, c.properties.System.LinkID))
+		c.notifications.Notify(notification.NewNotification(_const.Core, _const.NetworkService, c.properties.System.LinkID))
 	default:
-		c.logger.Error("Unknown network command",
-			zap.String("where", string(_const.CORE)),
+		c.logger.Error("unknown network command",
+			zap.String("where", string(_const.Core)),
 			zap.String("command", m.Command()))
 	}
 }
