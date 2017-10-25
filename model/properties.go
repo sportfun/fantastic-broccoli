@@ -1,13 +1,18 @@
 package model
 
-type Path string
-type Name string
-
 type Properties struct {
-	Modules []Module
+	System  SystemDefinition
+	Modules []ModuleDefinition
 }
 
-type Module struct {
-	Name Name
-	Path Path
+type ModuleDefinition struct {
+	Name string
+	Path string
+}
+
+type SystemDefinition struct {
+	LinkID     string
+	ServerIP   string
+	ServerPort int
+	ServerSSL  bool
 }
