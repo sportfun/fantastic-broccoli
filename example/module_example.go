@@ -66,7 +66,7 @@ func (m *ModuleExample) StartSession() error {
 	}
 	m.logger.Info("start new session")
 
-	m.data = make(chan string, 0xFF)
+	m.data = make(chan string, 0x9)
 	m.endRunner = make(chan bool, 1)
 	go func() {
 		defer m.logger.Info("end goroutine")
