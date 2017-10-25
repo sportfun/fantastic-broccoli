@@ -30,7 +30,7 @@ type Service struct {
 func (s *Service) Start(q *service.notificationQueue, l *zap.Logger) error {
 	s.modules = map[string]module.Module{}
 	s.sessionId = -1
-	s.state = constant.STARTED
+	s.state = constant.Started
 
 	s.messages = module.notificationQueue{}
 	s.notifications = q
@@ -64,12 +64,12 @@ func (s *Service) Configure(props *model.Properties) error {
 		s.errorHandler(NoModule, fmt.Errorf("no module charged"))
 	}
 
-	s.state = constant.IDLE
+	s.state = constant.Idle
 	return nil
 }
 
 func (s *Service) Process() error {
-	s.state = constant.WORKING
+	s.state = constant.Working
 	for _, n := range s.notifications.Notifications(s.Name()) {
 		s.notificationHandler(n)
 	}
@@ -82,7 +82,7 @@ func (s *Service) Process() error {
 		m := object.NewErrorObject(e.From(), fmt.Errorf(e.Content().(string)))
 		s.notifications.Notify(netBuilder.With(m).Build())
 
-		if e.Content().(module.ErrorObject).ErrorLevel == constant.FATAL {
+		if e.Content().(module.ErrorObject).ErrorLevel == constant.Fatal {
 			// TODO: Stop module
 			s.errorHandler(ModuleStop, s.modules[e.From()].Stop(), e.From())
 		}
@@ -93,7 +93,7 @@ func (s *Service) Process() error {
 		s.notifications.Notify(netBuilder.With(m).Build())
 	}
 
-	s.state = constant.IDLE
+	s.state = constant.Idle
 	return nil
 }
 

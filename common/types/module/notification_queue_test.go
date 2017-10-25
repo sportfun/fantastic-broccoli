@@ -16,7 +16,7 @@ func TestNotificationQueueNotifyError(t *testing.T) {
 	q := NewNotificationQueue()
 
 	for i := 0; i < 0xFF; i++ {
-		q.NotifyError(constant.FATAL, "Error message %s %s", "can be", "formatted")
+		q.NotifyError(constant.Fatal, "Error message %s %s", "can be", "formatted")
 	}
 	_, caller, line, _ := runtime.Caller(0)
 	origin := fmt.Sprintf("%s:%d", path.Base(caller), line-2)
@@ -29,7 +29,7 @@ func TestNotificationQueueNotifyError(t *testing.T) {
 	o := errors[0].Content().(ErrorObject)
 	utils.AssertEquals(t, origin, o.Origin())
 	utils.AssertEquals(t, "Error message can be formatted", o.Reason().Error())
-	utils.AssertEquals(t, constant.FATAL, o.ErrorLevel())
+	utils.AssertEquals(t, constant.Fatal, o.ErrorLevel())
 }
 
 func TestNotificationQueueNotifyData(t *testing.T) {
@@ -70,7 +70,7 @@ func BenchmarkNotificationQueueNotifyError(b *testing.B) {
 	err := "error"
 
 	for i := 0; i < b.N; i++ {
-		q.NotifyError(constant.CRITICAL, err)
+		q.NotifyError(constant.Critical, err)
 	}
 
 }

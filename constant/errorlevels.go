@@ -1,8 +1,8 @@
 package constant
 
 const (
-	WARNING  = 1 << iota
-	ERROR
-	CRITICAL
-	FATAL
+	Warning  = 1 << iota
+	Error
+	Critical
+	Fatal    
 )

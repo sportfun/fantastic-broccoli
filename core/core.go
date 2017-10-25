@@ -43,7 +43,7 @@ func (c *Core) Stop() {
 	for _, s := range c.services {
 		c.serviceErrorHandler(ModuleStop, s.Stop())
 	}
-	c.state = constant.STOPPED
+	c.state = constant.Stopped
 }
 
 func (c *Core) State() int {

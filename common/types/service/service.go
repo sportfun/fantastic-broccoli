@@ -6,7 +6,7 @@ import (
 )
 
 type Service interface {
-	Start(queue *notificationQueue, logger *zap.Logger) error
+	Start(queue *NotificationQueue, logger *zap.Logger) error
 	Configure(properties *model.Properties) error
 	Process() error
 	Stop() error

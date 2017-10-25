@@ -24,5 +24,6 @@ func (builder *builder) With(o interface{}) *builder {
 }
 
 func (builder *builder) Build() *Notification {
-	return &builder.Notification
+	n := builder.Notification
+	return &n
 }

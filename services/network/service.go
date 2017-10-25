@@ -22,7 +22,7 @@ type Service struct {
 }
 
 func (s *Service) Start(q *service.notificationQueue, l *zap.Logger) error {
-	s.state = constant.STARTED
+	s.state = constant.Started
 
 	s.notifications = q
 	s.logger = l
@@ -53,12 +53,12 @@ func (s *Service) Configure(props *model.Properties) error {
 		return fmt.Errorf("")
 	}
 
-	s.state = constant.IDLE
+	s.state = constant.Idle
 	return nil
 }
 
 func (s *Service) Process() error {
-	s.state = constant.WORKING
+	s.state = constant.Working
 	for _, m := range s.messages {
 		s.messageHandler(m)
 	}
@@ -68,13 +68,13 @@ func (s *Service) Process() error {
 			return err
 		}
 	}
-	s.state = constant.IDLE
+	s.state = constant.Idle
 	return nil
 }
 
 func (s *Service) Stop() error {
 	s.client.Close()
-	s.state = constant.STOPPED
+	s.state = constant.Stopped
 	return nil
 }
 
