@@ -14,14 +14,14 @@ import (
 type Service struct {
 	state int
 
-	notifications *service.NotificationQueue
+	notifications *service.notificationQueue
 	logger        *zap.Logger
 	client        *gosocketio.Client
 	linkId        string
 	messages      []*object.NetworkObject
 }
 
-func (s *Service) Start(q *service.NotificationQueue, l *zap.Logger) error {
+func (s *Service) Start(q *service.notificationQueue, l *zap.Logger) error {
 	s.state = constant.STARTED
 
 	s.notifications = q

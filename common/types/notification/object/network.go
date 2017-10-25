@@ -9,15 +9,15 @@ func NewNetworkObject(command string, args ...string) *NetworkObject {
 	return &NetworkObject{command: command, args: args}
 }
 
-func (m *NetworkObject) AddArgument(args ...string) *NetworkObject {
-	m.args = append(m.args, args...)
-	return m
+func (networkObject *NetworkObject) AddArgument(args ...string) *NetworkObject {
+	networkObject.args = append(networkObject.args, args...)
+	return networkObject
 }
 
-func (m *NetworkObject) Command() string {
-	return m.command
+func (networkObject *NetworkObject) Command() string {
+	return networkObject.command
 }
 
-func (m *NetworkObject) Arguments() []string {
-	return m.args
+func (networkObject *NetworkObject) Arguments() []string {
+	return networkObject.args
 }

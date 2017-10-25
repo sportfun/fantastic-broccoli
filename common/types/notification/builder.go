@@ -1,28 +1,28 @@
 package notification
 
-type Builder struct {
+type builder struct {
 	Notification
 }
 
-func NewBuilder() *Builder {
-	return &Builder{}
+func NewBuilder() *builder {
+	return &builder{}
 }
 
-func (b *Builder) From(o string) *Builder {
-	b.from = o
-	return b
+func (builder *builder) From(o string) *builder {
+	builder.from = o
+	return builder
 }
 
-func (b *Builder) To(d string) *Builder {
-	b.to = d
-	return b
+func (builder *builder) To(d string) *builder {
+	builder.to = d
+	return builder
 }
 
-func (b *Builder) With(o interface{}) *Builder {
-	b.content = o
-	return b
+func (builder *builder) With(o interface{}) *builder {
+	builder.content = o
+	return builder
 }
 
-func (b *Builder) Build() *Notification {
-	return &b.Notification
+func (builder *builder) Build() *Notification {
+	return &builder.Notification
 }

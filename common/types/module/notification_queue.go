@@ -4,6 +4,7 @@ import (
 	"fantastic-broccoli/common/types/notification"
 	"fantastic-broccoli/common/types/notification/object"
 	"fmt"
+	"path"
 	"runtime"
 )
 
@@ -26,7 +27,8 @@ func NewNotificationQueue() *notificationQueue {
 }
 
 func (queue *notificationQueue) NotifyError(level int, format string, a ...interface{}) {
-	_, origin, _, _ := runtime.Caller(1)
+	_, caller, line, _ := runtime.Caller(1)
+	origin := fmt.Sprintf("%s:%d", path.Base(caller), line)
 	errorObject := ErrorObject{*object.NewErrorObject(origin, fmt.Errorf(format, a...)), level}
 	queue.errors = append(queue.errors, builder.With(errorObject).Build())
 }
@@ -38,7 +40,7 @@ func (queue *notificationQueue) NotificationsError() []*notification.Notificatio
 }
 
 func (queue *notificationQueue) NotifyData(origin string, format string, a ...interface{}) {
-	dataObject := object.NewDataObject(origin, fmt.Sprintf(format, a...))
+	dataObject := *object.NewDataObject(origin, fmt.Sprintf(format, a...))
 	queue.data = append(queue.data, builder.With(dataObject).Build())
 }
 

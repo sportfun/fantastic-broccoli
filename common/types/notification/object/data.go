@@ -9,10 +9,10 @@ func NewDataObject(module string, value interface{}) *DataObject {
 	return &DataObject{module: module, value: value}
 }
 
-func (d *DataObject) Module() string {
-	return d.module
+func (dataObject *DataObject) Module() string {
+	return dataObject.module
 }
 
-func (d *DataObject) Value() interface{} {
-	return d.value
+func (dataObject *DataObject) Value() interface{} {
+	return dataObject.value
 }

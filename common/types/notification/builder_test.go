@@ -1,28 +1,28 @@
 package notification
 
 import (
-	"testing"
 	"fantastic-broccoli/utils"
+	"testing"
 )
 
 // -- Unit test
 
 func TestBuilderFrom(t *testing.T) {
-	b := Builder{}
+	b := NewBuilder()
 	b.From("Origin")
 
 	utils.AssertEquals(t, "Origin", b.from)
 }
 
 func TestBuilderTo(t *testing.T) {
-	b := Builder{}
+	b := NewBuilder()
 	b.To("Destination")
 
 	utils.AssertEquals(t, "Destination", b.to)
 }
 
 func TestBuilderWith(t *testing.T) {
-	b := Builder{}
+	b := NewBuilder()
 	o := struct {
 		a string
 		b int
@@ -34,7 +34,7 @@ func TestBuilderWith(t *testing.T) {
 }
 
 func TestBuilderBuild(t *testing.T) {
-	b := Builder{}
+	b := NewBuilder()
 	o := struct {
 		a string
 		b int
@@ -46,22 +46,22 @@ func TestBuilderBuild(t *testing.T) {
 	d4 := Notification{"Destination", "Origin", struct{}{}}
 
 	n := b.From("Origin").To("Destination").With(o).Build()
-	utils.AssertEquals(t, d1, n)
+	utils.AssertEquals(t, d1, *n)
 
 	n = b.From("").Build()
-	utils.AssertEquals(t, d2, n)
+	utils.AssertEquals(t, d2, *n)
 
 	n = b.From("Destination").To("Origin").Build()
-	utils.AssertEquals(t, d3, n)
+	utils.AssertEquals(t, d3, *n)
 
 	n = b.With(struct{}{}).Build()
-	utils.AssertEquals(t, d4, n)
+	utils.AssertEquals(t, d4, *n)
 }
 
 // -- Benchmark
 
 func BenchmarkBuilderAll(b *testing.B) {
-	bd := Builder{}
+	bd := NewBuilder()
 	ori := "Origin"
 	des := "Destination"
 	o := struct {
@@ -78,7 +78,7 @@ func BenchmarkBuilderAll(b *testing.B) {
 }
 
 func BenchmarkBuilderBuild(b *testing.B) {
-	bd := Builder{}
+	bd := NewBuilder()
 	bd.From("Origin").To("Destination").With(struct {
 		a string
 		b int

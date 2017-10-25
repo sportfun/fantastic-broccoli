@@ -12,15 +12,15 @@ func NewErrorObject(origin string, reason ...error) *ErrorObject {
 	return &ErrorObject{origin: origin, reason: nil}
 }
 
-func (e *ErrorObject) Why(reason error) *ErrorObject {
-	e.reason = reason
-	return e
+func (errorObject *ErrorObject) Why(reason error) *ErrorObject {
+	errorObject.reason = reason
+	return errorObject
 }
 
-func (e *ErrorObject) Origin() string {
-	return e.origin
+func (errorObject *ErrorObject) Origin() string {
+	return errorObject.origin
 }
 
-func (e *ErrorObject) Reason() error {
-	return e.reason
+func (errorObject *ErrorObject) Reason() error {
+	return errorObject.reason
 }

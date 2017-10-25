@@ -1,8 +1,8 @@
 package notification
 
 import (
-	"testing"
 	"fantastic-broccoli/utils"
+	"testing"
 )
 
 func TestNewNotification(t *testing.T) {

@@ -13,7 +13,7 @@ import (
 	"fantastic-broccoli/common/types/notification/object"
 )
 
-var netBuilder = new(notification.Builder).
+var netBuilder = new(notification.builder).
 	From(constant.ModuleService).
 	To(constant.NetworkService)
 
@@ -23,11 +23,11 @@ type Service struct {
 	state     int
 
 	messages      module.notificationQueue
-	notifications *service.NotificationQueue
+	notifications *service.notificationQueue
 	logger        *zap.Logger
 }
 
-func (s *Service) Start(q *service.NotificationQueue, l *zap.Logger) error {
+func (s *Service) Start(q *service.notificationQueue, l *zap.Logger) error {
 	s.modules = map[string]module.Module{}
 	s.sessionId = -1
 	s.state = constant.STARTED
