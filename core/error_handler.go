@@ -1,15 +1,15 @@
 package core
 
-type ErrorType int
+type errorType int
 
 const (
-	ModuleStart     ErrorType = iota
+	ModuleStart     errorType = iota
 	ModuleConfigure
 	ModuleProcess
 	ModuleStop
 )
 
-func (c *Core) serviceErrorHandler(t ErrorType, e error) {
+func (c *Core) serviceErrorHandler(t errorType, e error) {
 	if e == nil {
 		return
 	}
@@ -22,18 +22,22 @@ func (c *Core) serviceErrorHandler(t ErrorType, e error) {
 	case ModuleProcess:
 		processErrorHandler(c, e)
 	case ModuleStop:
-		processErrorHandler(c, e)
+		stopErrorHandler(c, e)
 	}
 }
 
 func startErrorHandler(c *Core, e error) {
+	//TODO: Start error handler
 }
 
 func stopErrorHandler(c *Core, e error) {
+	//TODO: Stop error handler
 }
 
 func configureErrorHandler(c *Core, e error) {
+	//TODO: Configure error handler
 }
 
 func processErrorHandler(c *Core, e error) {
+	//TODO: Process error handler
 }

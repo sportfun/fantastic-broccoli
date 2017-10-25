@@ -1,42 +1,53 @@
 package module
 
 import (
-	"fantastic-broccoli/common/types"
 	"fantastic-broccoli/common/types/notification"
+	"fantastic-broccoli/common/types/notification/object"
 	"fmt"
+	"runtime"
 )
 
-type NotificationQueue struct {
-	data   []notification.Notification
-	errors []notification.Notification
+var builder = notification.NewBuilder().
+	From("").
+	To("")
+
+type notificationQueue struct {
+	data   []*notification.Notification
+	errors []*notification.Notification
 }
 
 type ErrorObject struct {
-	ErrorLevel types.ErrorLevel
-	Message    string
+	object.ErrorObject
+	errorLevel int
 }
 
-type DataObject struct {
-	From  types.Name
-	Value string
+func NewNotificationQueue() *notificationQueue {
+	return &notificationQueue{}
 }
 
-func (q *NotificationQueue) NotifyError(t types.ErrorLevel, f string, p ...interface{}) {
-	q.errors = append(q.errors, *notification.NewNotification("", "", ErrorObject{t, fmt.Sprintf(f, p)}))
+func (queue *notificationQueue) NotifyError(level int, format string, a ...interface{}) {
+	_, origin, _, _ := runtime.Caller(1)
+	errorObject := ErrorObject{*object.NewErrorObject(origin, fmt.Errorf(format, a...)), level}
+	queue.errors = append(queue.errors, builder.With(errorObject).Build())
 }
 
-func (q *NotificationQueue) NotificationsError() []notification.Notification {
-	arr := q.errors
-	q.errors = []notification.Notification{}
+func (queue *notificationQueue) NotificationsError() []*notification.Notification {
+	arr := queue.errors
+	queue.errors = []*notification.Notification{}
 	return arr
 }
 
-func (q *NotificationQueue) NotifyData(o types.Name, f string, p ...interface{}) {
-	q.data = append(q.data, *notification.NewNotification("", "", DataObject{o, fmt.Sprintf(f, p)}))
+func (queue *notificationQueue) NotifyData(origin string, format string, a ...interface{}) {
+	dataObject := object.NewDataObject(origin, fmt.Sprintf(format, a...))
+	queue.data = append(queue.data, builder.With(dataObject).Build())
 }
 
-func (q *NotificationQueue) NotificationsData() []notification.Notification {
-	arr := q.data
-	q.data = []notification.Notification{}
+func (queue *notificationQueue) NotificationsData() []*notification.Notification {
+	arr := queue.data
+	queue.data = []*notification.Notification{}
 	return arr
+}
+
+func (obj *ErrorObject) ErrorLevel() int {
+	return obj.errorLevel
 }

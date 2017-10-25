@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fantastic-broccoli/common/types"
 	"fantastic-broccoli/common/types/notification"
 )
 
@@ -14,7 +13,7 @@ func (q *NotificationQueue) Notify(n *notification.Notification) {
 	q.notifications[k] = append(q.notifications[k], n)
 }
 
-func (q *NotificationQueue) Notifications(n types.Name) []*notification.Notification {
+func (q *NotificationQueue) Notifications(n string) []*notification.Notification {
 	k := string(n)
 	arr, ok := q.notifications[k]
 

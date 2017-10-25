@@ -1,17 +1,16 @@
 package module
 
 import (
-	"fantastic-broccoli/common/types"
-	"fantastic-broccoli/common/types/network"
 	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/const"
+	"fantastic-broccoli/constant"
 	"fmt"
 	"go.uber.org/zap"
+	"fantastic-broccoli/common/types/notification/object"
 )
 
 func (s *Service) notificationHandler(n *notification.Notification) {
-	switch types.Name(n.From()) {
-	case _const.NetworkService:
+	switch string(n.From()) {
+	case constant.NetworkService:
 		netNotificationHandler(s, n)
 	default:
 		s.logger.Warn("unhandled notification",
@@ -22,7 +21,7 @@ func (s *Service) notificationHandler(n *notification.Notification) {
 }
 
 func netNotificationHandler(c *Service, n *notification.Notification) {
-	m := n.Content().(network.Message)
+	m := n.Content().(object.NetworkObject)
 
 	switch m.Command() {
 	case "new_session":
@@ -37,7 +36,7 @@ func netNotificationHandler(c *Service, n *notification.Notification) {
 		}
 	default:
 		c.logger.Error("unknown network command",
-			zap.String("where", string(_const.Core)),
+			zap.String("where", string(constant.Core)),
 			zap.String("command", m.Command()))
 	}
 }

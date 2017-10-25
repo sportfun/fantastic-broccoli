@@ -11,14 +11,14 @@ func TestBuilderFrom(t *testing.T) {
 	b := Builder{}
 	b.From("Origin")
 
-	utils.AssertEquals(t, Origin("Origin"), b.from)
+	utils.AssertEquals(t, "Origin", b.from)
 }
 
 func TestBuilderTo(t *testing.T) {
 	b := Builder{}
 	b.To("Destination")
 
-	utils.AssertEquals(t, Destination("Destination"), b.to)
+	utils.AssertEquals(t, "Destination", b.to)
 }
 
 func TestBuilderWith(t *testing.T) {
@@ -62,8 +62,8 @@ func TestBuilderBuild(t *testing.T) {
 
 func BenchmarkBuilderAll(b *testing.B) {
 	bd := Builder{}
-	ori := Origin("Origin")
-	des := Destination("Destination")
+	ori := "Origin"
+	des := "Destination"
 	o := struct {
 		a string
 		b int
@@ -93,8 +93,8 @@ func BenchmarkBuilderBuild(b *testing.B) {
 }
 
 func BenchmarkBuilderNotificationOnly(b *testing.B) {
-	ori := Origin("Origin")
-	des := Destination("Destination")
+	ori := "Origin"
+	des := "Destination"
 	o := struct {
 		a string
 		b int

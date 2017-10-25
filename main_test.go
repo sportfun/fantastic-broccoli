@@ -7,6 +7,15 @@ import (
 	"testing"
 	"fantastic-broccoli/model"
 	"fantastic-broccoli/core"
+	"log"
+	"net/http"
+	"github.com/graarh/golang-socketio"
+	"github.com/graarh/golang-socketio/transport"
+	"fantastic-broccoli/constant"
+	"time"
+	"sync"
+	"fantastic-broccoli/common/types/service"
+	"fantastic-broccoli/services/network"
 )
 
 func NewLogger() *zap.Logger {
@@ -60,12 +69,101 @@ func NewLogger() *zap.Logger {
 	return logger
 }
 
+func NewServer() {
+	//create server instance, you can setup transport parameters or get the default one
+	//look at websocket.go for parameters description
+	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
+
+	// --- caller is default handlers
+
+	//on connection handler, occurs once for each connected client
+	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel, args interface{}) {
+		//client id is unique
+		log.Printf("[Server] New client connected, client id is '%s'", c.Id())
+
+		c.Join(constant.CommandChan)
+	})
+	//on disconnection handler, if client hangs connection unexpectedly, it will still occurs
+	//you can omit function args if you do not need them
+	//you can return string value for ack, or return nothing for emit
+	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
+		//caller is not necessary, client will be removed from rooms
+		//automatically on disconnect
+		//but you can remove client from room whenever you need to
+		c.Leave(constant.CommandChan)
+
+		log.Printf("[Server] %s (%s) disconnected", c.Id(), c.Ip())
+	})
+
+	//error catching handler
+	server.On(gosocketio.OnError, func(c *gosocketio.Channel) {
+		log.Println("Error occurs")
+	})
+
+	// --- caller is custom handler
+
+	server.On(constant.CommandChan, func(c *gosocketio.Channel, args interface{}) {
+		log.Printf("[Server] Something successfully handled (%v)", args)
+		c.Emit(constant.CommandChan, "ok")
+	})
+
+	//setup http server like caller for handling connections
+	serveMux := http.NewServeMux()
+	serveMux.Handle("/", server)
+	log.Fatal(http.ListenAndServe(":80", serveMux))
+}
+
+func BenchmarkServer(b *testing.B) {
+	var wg sync.WaitGroup
+	go NewServer()
+
+	wg.Add(0xF)
+	for i := 0; i < 0xF; i++ {
+		go func(i int) {
+			c, err := gosocketio.Dial(
+				gosocketio.GetUrl("localhost", 80, false),
+				transport.GetDefaultWebsocketTransport(),
+			)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			c.On(constant.CommandChan, func(x *gosocketio.Channel, args interface{}) {
+				log.Printf("[%s] Received something '%v' from %s", c.Id(), args, x.Id())
+			})
+			ms := &struct {
+				LinkId  string
+				Command string
+				Args    []string
+			}{"0x", "command", []string{"ok"}}
+			c.Emit(constant.CommandChan, ms)
+			time.Sleep(10 * time.Second)
+			c.Close()
+			time.Sleep(time.Second)
+			wg.Done()
+		}(i)
+	}
+
+	wg.Wait()
+}
+
 func BenchmarkCore_Configure(b *testing.B) {
 	c := core.Core{}
-	p := model.Properties{}
+	p := model.Properties{
+		System: model.SystemDefinition{
+			LinkID:     "c0f629ed-4b1a-4fea-a88e-5d9070807112",
+			ServerIP:   "localhost/socket.io/",
+			ServerPort: 80,
+			ServerSSL:  false,
+		},
+	}
 	l := NewLogger()
+	go NewServer()
 
-	c.Configure(&p, l)
+	s := []service.Service{new(network.Service)}
+
+	c.Configure(s, &p, l)
 	c.Run()
 }
 

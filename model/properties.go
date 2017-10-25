@@ -1,17 +1,18 @@
 package model
 
-import "fantastic-broccoli/common/types"
-
 type Properties struct {
 	System  SystemDefinition
 	Modules []ModuleDefinition
 }
 
 type ModuleDefinition struct {
-	Name types.Name
-	Path types.Path
+	Name string
+	Path string
 }
 
 type SystemDefinition struct {
-	LinkID types.ID
+	LinkID     string
+	ServerIP   string
+	ServerPort int
+	ServerSSL  bool
 }

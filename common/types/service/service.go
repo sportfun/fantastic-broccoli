@@ -2,7 +2,6 @@ package service
 
 import (
 	"go.uber.org/zap"
-	"fantastic-broccoli/common/types"
 	"fantastic-broccoli/model"
 )
 
@@ -12,6 +11,6 @@ type Service interface {
 	Process() error
 	Stop() error
 
-	Name() types.Name
-	State() types.State
+	Name() string
+	State() int
 }

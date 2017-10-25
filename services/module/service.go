@@ -1,38 +1,38 @@
 package module
 
 import (
-	"fantastic-broccoli/common/types"
 	"fantastic-broccoli/common/types/module"
-	"fantastic-broccoli/common/types/network"
+
 	"fantastic-broccoli/common/types/notification"
 	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/const"
+	"fantastic-broccoli/constant"
 	"fantastic-broccoli/model"
 	"go.uber.org/zap"
 	"plugin"
-	"errors"
+	"fmt"
+	"fantastic-broccoli/common/types/notification/object"
 )
 
-var netBuilder *notification.Builder = notification.Builder{}.
-	From(_const.ModuleService).
-	To(_const.NetworkService)
+var netBuilder = new(notification.Builder).
+	From(constant.ModuleService).
+	To(constant.NetworkService)
 
 type Service struct {
-	modules   map[types.Name]module.Module
+	modules   map[string]module.Module
 	sessionId int
-	state     types.State
+	state     int
 
-	messages      module.NotificationQueue
+	messages      module.notificationQueue
 	notifications *service.NotificationQueue
 	logger        *zap.Logger
 }
 
 func (s *Service) Start(q *service.NotificationQueue, l *zap.Logger) error {
-	s.modules = map[types.Name]module.Module{}
+	s.modules = map[string]module.Module{}
 	s.sessionId = -1
-	s.state = _const.STARTED
+	s.state = constant.STARTED
 
-	s.messages = module.NotificationQueue{}
+	s.messages = module.notificationQueue{}
 	s.notifications = q
 	s.logger = l
 
@@ -61,12 +61,15 @@ func (s *Service) Configure(props *model.Properties) error {
 	}
 
 	if len(s.modules) == 0 {
-		s.errorHandler(NoModule, errors.New("no module charged"))
+		s.errorHandler(NoModule, fmt.Errorf("no module charged"))
 	}
+
+	s.state = constant.IDLE
 	return nil
 }
 
 func (s *Service) Process() error {
+	s.state = constant.WORKING
 	for _, n := range s.notifications.Notifications(s.Name()) {
 		s.notificationHandler(n)
 	}
@@ -76,22 +79,21 @@ func (s *Service) Process() error {
 	}
 
 	for _, e := range s.messages.NotificationsError() {
-		m := network.NewMessage("error").
-			AddArgument(string(e.From())).
-			AddArgument(e.Content().(string))
+		m := object.NewErrorObject(e.From(), fmt.Errorf(e.Content().(string)))
 		s.notifications.Notify(netBuilder.With(m).Build())
 
-		if e.Content().(module.ErrorObject).ErrorLevel == _const.FATAL {
+		if e.Content().(module.ErrorObject).ErrorLevel == constant.FATAL {
+			// TODO: Stop module
 			s.errorHandler(ModuleStop, s.modules[e.From()].Stop(), e.From())
 		}
 	}
 
 	for _, e := range s.messages.NotificationsData() {
-		m := network.NewMessage("data").
-			AddArgument(e.Content().(string))
+		m := object.NewDataObject(e.From(), e.Content())
 		s.notifications.Notify(netBuilder.With(m).Build())
 	}
 
+	s.state = constant.IDLE
 	return nil
 }
 
@@ -102,10 +104,10 @@ func (s *Service) Stop() error {
 	return nil
 }
 
-func (s *Service) Name() types.Name {
-	return _const.ModuleService
+func (s *Service) Name() string {
+	return constant.ModuleService
 }
 
-func (s *Service) State() types.State {
+func (s *Service) State() int {
 	return s.state
 }

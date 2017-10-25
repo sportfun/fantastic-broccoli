@@ -1,45 +1,87 @@
 package network
 
 import (
-	"fantastic-broccoli/common/types"
 	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/const"
+	"fantastic-broccoli/constant"
 	"fantastic-broccoli/model"
 	"go.uber.org/zap"
+	"github.com/graarh/golang-socketio"
+	"github.com/graarh/golang-socketio/transport"
+	"fantastic-broccoli/common/types/notification/object"
+	"fmt"
 )
 
 type Service struct {
-	state types.State
+	state int
 
 	notifications *service.NotificationQueue
 	logger        *zap.Logger
+	client        *gosocketio.Client
+	linkId        string
+	messages      []*object.NetworkObject
 }
 
-func (m *Service) Start(q *service.NotificationQueue, l *zap.Logger) error {
-	m.state = _const.STARTED
+func (s *Service) Start(q *service.NotificationQueue, l *zap.Logger) error {
+	s.state = constant.STARTED
 
-	m.notifications = q
-	m.logger = l
+	s.notifications = q
+	s.logger = l
 
 	return nil
 }
 
-func (m *Service) Configure(props *model.Properties) error {
+func (s *Service) Configure(props *model.Properties) error {
+	var err error
+
+	s.linkId = props.System.LinkID
+	s.client, err = gosocketio.Dial(
+		gosocketio.GetUrl(string(props.System.ServerIP), int(props.System.ServerPort), props.System.ServerSSL),
+		transport.GetDefaultWebsocketTransport(),
+	)
+	if err != nil {
+		return err
+	}
+
+	initiated :=
+		s.On(gosocketio.OnConnection, s.onConnectionHandler) &&
+			s.On(gosocketio.OnDisconnection, s.onDisconnectionHandler) &&
+			s.On(constant.CommandChan, s.onCommandChanHandler) &&
+			s.Emit(constant.CommandChan, object.NewNetworkObject(constant.CommandState, "started"))
+
+	if !initiated {
+		//TODO: Write error
+		return fmt.Errorf("")
+	}
+
+	s.state = constant.IDLE
 	return nil
 }
 
-func (m *Service) Process() error {
+func (s *Service) Process() error {
+	s.state = constant.WORKING
+	for _, m := range s.messages {
+		s.messageHandler(m)
+	}
+
+	for _, n := range s.notifications.Notifications(constant.NetworkService) {
+		if err := s.notificationHandler(n); err != nil {
+			return err
+		}
+	}
+	s.state = constant.IDLE
 	return nil
 }
 
-func (m *Service) Stop() error {
+func (s *Service) Stop() error {
+	s.client.Close()
+	s.state = constant.STOPPED
 	return nil
 }
 
-func (m *Service) Name() types.Name {
+func (s *Service) Name() string {
 	return "Network"
 }
 
-func (m *Service) State() types.State {
-	return m.state
+func (s *Service) State() int {
+	return s.state
 }

@@ -1,27 +1,23 @@
 package notification
 
-import "fantastic-broccoli/common/types"
-
-type Object interface{}
-
 type Notification struct {
-	from    types.Name
-	to      types.Name
-	content Object
+	from    string
+	to      string
+	content interface{}
 }
 
-func NewNotification(from types.Name, to types.Name, content Object) *Notification {
+func NewNotification(from string, to string, content interface{}) *Notification {
 	return &Notification{from, to, content}
 }
 
-func (n *Notification) From() types.Name {
+func (n *Notification) From() string {
 	return n.from
 }
 
-func (n *Notification) To() types.Name {
+func (n *Notification) To() string {
 	return n.to
 }
 
-func (n *Notification) Content() Object {
+func (n *Notification) Content() interface{} {
 	return n.content
 }
