@@ -13,8 +13,7 @@ var builder = notification.NewBuilder().
 	To("")
 
 type NotificationQueue struct {
-	data   []*notification.Notification
-	errors []*notification.Notification
+	notifications []*notification.Notification
 }
 
 type ErrorObject struct {
@@ -30,23 +29,17 @@ func (queue *NotificationQueue) NotifyError(level int, format string, a ...inter
 	_, caller, line, _ := runtime.Caller(1)
 	origin := fmt.Sprintf("%s:%d", path.Base(caller), line)
 	errorObject := ErrorObject{*object.NewErrorObject(origin, fmt.Errorf(format, a...)), level}
-	queue.errors = append(queue.errors, builder.With(errorObject).Build())
-}
-
-func (queue *NotificationQueue) NotificationsError() []*notification.Notification {
-	arr := queue.errors
-	queue.errors = []*notification.Notification{}
-	return arr
+	queue.notifications = append(queue.notifications, builder.With(errorObject).Build())
 }
 
 func (queue *NotificationQueue) NotifyData(origin string, format string, a ...interface{}) {
 	dataObject := *object.NewDataObject(origin, fmt.Sprintf(format, a...))
-	queue.data = append(queue.data, builder.With(dataObject).Build())
+	queue.notifications = append(queue.notifications, builder.With(dataObject).Build())
 }
 
-func (queue *NotificationQueue) NotificationsData() []*notification.Notification {
-	arr := queue.data
-	queue.data = []*notification.Notification{}
+func (queue *NotificationQueue) Notifications() []*notification.Notification {
+	arr := queue.notifications
+	queue.notifications = []*notification.Notification{}
 	return arr
 }
 

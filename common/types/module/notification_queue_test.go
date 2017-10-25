@@ -21,10 +21,10 @@ func TestNotificationQueueNotifyError(t *testing.T) {
 	_, caller, line, _ := runtime.Caller(0)
 	origin := fmt.Sprintf("%s:%d", path.Base(caller), line-2)
 
-	utils.AssertEquals(t, 0xFF, len(q.errors))
-	errors := q.NotificationsError()
+	utils.AssertEquals(t, 0xFF, len(q.notifications))
+	errors := q.Notifications()
 	utils.AssertEquals(t, 0xFF, len(errors))
-	utils.AssertEquals(t, 0, len(q.errors))
+	utils.AssertEquals(t, 0, len(q.notifications))
 
 	o := errors[0].Content().(ErrorObject)
 	utils.AssertEquals(t, origin, o.Origin())
@@ -39,10 +39,10 @@ func TestNotificationQueueNotifyData(t *testing.T) {
 		q.NotifyData("ModuleName", "%d RPM", 1000)
 	}
 
-	utils.AssertEquals(t, 0xFF, len(q.data))
-	data := q.NotificationsData()
+	utils.AssertEquals(t, 0xFF, len(q.notifications))
+	data := q.Notifications()
 	utils.AssertEquals(t, 0xFF, len(data))
-	utils.AssertEquals(t, 0, len(q.data))
+	utils.AssertEquals(t, 0, len(q.notifications))
 
 	o := data[0].Content().(object.DataObject)
 	utils.AssertEquals(t, "ModuleName", o.Module())

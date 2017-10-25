@@ -2,10 +2,10 @@ package module
 
 import (
 	"fantastic-broccoli/common/types/notification"
+	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/constant"
 	"fmt"
 	"go.uber.org/zap"
-	"fantastic-broccoli/common/types/notification/object"
 )
 
 func (s *Service) notificationHandler(n *notification.Notification) {
@@ -24,12 +24,12 @@ func netNotificationHandler(c *Service, n *notification.Notification) {
 	m := n.Content().(object.NetworkObject)
 
 	switch m.Command() {
-	case "new_session":
-		c.logger.Debug("new session")
+	case constant.CommandStartSession:
+		c.logger.Debug("start session")
 		for _, m := range c.modules {
 			m.StartSession()
 		}
-	case "end_session":
+	case constant.CommandEndSession:
 		c.logger.Debug("end session")
 		for _, m := range c.modules {
 			m.StopSession()

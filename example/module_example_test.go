@@ -35,7 +35,7 @@ func TestModuleExample(t *testing.T) {
 	m.Stop()
 	time.Sleep(250 * time.Millisecond)
 
-	for _, d := range q.NotificationsData() {
+	for _, d := range q.Notifications() {
 		o := d.Content().(object.DataObject)
 		l.Info("data notified", zap.String("from", o.Module()), zap.String("value", o.Value().(string)))
 	}

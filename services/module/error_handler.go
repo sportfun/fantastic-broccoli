@@ -1,9 +1,9 @@
 package module
 
 import (
+	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/constant"
 	"fmt"
-	"fantastic-broccoli/common/types/notification/object"
 )
 
 type errorType int
@@ -18,29 +18,24 @@ const (
 	SymbolLoading
 )
 
-func (s *Service) errorHandler(t errorType, e error, p ...interface{}) {
-	if e == nil {
-		return
-	}
-
-	m := object.NewErrorObject(constant.ModuleService)
+func (s *Service) errorHandler(t errorType, err error, a ...interface{}) {
+	obj := object.NewErrorObject(constant.ModuleService)
 
 	switch t {
 	case ModuleConfiguration:
-		m.Why(fmt.Errorf("failure during module ('%s') configuration: %s", p, e.Error()))
+		obj.Why(fmt.Errorf("failure during module ('%s') configuration: %s", a, err.Error()))
 	case ModuleProcess:
-		m.Why(fmt.Errorf("failure during module ('%s') processing: %s", p, e.Error()))
+		obj.Why(fmt.Errorf("failure during module ('%s') processing: %s", a, err.Error()))
 	case ModuleStarting:
-		m.Why(fmt.Errorf("failure during module ('%s') starting: %s", p, e.Error()))
+		obj.Why(fmt.Errorf("failure during module ('%s') starting: %s", a, err.Error()))
 	case ModuleStop:
-		m.Why(fmt.Errorf("failure during module ('%s') stopping: %s", p, e.Error()))
+		obj.Why(fmt.Errorf("failure during module ('%s') stopping: %s", a, err.Error()))
 	case NoModule:
-		//TODO: Blink Failure LED
-		m.Why(e)
+		obj.Why(err)
 	case PluginLoading:
-		m.Why(fmt.Errorf("failure during plugin ('%s') loading: %s", p, e.Error()))
+		obj.Why(fmt.Errorf("failure during plugin ('%s') loading: %s", a, err.Error()))
 	case SymbolLoading:
-		m.Why(fmt.Errorf("failure during module ('%s') loading: %s", p, e.Error()))
+		obj.Why(fmt.Errorf("failure during module ('%s') loading: %s", a, err.Error()))
 	}
-	s.notifications.Notify(netBuilder.With(m).Build())
+	s.notifications.Notify(netBuilder.With(obj).Build())
 }
