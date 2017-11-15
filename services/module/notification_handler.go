@@ -20,23 +20,23 @@ func (s *Service) notificationHandler(n *notification.Notification) {
 	}
 }
 
-func netNotificationHandler(c *Service, n *notification.Notification) {
+func netNotificationHandler(s *Service, n *notification.Notification) {
 	m := n.Content().(object.NetworkObject)
 
-	switch m.Command() {
+	switch m.Command {
 	case constant.CommandStartSession:
-		c.logger.Debug("start session")
-		for _, m := range c.modules {
+		s.logger.Debug("start session")
+		for _, m := range s.modules {
 			m.StartSession()
 		}
 	case constant.CommandEndSession:
-		c.logger.Debug("end session")
-		for _, m := range c.modules {
+		s.logger.Debug("end session")
+		for _, m := range s.modules {
 			m.StopSession()
 		}
 	default:
-		c.logger.Error("unknown network command",
+		s.logger.Error("unknown network command",
 			zap.String("where", string(constant.Core)),
-			zap.String("command", m.Command()))
+			zap.String("command", m.Command))
 	}
 }

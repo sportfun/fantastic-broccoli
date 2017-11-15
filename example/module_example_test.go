@@ -7,36 +7,58 @@ import (
 	"fantastic-broccoli/model"
 	"time"
 	"fantastic-broccoli/common/types/notification/object"
+	"fantastic-broccoli/utils"
+	"fantastic-broccoli/constant"
 )
 
-func TestModuleExample(t *testing.T) {
-	m := ModuleExample{}
+func ImplSpecTest(t *testing.T, nProcess int, logger *zap.Logger, queue *module.NotificationQueue) {
+	notifications := queue.Notifications()
+
+	utils.AssertEquals(t, nProcess, len(notifications))
+	for _, notification := range notifications {
+		o := notification.Content().(object.DataObject)
+
+		utils.AssertEquals(t, 5, len(o.Value.(string)))
+		utils.AssertEquals(t, "|||||", o.Value.(string))
+		logger.Info("data notified", zap.String("from", o.Module), zap.String("value", o.Value.(string)))
+	}
+}
+
+func ImplCustomProperty() model.Properties {
+	return model.Properties{}
+}
+
+func StartModuleTest(t *testing.T, m module.Module) (module.Module, *module.NotificationQueue, *zap.Logger) {
 	q := module.NewNotificationQueue()
 	l, _ := zap.NewProduction()
-	p := model.Properties{}
 
-	m.Start(q, l)
-	m.Configure(&p)
+	l.Info("Start module test", zap.String("moduleName", m.Name()))
+	if err := m.Start(q, l); err != nil {
+		l.Fatal(err.Error())
+	}
+	utils.AssertEquals(t, constant.Started, m.State())
+	if err := m.Configure(&model.Properties{}); err != nil {
+		l.Fatal(err.Error())
+	}
 
+	return m, q, l
+}
+
+func TestModuleExample(t *testing.T) {
+	m, q, l := StartModuleTest(t, &ModuleExample{})
+
+	// Error verification (Process without session)
 	m.Process()
 
 	m.StartSession()
-	m.Process()
-	time.Sleep(time.Second)
-	m.Process()
-	time.Sleep(time.Second)
-	m.Process()
-	m.Process()
+	for i := 0; i < 0xF; i++ {
+		time.Sleep(time.Millisecond * 250)
+		m.Process()
+	}
 
-	m.StartSession()
 	m.StopSession()
 	m.Process()
 
-	m.Stop()
-	time.Sleep(250 * time.Millisecond)
-
-	for _, d := range q.Notifications() {
-		o := d.Content().(object.DataObject)
-		l.Info("data notified", zap.String("from", o.Module()), zap.String("value", o.Value().(string)))
-	}
+	ImplSpecTest(t, 0xF, l, q)
+	time.Sleep(time.Second)
 }

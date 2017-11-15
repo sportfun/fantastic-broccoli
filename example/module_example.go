@@ -80,7 +80,7 @@ func (m *ModuleExample) StartSession() error {
 				m.data <- "|"
 			}
 
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}()
 
@@ -88,6 +88,10 @@ func (m *ModuleExample) StartSession() error {
 	return nil
 }
 func (m *ModuleExample) StopSession() error {
+	if m.state == constant.Idle {
+		return nil
+	}
+
 	m.logger.Info("end session")
 	m.endRunner <- true
 

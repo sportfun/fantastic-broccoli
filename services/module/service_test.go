@@ -9,7 +9,6 @@ import (
 	"fantastic-broccoli/example"
 	"fantastic-broccoli/model"
 	"fantastic-broccoli/utils"
-	"go.uber.org/zap"
 	"strconv"
 	"testing"
 	"time"
@@ -21,7 +20,7 @@ func TestService(t *testing.T) {
 	p := model.Properties{}
 	q := service.NewNotificationQueue()
 	b := notification.NewBuilder().From(constant.NetworkService).To(constant.ModuleService)
-	l, _ := zap.NewProduction()
+	l := utils.Default.Logger()
 
 	s.Start(q, l)
 	// Manually configuration
@@ -34,6 +33,7 @@ func TestService(t *testing.T) {
 
 	// Invalid: Session not started
 	s.Process()
+	time.Sleep(250 * time.Millisecond)
 
 	q.Notify(b.With(*object.NewNetworkObject(constant.CommandStartSession)).Build())
 	// Invalid: Session already started
@@ -49,9 +49,10 @@ func TestService(t *testing.T) {
 	d := s.notifications.Notifications(constant.NetworkService)
 	utils.AssertEquals(t, len(ms), len(d))
 	o := d[0].Content().(object.DataObject)
-	utils.AssertEquals(t, ms[0].Name(), o.Module())
-	utils.AssertEquals(t, 10, len(o.Value().(string)))
+	utils.AssertEquals(t, ms[0].Name(), o.Module)
+	utils.AssertEquals(t, 10, len(o.Value.(string)))
 
+	time.Sleep(250 * time.Millisecond)
 	q.Notify(b.With(*object.NewNetworkObject(constant.CommandEndSession)).Build())
 	// Invalid: Session not started
 	s.Process()

@@ -1,18 +1,10 @@
 package object
 
 type DataObject struct {
-	module string
-	value  interface{}
+	Module string      `json:"module" mapstructure:"module"`
+	Value  interface{} `json:"value" mapstructure:"value"`
 }
 
 func NewDataObject(module string, value interface{}) *DataObject {
-	return &DataObject{module: module, value: value}
-}
-
-func (dataObject *DataObject) Module() string {
-	return dataObject.module
-}
-
-func (dataObject *DataObject) Value() interface{} {
-	return dataObject.value
+	return &DataObject{Module: module, Value: value}
 }

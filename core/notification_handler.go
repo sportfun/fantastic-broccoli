@@ -24,8 +24,8 @@ func (c *Core) notificationHandler(n *notification.Notification) {
 func netNotificationHandler(c *Core, n *notification.Notification) {
 	m := n.Content().(object.NetworkObject)
 
-	switch m.Command() {
-	case "link":
+	switch m.Command {
+	case constant.CommandLink:
 		c.notifications.Notify(notification.NewNotification(constant.Core, constant.NetworkService, c.properties.System.LinkID))
 	default:
 		c.logger.Error("unknown network command",

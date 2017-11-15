@@ -3,6 +3,8 @@ package utils
 import (
 	"reflect"
 	"testing"
+	"runtime"
+	"path"
 )
 
 type Predicate func(interface{}, interface{}) bool
@@ -25,7 +27,8 @@ func AssertEquals(t *testing.T, expected, actual interface{}, predicates ...Pred
 		return
 	}
 
-	t.Fatalf("Expected '%v' [%v], but get '%v' [%v]", expected, reflect.TypeOf(expected), actual, reflect.TypeOf(actual))
+	_, caller, line, _ := runtime.Caller(1)
+	t.Fatalf("Expected '%v' [%v], but get '%v' [%v] (at %s:%d)", expected, reflect.TypeOf(expected), actual, reflect.TypeOf(actual), path.Base(caller), line)
 }
 
 func AssertNotEquals(t *testing.T, unexpected, actual interface{}, predicates ...Predicate) {
@@ -46,5 +49,6 @@ func AssertNotEquals(t *testing.T, unexpected, actual interface{}, predicates ..
 		return
 	}
 
-	t.Fatalf("Expected something different than '%v' [%v]", unexpected, reflect.TypeOf(unexpected))
+	_, caller, line, _ := runtime.Caller(1)
+	t.Fatalf("Expected something different than '%v' [%v] (at %s:%d)", unexpected, reflect.TypeOf(unexpected), path.Base(caller), line)
 }

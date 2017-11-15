@@ -25,12 +25,12 @@ type Service struct {
 	logger        *zap.Logger
 }
 
-func (s *Service) Start(notification *service.NotificationQueue, logger *zap.Logger) error {
+func (s *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
 	s.modules = map[string]module.Module{}
 	s.state = constant.Started
 
 	s.messages = module.NewNotificationQueue()
-	s.notifications = notification
+	s.notifications = notifications
 	s.logger = logger
 
 	return nil

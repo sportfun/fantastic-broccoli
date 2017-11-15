@@ -5,6 +5,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// TODO: [v1.x] Retourner une erreur avec type precis (pour la gestion d'erreur)
 type Module interface {
 	Start(queue *NotificationQueue, logger *zap.Logger) error
 	Configure(properties *model.Properties) error

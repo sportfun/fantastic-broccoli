@@ -27,8 +27,8 @@ func TestNotificationQueueNotifyError(t *testing.T) {
 	utils.AssertEquals(t, 0, len(q.notifications))
 
 	o := errors[0].Content().(ErrorObject)
-	utils.AssertEquals(t, origin, o.Origin())
-	utils.AssertEquals(t, "Error message can be formatted", o.Reason().Error())
+	utils.AssertEquals(t, origin, o.Origin)
+	utils.AssertEquals(t, "Error message can be formatted", o.Reason)
 	utils.AssertEquals(t, constant.Fatal, o.ErrorLevel())
 }
 
@@ -45,8 +45,8 @@ func TestNotificationQueueNotifyData(t *testing.T) {
 	utils.AssertEquals(t, 0, len(q.notifications))
 
 	o := data[0].Content().(object.DataObject)
-	utils.AssertEquals(t, "ModuleName", o.Module())
-	utils.AssertEquals(t, "1000 RPM", o.Value())
+	utils.AssertEquals(t, "ModuleName", o.Module)
+	utils.AssertEquals(t, "1000 RPM", o.Value)
 }
 
 // -- Benchmark
