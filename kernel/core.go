@@ -5,7 +5,6 @@ import (
 
 	"fantastic-broccoli/common/types/service"
 	"fantastic-broccoli/constant"
-	"fantastic-broccoli/errors"
 	"fantastic-broccoli/properties"
 )
 
@@ -20,6 +19,8 @@ type Core struct {
 }
 
 func (core *Core) Configure(services []service.Service, props *properties.Properties, logger *zap.Logger) error {
+	// Property file can be not loaded (props = nil) if file not found
+	// Todo: props can be nil -> fatal error
 	core.services = services
 	core.logger = logger
 	core.notifications = service.NotificationQueue{}
@@ -29,7 +30,7 @@ func (core *Core) Configure(services []service.Service, props *properties.Proper
 	for _, s := range services {
 		if !core.checkIf(s, s.Start(&core.notifications, logger), IsStarted) ||
 			!core.checkIf(s, s.Configure(props), IsConfigured) {
-			return errors.NewInternalError(core.internal, constant.ErrorLevels.Fatal, errors.OriginList.Core, "")
+			return core.internal
 		}
 	}
 	logger.Info("services successfully started")

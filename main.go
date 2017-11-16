@@ -23,6 +23,7 @@ var logger *zap.Logger
 func init() {
 	flag.StringVar(&propertiesPath, "properties", "/etc/sportsfun/acquisitor.json", "path where file is configured")
 	flag.IntVar(&nRetryMax, "maxretry", 5, "number max of retry before failure")
+	flag.Parse()
 }
 
 func main() {
@@ -33,20 +34,22 @@ func main() {
 
 configuration:
 	if hasFailed(core.Configure(services, props, logger)) {
-		properties.WaitReconfiguration(props)
+		properties.WaitReconfiguration(props) // Wait until properties file has been changed
 		goto configuration
 	}
 
 	nRetry := 0
-infinit:
+processing:
 	for core.State() != constant.States.Stopped {
 		if hasPanic(core.Run()) {
-			hasFailed(core.Stop())
-			if nRetry > nRetryMax {
-				utils.MaintenanceMode()
-			}
+			hasFailed(core.Stop()) // Just used to display error if needed
 			nRetry++
-			goto infinit
+
+			// Retry n times before maintenance mode (system locked + LED blinked)
+			if nRetry < nRetryMax {
+				goto processing
+			}
+			utils.MaintenanceMode()
 		}
 		nRetry = 0
 	}
