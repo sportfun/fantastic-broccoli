@@ -1,91 +1,102 @@
 package example
 
 import (
-	"go.uber.org/zap"
 	"fantastic-broccoli/common/types/module"
-	"fantastic-broccoli/model"
 	"fantastic-broccoli/constant"
-	"fmt"
+	"fantastic-broccoli/model"
+	"go.uber.org/zap"
 	"time"
 )
 
 type ModuleExample struct {
-	state      int
-	queue      *module.notificationQueue
-	logger     *zap.Logger
-	data       chan string
-	end_runner chan bool
+	state         int
+	notifications *module.NotificationQueue
+	logger        *zap.Logger
+	data          chan string
+	endRunner     chan bool
 }
 
-func (m *ModuleExample) Start(q *module.notificationQueue, l *zap.Logger) error {
+func (m *ModuleExample) Start(q *module.NotificationQueue, l *zap.Logger) error {
 	m.logger = l
-	m.queue = q
-	m.state = constant.STARTED
+	m.notifications = q
+	m.state = constant.Started
 
-	l.Info("Module 'Example' started")
+	l.Info("module 'Example' started")
 	return nil
 }
 func (m *ModuleExample) Configure(properties *model.Properties) error {
-	m.logger.Info("Module 'Example' configured")
-	m.state = constant.IDLE
+	m.logger.Info("module 'Example' configured")
+	m.state = constant.Idle
 	return nil
 }
 func (m *ModuleExample) Process() error {
-	if m.state == constant.IDLE {
-		m.logger.Info("session not started")
+	if m.state == constant.Idle {
+		m.logger.Error("session not started")
 		return nil
 	}
 
-	var st string
-	var end = true
-	for ; end; {
+	value := ""
+aggregator:
+	for {
 		select {
 		case s := <-m.data:
-			st += s
+			value += s
 		default:
-			end = false
+			break aggregator
 		}
 	}
-	m.logger.Info("process ended", zap.Int("nb_value", len(st)))
+	m.logger.Info("process ended", zap.Int("nb_value", len(value)))
+	m.notifications.NotifyData(m.Name(), value)
 
 	return nil
 }
 func (m *ModuleExample) Stop() error {
-	m.state = constant.STOPPED
+	if m.state == constant.Working {
+		m.StopSession()
+	}
+
+	m.state = constant.Stopped
 	return nil
 }
 
 func (m *ModuleExample) StartSession() error {
-	if m.state == constant.WORKING {
-		return fmt.Errorf("previous session has not been ended")
+	if m.state == constant.Working {
+		m.logger.Error("previous session has not been ended")
+		return nil
 	}
+	m.logger.Info("start new session")
 
-	m.data = make(chan string, 0xFF)
-	m.end_runner = make(chan bool, 1)
+	m.data = make(chan string, 0x9)
+	m.endRunner = make(chan bool, 1)
 	go func() {
 		defer m.logger.Info("end goroutine")
 		defer close(m.data)
 
 		for {
 			select {
-			case <-m.end_runner:
+			case <-m.endRunner:
 				return
 			default:
 				m.data <- "|"
 			}
 
-			time.Sleep(time.Nanosecond)
+			time.Sleep(50 * time.Millisecond)
 		}
 	}()
 
-	m.state = constant.WORKING
+	m.state = constant.Working
 	return nil
 }
 func (m *ModuleExample) StopSession() error {
-	m.end_runner <- true
+	if m.state == constant.Idle {
+		return nil
+	}
 
-	close(m.end_runner)
-	m.state = constant.IDLE
+	m.logger.Info("end session")
+	m.endRunner <- true
+
+	close(m.endRunner)
+	m.state = constant.Idle
 	return nil
 }
 

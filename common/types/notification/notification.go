@@ -10,14 +10,14 @@ func NewNotification(from string, to string, content interface{}) *Notification 
 	return &Notification{from, to, content}
 }
 
-func (n *Notification) From() string {
-	return n.from
+func (notification *Notification) From() string {
+	return notification.from
 }
 
-func (n *Notification) To() string {
-	return n.to
+func (notification *Notification) To() string {
+	return notification.to
 }
 
-func (n *Notification) Content() interface{} {
-	return n.content
+func (notification *Notification) Content() interface{} {
+	return notification.content
 }

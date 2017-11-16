@@ -1,31 +1,30 @@
 package network
 
 import (
+	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/common/types/service"
 	"fantastic-broccoli/constant"
 	"fantastic-broccoli/model"
-	"go.uber.org/zap"
+	"fmt"
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
-	"fantastic-broccoli/common/types/notification/object"
-	"fmt"
+	"go.uber.org/zap"
 )
 
 type Service struct {
-	state int
+	state  int
+	linkId string
 
-	notifications *service.NotificationQueue
 	logger        *zap.Logger
 	client        *gosocketio.Client
-	linkId        string
-	messages      []*object.NetworkObject
+	notifications *service.NotificationQueue
 }
 
-func (s *Service) Start(q *service.NotificationQueue, l *zap.Logger) error {
-	s.state = constant.STARTED
+func (s *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
+	s.state = constant.Started
 
-	s.notifications = q
-	s.logger = l
+	s.notifications = notifications
+	s.logger = logger
 
 	return nil
 }
@@ -43,38 +42,33 @@ func (s *Service) Configure(props *model.Properties) error {
 	}
 
 	initiated :=
-		s.On(gosocketio.OnConnection, s.onConnectionHandler) &&
-			s.On(gosocketio.OnDisconnection, s.onDisconnectionHandler) &&
-			s.On(constant.CommandChan, s.onCommandChanHandler) &&
-			s.Emit(constant.CommandChan, object.NewNetworkObject(constant.CommandState, "started"))
+		s.on(gosocketio.OnConnection, s.onConnectionHandler) &&
+			s.on(gosocketio.OnDisconnection, s.onDisconnectionHandler) &&
+			s.on(constant.CommandChan, s.onCommandChanHandler) &&
+			s.emit(constant.CommandChan, object.NewNetworkObject(constant.CommandState, "started"))
 
 	if !initiated {
-		//TODO: Write error
-		return fmt.Errorf("")
+		return fmt.Errorf("impossible to initialise network")
 	}
 
-	s.state = constant.IDLE
+	s.state = constant.Idle
 	return nil
 }
 
 func (s *Service) Process() error {
-	s.state = constant.WORKING
-	for _, m := range s.messages {
-		s.messageHandler(m)
-	}
-
+	s.state = constant.Working
 	for _, n := range s.notifications.Notifications(constant.NetworkService) {
 		if err := s.notificationHandler(n); err != nil {
 			return err
 		}
 	}
-	s.state = constant.IDLE
+	s.state = constant.Idle
 	return nil
 }
 
 func (s *Service) Stop() error {
+	s.state = constant.Stopped
 	s.client.Close()
-	s.state = constant.STOPPED
 	return nil
 }
 

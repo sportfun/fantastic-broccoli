@@ -2,15 +2,11 @@ package network
 
 import (
 	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/constant"
-	"go.uber.org/zap"
-	"fmt"
 	"fantastic-broccoli/common/types/notification/object"
+	"fantastic-broccoli/constant"
+	"fmt"
+	"go.uber.org/zap"
 )
-
-func (s *Service) messageHandler(m *object.NetworkObject) {
-
-}
 
 func (s *Service) notificationHandler(n *notification.Notification) error {
 	switch string(n.From()) {
@@ -33,11 +29,11 @@ func serviceNotificationHandler(s *Service, n *notification.Notification) error 
 
 	switch o := n.Content().(type) {
 	case *object.NetworkObject:
-		succeed = s.Emit(constant.CommandChan, o)
+		succeed = s.emit(constant.CommandChan, o)
 	case *object.DataObject:
-		succeed = s.Emit(constant.DataChan, o)
+		succeed = s.emit(constant.DataChan, o)
 	case *object.ErrorObject:
-		succeed = s.Emit(constant.ErrorChan, o)
+		succeed = s.emit(constant.ErrorChan, o)
 	default:
 		s.logger.Warn("unknown content type",
 			zap.String("where", string(n.To())),
@@ -47,8 +43,7 @@ func serviceNotificationHandler(s *Service, n *notification.Notification) error 
 	}
 
 	if !succeed {
-		// TODO: Write error
-		return fmt.Errorf("")
+		return fmt.Errorf("failed to emit message")
 	}
 	return nil
 }

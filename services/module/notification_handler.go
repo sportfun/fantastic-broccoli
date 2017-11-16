@@ -2,10 +2,10 @@ package module
 
 import (
 	"fantastic-broccoli/common/types/notification"
+	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/constant"
 	"fmt"
 	"go.uber.org/zap"
-	"fantastic-broccoli/common/types/notification/object"
 )
 
 func (s *Service) notificationHandler(n *notification.Notification) {
@@ -20,23 +20,23 @@ func (s *Service) notificationHandler(n *notification.Notification) {
 	}
 }
 
-func netNotificationHandler(c *Service, n *notification.Notification) {
+func netNotificationHandler(s *Service, n *notification.Notification) {
 	m := n.Content().(object.NetworkObject)
 
-	switch m.Command() {
-	case "new_session":
-		c.logger.Debug("new session")
-		for _, m := range c.modules {
+	switch m.Command {
+	case constant.CommandStartSession:
+		s.logger.Debug("start session")
+		for _, m := range s.modules {
 			m.StartSession()
 		}
-	case "end_session":
-		c.logger.Debug("end session")
-		for _, m := range c.modules {
+	case constant.CommandEndSession:
+		s.logger.Debug("end session")
+		for _, m := range s.modules {
 			m.StopSession()
 		}
 	default:
-		c.logger.Error("unknown network command",
+		s.logger.Error("unknown network command",
 			zap.String("where", string(constant.Core)),
-			zap.String("command", m.Command()))
+			zap.String("command", m.Command))
 	}
 }

@@ -1,23 +1,15 @@
 package object
 
 type NetworkObject struct {
-	command string
-	args    []string
+	Command string   `json:"command" mapstructure:"command"`
+	Args    []string `json:"args" mapstructure:"args"`
 }
 
 func NewNetworkObject(command string, args ...string) *NetworkObject {
-	return &NetworkObject{command: command, args: args}
+	return &NetworkObject{Command: command, Args: args}
 }
 
-func (m *NetworkObject) AddArgument(args ...string) *NetworkObject {
-	m.args = append(m.args, args...)
-	return m
-}
-
-func (m *NetworkObject) Command() string {
-	return m.command
-}
-
-func (m *NetworkObject) Arguments() []string {
-	return m.args
+func (networkObject *NetworkObject) AddArgument(args ...string) *NetworkObject {
+	networkObject.Args = append(networkObject.Args, args...)
+	return networkObject
 }

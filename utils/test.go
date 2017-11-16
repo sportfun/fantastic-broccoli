@@ -1,44 +1,54 @@
 package utils
 
 import (
-	"testing"
 	"reflect"
+	"testing"
+	"runtime"
+	"path"
 )
 
 type Predicate func(interface{}, interface{}) bool
 
-func AssertEquals(t *testing.T, expected, actual interface{}, predicate ...Predicate) {
-	var pred Predicate
+func AssertEquals(t *testing.T, expected, actual interface{}, predicates ...Predicate) {
+	var isEqual bool
 
-	if len(predicate) > 0 {
-		pred = predicate[0]
-	} else {
-		pred = func(a interface{}, b interface{}) bool {
-			return a == b
+	if len(predicates) > 0 {
+		for _, p := range predicates {
+			isEqual = p(expected, actual)
+			if !isEqual {
+				break
+			}
 		}
+	} else {
+		isEqual = expected == actual
 	}
 
-	if pred(expected, actual) {
+	if isEqual {
 		return
 	}
 
-	t.Fatalf("Expected '%v' [%v], but get '%v' [%v]", expected, reflect.TypeOf(expected), actual, reflect.TypeOf(actual))
+	_, caller, line, _ := runtime.Caller(1)
+	t.Fatalf("Expected '%v' [%v], but get '%v' [%v] (at %s:%d)", expected, reflect.TypeOf(expected), actual, reflect.TypeOf(actual), path.Base(caller), line)
 }
 
-func AssertNotEquals(t *testing.T, unexpected, actual interface{}, predicate ...Predicate) {
-	var pred Predicate
+func AssertNotEquals(t *testing.T, unexpected, actual interface{}, predicates ...Predicate) {
+	var isEqual bool
 
-	if len(predicate) > 0 {
-		pred = predicate[0]
-	} else {
-		pred = func(a interface{}, b interface{}) bool {
-			return a == b
+	if len(predicates) > 0 {
+		for _, p := range predicates {
+			isEqual = p(unexpected, actual)
+			if !isEqual {
+				break
+			}
 		}
+	} else {
+		isEqual = unexpected == actual
 	}
 
-	if !pred(unexpected, actual) {
+	if !isEqual {
 		return
 	}
 
-	t.Fatalf("Expected something different than '%v' (%v)", unexpected, reflect.TypeOf(unexpected))
+	_, caller, line, _ := runtime.Caller(1)
+	t.Fatalf("Expected something different than '%v' [%v] (at %s:%d)", unexpected, reflect.TypeOf(unexpected), path.Base(caller), line)
 }

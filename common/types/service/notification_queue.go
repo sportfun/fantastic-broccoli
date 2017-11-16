@@ -1,25 +1,25 @@
 package service
 
-import (
-	"fantastic-broccoli/common/types/notification"
-)
+import "fantastic-broccoli/common/types/notification"
 
 type NotificationQueue struct {
 	notifications map[string][]*notification.Notification
 }
 
-func (q *NotificationQueue) Notify(n *notification.Notification) {
-	k := string(n.To())
-	q.notifications[k] = append(q.notifications[k], n)
+func NewNotificationQueue() *NotificationQueue {
+	return &NotificationQueue{map[string][]*notification.Notification{}}
 }
 
-func (q *NotificationQueue) Notifications(n string) []*notification.Notification {
-	k := string(n)
-	arr, ok := q.notifications[k]
+func (queue *NotificationQueue) Notify(notification *notification.Notification) {
+	queue.notifications[notification.To()] = append(queue.notifications[notification.To()], notification)
+}
+
+func (queue *NotificationQueue) Notifications(name string) []*notification.Notification {
+	arr, ok := queue.notifications[name]
 
 	if !ok {
 		return []*notification.Notification{}
 	}
-	q.notifications[k] = []*notification.Notification{}
+	queue.notifications[name] = []*notification.Notification{}
 	return arr
 }

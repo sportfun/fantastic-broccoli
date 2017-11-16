@@ -1,26 +1,18 @@
 package object
 
 type ErrorObject struct {
-	origin string
-	reason error
+	Origin string `json:"origin" mapstructure:"origin"`
+	Reason string `json:"reason" mapstructure:"reason"`
 }
 
 func NewErrorObject(origin string, reason ...error) *ErrorObject {
 	if len(reason) > 0 {
-		return &ErrorObject{origin: origin, reason: reason[0]}
+		return &ErrorObject{Origin: origin, Reason: reason[0].Error()}
 	}
-	return &ErrorObject{origin: origin, reason: nil}
+	return &ErrorObject{Origin: origin, Reason: ""}
 }
 
-func (e *ErrorObject) Why(reason error) *ErrorObject {
-	e.reason = reason
-	return e
-}
-
-func (e *ErrorObject) Origin() string {
-	return e.origin
-}
-
-func (e *ErrorObject) Reason() error {
-	return e.reason
+func (errorObject *ErrorObject) Why(reason error) *ErrorObject {
+	errorObject.Reason = reason.Error()
+	return errorObject
 }

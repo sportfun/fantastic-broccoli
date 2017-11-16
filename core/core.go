@@ -12,14 +12,14 @@ import (
 type Core struct {
 	services      []service.Service
 	state         int
-	notifications service.NotificationQueue
+	notifications service.notificationQueue
 	logger        *zap.Logger
 	properties    *model.Properties
 }
 
 func (c *Core) Configure(s []service.Service, p *model.Properties, l *zap.Logger) {
 	c.services = s
-	c.notifications = service.NotificationQueue{}
+	c.notifications = service.notificationQueue{}
 	c.logger = l
 
 	l.Info("start services")
@@ -43,7 +43,7 @@ func (c *Core) Stop() {
 	for _, s := range c.services {
 		c.serviceErrorHandler(ModuleStop, s.Stop())
 	}
-	c.state = constant.STOPPED
+	c.state = constant.Stopped
 }
 
 func (c *Core) State() int {
