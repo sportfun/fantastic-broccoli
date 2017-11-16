@@ -6,7 +6,7 @@ import (
 	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/common/types/service"
 	"fantastic-broccoli/constant"
-	"fantastic-broccoli/model"
+	"fantastic-broccoli/properties"
 	"fmt"
 	"go.uber.org/zap"
 	"plugin"
@@ -36,7 +36,7 @@ func (s *Service) Start(notifications *service.NotificationQueue, logger *zap.Lo
 	return nil
 }
 
-func (s *Service) Configure(props *model.Properties) error {
+func (s *Service) Configure(props *properties.Properties) error {
 	for _, e := range props.Modules {
 		p, err := plugin.Open(string(e.Path))
 		if err != nil {

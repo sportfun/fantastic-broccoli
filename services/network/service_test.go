@@ -2,7 +2,7 @@ package network
 
 import (
 	"testing"
-	"fantastic-broccoli/model"
+	"fantastic-broccoli/properties"
 	"fantastic-broccoli/common/types/service"
 	"fantastic-broccoli/utils"
 	"sync"
@@ -131,8 +131,8 @@ func TestService(t *testing.T) {
 	go utils.Default.SocketIOServer(r)
 
 	s := Service{}
-	p := model.Properties{
-		System: model.SystemDefinition{
+	p := properties.Properties{
+		System: properties.SystemDefinition{
 			LinkID:     "70ed3820-d487-42b9-92a8-ae9cbf55918c",
 			ServerIP:   "localhost",
 			ServerPort: 8080,

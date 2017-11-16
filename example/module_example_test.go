@@ -4,7 +4,7 @@ import (
 	"testing"
 	"fantastic-broccoli/common/types/module"
 	"go.uber.org/zap"
-	"fantastic-broccoli/model"
+	"fantastic-broccoli/properties"
 	"time"
 	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/utils"
@@ -24,8 +24,8 @@ func ImplSpecTest(t *testing.T, nProcess int, logger *zap.Logger, queue *module.
 	}
 }
 
-func ImplCustomProperty() model.Properties {
-	return model.Properties{}
+func ImplCustomProperty() properties.Properties {
+	return properties.Properties{}
 }
 
 func StartModuleTest(t *testing.T, m module.Module) (module.Module, *module.NotificationQueue, *zap.Logger) {
@@ -37,7 +37,7 @@ func StartModuleTest(t *testing.T, m module.Module) (module.Module, *module.Noti
 		l.Fatal(err.Error())
 	}
 	utils.AssertEquals(t, constant.Started, m.State())
-	if err := m.Configure(&model.Properties{}); err != nil {
+	if err := m.Configure(&properties.Properties{}); err != nil {
 		l.Fatal(err.Error())
 	}
 

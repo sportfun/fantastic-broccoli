@@ -1,9 +1,15 @@
 package constant
 
-const (
-	CommandState          = "state"
-	CommandLink           = "link"
-	CommandStartSession   = "start_session"
-	CommandEndSession     = "end_session"
-	CommandRestartService = "restart_service"
-)
+var NetCommand = struct {
+	State          string
+	Link           string
+	StartSession   string
+	EndSession     string
+	RestartService string
+}{
+	State:          "state",
+	Link:           "link",
+	StartSession:   "start_session",
+	EndSession:     "end_session",
+	RestartService: "restart_service",
+}

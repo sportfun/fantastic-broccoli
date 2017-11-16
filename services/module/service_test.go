@@ -7,7 +7,7 @@ import (
 	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/common/types/service"
 	"fantastic-broccoli/example"
-	"fantastic-broccoli/model"
+	"fantastic-broccoli/properties"
 	"fantastic-broccoli/utils"
 	"strconv"
 	"testing"
@@ -17,7 +17,7 @@ import (
 func TestService(t *testing.T) {
 	s := Service{}
 	ms := []module.Module{&example.ModuleExample{}, &example.ModuleExample{}}
-	p := model.Properties{}
+	p := properties.Properties{}
 	q := service.NewNotificationQueue()
 	b := notification.NewBuilder().From(constant.NetworkService).To(constant.ModuleService)
 	l := utils.Default.Logger()

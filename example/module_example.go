@@ -3,7 +3,7 @@ package example
 import (
 	"fantastic-broccoli/common/types/module"
 	"fantastic-broccoli/constant"
-	"fantastic-broccoli/model"
+	"fantastic-broccoli/properties"
 	"go.uber.org/zap"
 	"time"
 )
@@ -24,7 +24,7 @@ func (m *ModuleExample) Start(q *module.NotificationQueue, l *zap.Logger) error 
 	l.Info("module 'Example' started")
 	return nil
 }
-func (m *ModuleExample) Configure(properties *model.Properties) error {
+func (m *ModuleExample) Configure(properties *properties.Properties) error {
 	m.logger.Info("module 'Example' configured")
 	m.state = constant.Idle
 	return nil

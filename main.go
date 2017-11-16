@@ -1,20 +1,23 @@
 package fantastic_broccoli
 
 import (
-	"fantastic-broccoli/core"
-	"fantastic-broccoli/services/network"
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/services/module"
-	"fantastic-broccoli/constant"
 	"flag"
 	"go.uber.org/zap"
-	"errors"
+
+	"fantastic-broccoli/common/types/service"
+	"fantastic-broccoli/constant"
+	"fantastic-broccoli/errors"
+	"fantastic-broccoli/kernel"
+	"fantastic-broccoli/log"
+	"fantastic-broccoli/properties"
+	"fantastic-broccoli/services/module"
+	"fantastic-broccoli/services/network"
 	"fantastic-broccoli/utils"
 )
 
 var propertiesPath string
 var nRetryMax int
-var properties *properties.Properties
+var props *properties.Properties
 var logger *zap.Logger
 
 func init() {
@@ -23,22 +26,22 @@ func init() {
 }
 
 func main() {
-	kernel := core.Core{}
+	core := kernel.Core{}
 	services := []service.Service{&network.Service{}, &module.Service{}}
-	properties = properties.LoadFrom(propertiesPath)
-	logger = logger.Configure(properties)
+	props = properties.LoadFrom(propertiesPath)
+	logger = log.Configure(props)
 
 configuration:
-	if hasFailed(kernel.Configure(services, properties, logger)) {
-		properties.WaitReconfiguration(properties)
+	if hasFailed(core.Configure(services, props, logger)) {
+		properties.WaitReconfiguration(props)
 		goto configuration
 	}
 
 	nRetry := 0
 infinit:
-	for kernel.State() != constant.Stopped {
-		if hasPanic(kernel.Run()) {
-			hasFailed(kernel.Stop())
+	for core.State() != constant.States.Stopped {
+		if hasPanic(core.Run()) {
+			hasFailed(core.Stop())
 			if nRetry > nRetryMax {
 				utils.MaintenanceMode()
 			}
@@ -56,7 +59,7 @@ func hasFailed(err error) bool {
 
 	switch err := err.(type) {
 	case errors.InternalError:
-		logger.Error(err.Error(), zap.String("level", err.Level), zap.NamedError("error", err))
+		logger.Error(err.Error(), zap.String("level", err.Level), zap.NamedError("error", &err))
 	default:
 		logger.Error(err.Error(), zap.NamedError("error", err))
 	}

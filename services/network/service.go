@@ -4,7 +4,7 @@ import (
 	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/common/types/service"
 	"fantastic-broccoli/constant"
-	"fantastic-broccoli/model"
+	"fantastic-broccoli/properties"
 	"fmt"
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
@@ -29,7 +29,7 @@ func (s *Service) Start(notifications *service.NotificationQueue, logger *zap.Lo
 	return nil
 }
 
-func (s *Service) Configure(props *model.Properties) error {
+func (s *Service) Configure(props *properties.Properties) error {
 	var err error
 
 	s.linkId = props.System.LinkID
