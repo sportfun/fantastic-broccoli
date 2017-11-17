@@ -5,18 +5,10 @@ type webPacket struct {
 	Body   interface{} `json:"body" mapstructure:"body"`
 }
 
-func (s *Service) on(method string, f interface{}) bool {
-	if err := s.client.On(method, f); err != nil {
-		s.errorHandler(SocketOn, err)
-		return false
-	}
-	return true
+func (service *Service) on(method string, f interface{}) bool {
+	return service.checkIf(nil, service.client.On(method, f), IsLitening)
 }
 
-func (s *Service) emit(method string, body interface{}) bool {
-	if err := s.client.Emit(method, webPacket{s.linkId, body}); err != nil {
-		s.errorHandler(SocketEmit, err)
-		return false
-	}
-	return true
+func (service *Service) emit(method string, body interface{}) bool {
+	return service.checkIf(nil, service.client.Emit(method, webPacket{service.linkId, body}), IsEmitted)
 }

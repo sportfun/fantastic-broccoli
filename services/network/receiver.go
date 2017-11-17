@@ -11,24 +11,24 @@ import (
 )
 
 var serviceCommandMap = map[string]string{
-	constant.CommandLink:         constant.Core,
-	constant.CommandStartSession: constant.ModuleService,
-	constant.CommandEndSession:   constant.ModuleService,
+	constant.NetCommand.Link:         constant.EntityNames.Core,
+	constant.NetCommand.StartSession: constant.EntityNames.Services.Module,
+	constant.NetCommand.EndSession:   constant.EntityNames.Services.Module,
 }
 
-func (s *Service) onConnectionHandler(client *gosocketio.Channel, args interface{}) {
-	s.logger.Info("successfully connected to the server", zap.String("id", client.Id()))
+func (service *Service) onConnectionHandler(client *gosocketio.Channel, args interface{}) {
+	service.logger.Info("successfully connected to the server", zap.String("id", client.Id()))
 }
 
-func (s *Service) onDisconnectionHandler(client *gosocketio.Channel) {
-	s.logger.Debug("disconnection handled", zap.String("id", client.Id()))
-	if s.state != constant.Stopped {
-		s.notifications.Notify(notification.NewNotification(s.Name(), constant.Core, constant.CommandRestartService))
+func (service *Service) onDisconnectionHandler(client *gosocketio.Channel) {
+	service.logger.Debug("disconnection handled", zap.String("id", client.Id()))
+	if service.state != constant.States.Stopped {
+		service.notifications.Notify(notification.NewNotification(service.Name(), constant.EntityNames.Core, constant.NetCommand.RestartService))
 	}
 }
 
-func (s *Service) onCommandChanHandler(client *gosocketio.Channel, args interface{}) {
-	s.logger.Debug("command handled",
+func (service *Service) onCommandChanHandler(client *gosocketio.Channel, args interface{}) {
+	service.logger.Debug("command handled",
 		zap.String("id", client.Id()),
 		zap.String("packet", fmt.Sprint(args)),
 	)
@@ -37,10 +37,10 @@ func (s *Service) onCommandChanHandler(client *gosocketio.Channel, args interfac
 
 	switch {
 	case mapstructure.Decode(args, &web) == nil:
-		webPacketHandler(s, web)
+		webPacketHandler(service, web)
 	default:
-		s.logger.Warn("unknown packet type",
-			zap.String("where", s.Name()),
+		service.logger.Warn("unknown packet type",
+			zap.String("where", service.Name()),
 			zap.String("packet", fmt.Sprintf("%v", args)),
 		)
 	}

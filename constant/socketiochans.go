@@ -4,8 +4,12 @@ import (
 	"github.com/graarh/golang-socketio"
 )
 
-const (
-	CommandChan = "command"
-	DataChan    = "data"
-	ErrorChan   = gosocketio.OnError
-)
+var Channels = struct {
+	Command string
+	Data    string
+	Error   string
+}{
+	Command: "command",
+	Data:    "data",
+	Error:   gosocketio.OnError,
+}

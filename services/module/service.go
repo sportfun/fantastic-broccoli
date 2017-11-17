@@ -1,131 +1,139 @@
 package module
 
 import (
+	"fmt"
+	"go.uber.org/zap"
+	"plugin"
+
 	"fantastic-broccoli/common/types/module"
 	"fantastic-broccoli/common/types/notification"
 	"fantastic-broccoli/common/types/notification/object"
 	"fantastic-broccoli/common/types/service"
 	"fantastic-broccoli/constant"
-	"fantastic-broccoli/model"
-	"fmt"
-	"go.uber.org/zap"
-	"plugin"
+	"fantastic-broccoli/properties"
 )
 
 var netBuilder = notification.NewBuilder().
-	From(constant.ModuleService).
-	To(constant.NetworkService)
+	From(constant.EntityNames.Services.Module).
+	To(constant.EntityNames.Services.Network)
+
+type moduleContainer map[string]module.Module
 
 type Service struct {
-	modules map[string]module.Module
-	state   int
+	modules moduleContainer
+	state   byte
 
 	messages      *module.NotificationQueue
 	notifications *service.NotificationQueue
 	logger        *zap.Logger
 }
 
-func (s *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
-	s.modules = map[string]module.Module{}
-	s.state = constant.Started
+func (service *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
+	service.modules = map[string]module.Module{}
+	service.state = constant.States.Started
 
-	s.messages = module.NewNotificationQueue()
-	s.notifications = notifications
-	s.logger = logger
+	service.messages = module.NewNotificationQueue()
+	service.notifications = notifications
+	service.logger = logger
 
 	return nil
 }
 
-func (s *Service) Configure(props *model.Properties) error {
-	for _, e := range props.Modules {
-		p, err := plugin.Open(string(e.Path))
+func loadModules(service *Service, props *properties.Properties) moduleContainer {
+	modules := moduleContainer{}
+
+	for _, moduleDefinition := range props.Modules {
+		plug, err := plugin.Open(moduleDefinition.Path)
 		if err != nil {
-			s.errorHandler(PluginLoading, err, e.Path)
+			service.pluginFailure(PluginLoading, err, moduleDefinition.Path)
 			continue
 		}
 
-		ex, err := p.Lookup("ExportModule")
+		exporter, err := plug.Lookup("ExportModule")
 		if err != nil {
-			s.errorHandler(SymbolLoading, err, e.Name)
+			service.pluginFailure(SymbolLoading, err, moduleDefinition.Name)
 			continue
 		}
 
-		mod := ex.(func() (module.Module))()
-		s.modules[mod.Name()] = mod
-
-		if err = mod.Start(s.messages, s.logger); err != nil {
-			s.errorHandler(ModuleStarting, err, e.Name)
-			delete(s.modules, mod.Name())
+		module := exporter.(func() (module.Module))()
+		if module == nil {
+			service.pluginFailure(ModuleLoading, nil, moduleDefinition.Name)
 			continue
 		}
 
-		if err = mod.Configure(props); err != nil {
-			s.errorHandler(ModuleConfiguration, err, e.Name)
-			if err = mod.Stop(); err != nil {
-				s.errorHandler(ModuleStop, err, e.Name)
-			}
-			delete(s.modules, mod.Name())
+		modules[module.Name()] = module
+
+		if !service.checkIf(module, module.Start(service.messages, service.logger), IsStarted) {
+			delete(modules, module.Name())
+			continue
+		}
+
+		if !service.checkIf(module, module.Configure(props), IsConfigured) {
+			service.checkIf(module, module.Stop(), IsStopped)
+			delete(modules, module.Name())
+			continue
 		}
 	}
 
-	if len(s.modules) == 0 {
+	return modules
+}
+
+func (service *Service) Configure(props *properties.Properties) error {
+	service.modules = loadModules(service, props)
+
+	if len(service.modules) == 0 {
 		err := fmt.Errorf("no module charged")
-		s.errorHandler(NoModule, err)
-		s.state = constant.Stopped
+		service.pluginFailure(NoModule, err)
+		service.state = constant.States.Panic
 		return err
 	}
 
-	s.state = constant.Idle
+	service.state = constant.States.Idle
 	return nil
 }
 
-func (s *Service) Process() error {
-	s.state = constant.Working
-	for _, n := range s.notifications.Notifications(s.Name()) {
-		s.notificationHandler(n)
+func (service *Service) Process() error {
+	service.state = constant.States.Working
+	for _, notif := range service.notifications.Notifications(service.Name()) {
+		service.handle(notif)
 	}
 
-	for _, m := range s.modules {
-		if err := m.Process(); err != nil {
-			s.errorHandler(ModuleProcess, err)
-		}
+	for _, mod := range service.modules {
+		service.checkIf(mod, mod.Process(), IsProcessed)
 	}
 
-	for _, n := range s.messages.Notifications() {
-		switch obj := n.Content().(type) {
+	for _, notif := range service.messages.Notifications() {
+		switch obj := notif.Content().(type) {
 		case module.ErrorObject:
 			netBuilder.With(obj.ErrorObject)
 
-			if obj.ErrorLevel() == constant.Fatal {
-				if err := s.modules[n.From()].Stop(); err != nil {
-					s.errorHandler(ModuleStop, err, n.From())
-				}
+			if obj.ErrorLevel() == constant.ErrorLevels.Fatal {
+				mod := service.modules[notif.From()]
+				service.checkIf(mod, mod.Stop(), IsStopped)
 			}
 		case object.DataObject:
 			netBuilder.With(obj)
 		default:
 			continue
 		}
-		s.notifications.Notify(netBuilder.Build())
+		service.notifications.Notify(netBuilder.Build())
 	}
 
-	s.state = constant.Idle
+	service.state = constant.States.Idle
 	return nil
 }
 
-func (s *Service) Stop() error {
-	for n, m := range s.modules {
-		if err := m.Stop(); err != nil {
-			s.errorHandler(ModuleStop, err, n)
-		}
+func (service *Service) Stop() error {
+	for _, m := range service.modules {
+		service.checkIf(m, m.Stop(), IsStopped)
 	}
 	return nil
 }
 
-func (s *Service) Name() string {
-	return constant.ModuleService
+func (service *Service) Name() string {
+	return constant.EntityNames.Services.Module
 }
 
-func (s *Service) State() int {
-	return s.state
+func (service *Service) State() byte {
+	return service.state
 }

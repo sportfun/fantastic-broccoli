@@ -1,4 +1,4 @@
-package model
+package properties
 
 type Properties struct {
 	System  SystemDefinition
