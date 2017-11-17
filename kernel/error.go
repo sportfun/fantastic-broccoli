@@ -9,9 +9,9 @@ import (
 	"fantastic-broccoli/constant"
 )
 
-type errorType func(*Core, service.Service, error)
+type serviceError func(*Core, service.Service, error)
 
-func (core *Core) checkIf(srv service.Service, err error, fnc errorType) bool {
+func (core *Core) checkIf(srv service.Service, err error, fnc serviceError) bool {
 	core.internal = err
 	if err == nil {
 		return true

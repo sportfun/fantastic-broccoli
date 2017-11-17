@@ -9,7 +9,7 @@ import (
 )
 
 type ModuleExample struct {
-	state         int
+	state         byte
 	notifications *module.NotificationQueue
 	logger        *zap.Logger
 	data          chan string
@@ -19,18 +19,18 @@ type ModuleExample struct {
 func (m *ModuleExample) Start(q *module.NotificationQueue, l *zap.Logger) error {
 	m.logger = l
 	m.notifications = q
-	m.state = constant.Started
+	m.state = constant.States.Started
 
 	l.Info("module 'Example' started")
 	return nil
 }
 func (m *ModuleExample) Configure(properties *properties.Properties) error {
 	m.logger.Info("module 'Example' configured")
-	m.state = constant.Idle
+	m.state = constant.States.Idle
 	return nil
 }
 func (m *ModuleExample) Process() error {
-	if m.state == constant.Idle {
+	if m.state == constant.States.Idle {
 		m.logger.Error("session not started")
 		return nil
 	}
@@ -51,16 +51,16 @@ aggregator:
 	return nil
 }
 func (m *ModuleExample) Stop() error {
-	if m.state == constant.Working {
+	if m.state == constant.States.Working {
 		m.StopSession()
 	}
 
-	m.state = constant.Stopped
+	m.state = constant.States.Stopped
 	return nil
 }
 
 func (m *ModuleExample) StartSession() error {
-	if m.state == constant.Working {
+	if m.state == constant.States.Working {
 		m.logger.Error("previous session has not been ended")
 		return nil
 	}
@@ -84,11 +84,11 @@ func (m *ModuleExample) StartSession() error {
 		}
 	}()
 
-	m.state = constant.Working
+	m.state = constant.States.Working
 	return nil
 }
 func (m *ModuleExample) StopSession() error {
-	if m.state == constant.Idle {
+	if m.state == constant.States.Idle {
 		return nil
 	}
 
@@ -96,13 +96,13 @@ func (m *ModuleExample) StopSession() error {
 	m.endRunner <- true
 
 	close(m.endRunner)
-	m.state = constant.Idle
+	m.state = constant.States.Idle
 	return nil
 }
 
 func (m *ModuleExample) Name() string {
 	return "ModuleExample"
 }
-func (m *ModuleExample) State() int {
+func (m *ModuleExample) State() byte {
 	return m.state
 }

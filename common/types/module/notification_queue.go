@@ -18,14 +18,14 @@ type NotificationQueue struct {
 
 type ErrorObject struct {
 	object.ErrorObject
-	errorLevel int
+	errorLevel string
 }
 
 func NewNotificationQueue() *NotificationQueue {
 	return &NotificationQueue{}
 }
 
-func (queue *NotificationQueue) NotifyError(level int, format string, a ...interface{}) {
+func (queue *NotificationQueue) NotifyError(level string, format string, a ...interface{}) {
 	_, caller, line, _ := runtime.Caller(1)
 	origin := fmt.Sprintf("%s:%d", path.Base(caller), line)
 	errorObject := ErrorObject{*object.NewErrorObject(origin, fmt.Errorf(format, a...)), level}
@@ -43,6 +43,6 @@ func (queue *NotificationQueue) Notifications() []*notification.Notification {
 	return arr
 }
 
-func (obj *ErrorObject) ErrorLevel() int {
+func (obj *ErrorObject) ErrorLevel() string {
 	return obj.errorLevel
 }
