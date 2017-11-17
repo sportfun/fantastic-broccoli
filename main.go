@@ -1,4 +1,4 @@
-package fantastic_broccoli
+package main
 
 import (
 	"flag"
@@ -61,8 +61,8 @@ func hasFailed(err error) bool {
 	}
 
 	switch err := err.(type) {
-	case errors.InternalError:
-		logger.Error(err.Error(), zap.String("level", err.Level), zap.NamedError("error", &err))
+	case *errors.InternalError:
+		logger.Error(err.Error(), zap.String("level", err.Level), zap.NamedError("error", err))
 	default:
 		logger.Error(err.Error(), zap.NamedError("error", err))
 	}
@@ -76,7 +76,7 @@ func hasPanic(err error) bool {
 	}
 
 	switch err := err.(type) {
-	case errors.InternalError:
+	case *errors.InternalError:
 		return err.Level == constant.ErrorLevels.Fatal
 	default:
 		return false

@@ -29,12 +29,12 @@ func IsStarted(core *Core, srv service.Service, err error) {
 	)
 
 	switch err := err.(type) {
-	case errors.InternalError:
+	case *errors.InternalError:
 		if err.Level == constant.ErrorLevels.Fatal {
-			panic(core, &err, srv.Name(), "start")
+			panic(core, err, srv.Name(), "start")
 		}
 		err.Level = constant.ErrorLevels.Fatal
-		core.internal = &err
+		core.internal = err
 	default:
 		core.internal = errors.NewInternalError(err, constant.ErrorLevels.Fatal, errors.OriginList.Service, srv.Name())
 	}
@@ -48,12 +48,12 @@ func IsConfigured(core *Core, srv service.Service, err error) {
 	)
 
 	switch err := err.(type) {
-	case errors.InternalError:
+	case *errors.InternalError:
 		if err.Level == constant.ErrorLevels.Fatal {
-			panic(core, &err, srv.Name(), "configuration")
+			panic(core, err, srv.Name(), "configuration")
 		}
 		err.Level = constant.ErrorLevels.Fatal
-		core.internal = &err
+		core.internal = err
 	default:
 		core.internal = errors.NewInternalError(err, constant.ErrorLevels.Fatal, errors.OriginList.Service, srv.Name())
 	}
@@ -67,7 +67,7 @@ func IsProcessed(core *Core, srv service.Service, err error) {
 	)
 
 	switch err := err.(type) {
-	case errors.InternalError:
+	case *errors.InternalError:
 	default:
 		core.internal = errors.NewInternalError(err, constant.ErrorLevels.Error, errors.OriginList.Service, srv.Name())
 	}

@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"fmt"
 	"go.uber.org/zap"
 
 	"fantastic-broccoli/common/types/service"
@@ -19,8 +20,11 @@ type Core struct {
 }
 
 func (core *Core) Configure(services []service.Service, props *properties.Properties, logger *zap.Logger) error {
-	// Property file can be not loaded (props = nil) if file not found
-	// Todo: props can be nil -> fatal error
+	// Property file can be not loaded (props.IsLoaded = false) if file not found or invalid
+	if !props.IsLoaded() {
+		return fmt.Errorf("properties not loaded")
+	}
+
 	core.services = services
 	core.logger = logger
 	core.notifications = service.NotificationQueue{}

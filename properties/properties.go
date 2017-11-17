@@ -12,7 +12,7 @@ func LoadFrom(path string) *Properties {
 
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil
+		return &properties
 	}
 
 	json.Unmarshal(raw, &properties)
