@@ -11,10 +11,6 @@ import (
 )
 
 type _default struct{}
-type webPacket struct {
-	LinkId string      `json:"link_id" mapstructure:"link_id"`
-	Body   interface{} `json:"body" mapstructure:"body"`
-}
 
 var Default = _default{}
 

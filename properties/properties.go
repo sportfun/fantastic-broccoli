@@ -1,10 +1,26 @@
 package properties
 
-//Todo: Need implementation
+import (
+	"encoding/json"
+	"io/ioutil"
+)
+
 func LoadFrom(path string) *Properties {
-	return nil
+	var properties Properties
+	properties.originPath = path
+	properties.isLoaded = false
+
+	raw, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil
+	}
+
+	json.Unmarshal(raw, &properties)
+	properties.isLoaded = true
+	return &properties
 }
 
 func WaitReconfiguration(properties *Properties) {
-
+	// Check if file is edited (https://godoc.org/github.com/fsnotify/fsnotify)
+	properties = LoadFrom(properties.originPath)
 }
