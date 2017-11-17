@@ -1,18 +1,19 @@
 package network
 
 import (
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/properties"
 	"fmt"
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
 	"go.uber.org/zap"
+
+	"fantastic-broccoli/common/types/notification/object"
+	"fantastic-broccoli/common/types/service"
+	"fantastic-broccoli/constant"
+	"fantastic-broccoli/properties"
 )
 
 type Service struct {
-	state  int
+	state  byte
 	linkId string
 
 	logger        *zap.Logger
@@ -20,20 +21,20 @@ type Service struct {
 	notifications *service.NotificationQueue
 }
 
-func (s *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
-	s.state = constant.Started
+func (service *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
+	service.state = constant.States.Started
 
-	s.notifications = notifications
-	s.logger = logger
+	service.notifications = notifications
+	service.logger = logger
 
 	return nil
 }
 
-func (s *Service) Configure(props *properties.Properties) error {
+func (service *Service) Configure(props *properties.Properties) error {
 	var err error
 
-	s.linkId = props.System.LinkID
-	s.client, err = gosocketio.Dial(
+	service.linkId = props.System.LinkID
+	service.client, err = gosocketio.Dial(
 		gosocketio.GetUrl(string(props.System.ServerIP), int(props.System.ServerPort), props.System.ServerSSL),
 		transport.GetDefaultWebsocketTransport(),
 	)
@@ -42,40 +43,40 @@ func (s *Service) Configure(props *properties.Properties) error {
 	}
 
 	initiated :=
-		s.on(gosocketio.OnConnection, s.onConnectionHandler) &&
-			s.on(gosocketio.OnDisconnection, s.onDisconnectionHandler) &&
-			s.on(constant.CommandChan, s.onCommandChanHandler) &&
-			s.emit(constant.CommandChan, object.NewNetworkObject(constant.CommandState, "started"))
+		service.on(gosocketio.OnConnection, service.onConnectionHandler) &&
+			service.on(gosocketio.OnDisconnection, service.onDisconnectionHandler) &&
+			service.on(constant.Channels.Command, service.onCommandChanHandler) &&
+			service.emit(constant.Channels.Command, object.NewNetworkObject(constant.NetCommand.State, "started"))
 
 	if !initiated {
 		return fmt.Errorf("impossible to initialise network")
 	}
 
-	s.state = constant.Idle
+	service.state = constant.States.Idle
 	return nil
 }
 
-func (s *Service) Process() error {
-	s.state = constant.Working
-	for _, n := range s.notifications.Notifications(constant.NetworkService) {
-		if err := s.notificationHandler(n); err != nil {
+func (service *Service) Process() error {
+	service.state = constant.States.Working
+	for _, n := range service.notifications.Notifications(constant.EntityNames.Services.Network) {
+		if err := service.handle(n); err != nil {
 			return err
 		}
 	}
-	s.state = constant.Idle
+	service.state = constant.States.Idle
 	return nil
 }
 
-func (s *Service) Stop() error {
-	s.state = constant.Stopped
-	s.client.Close()
+func (service *Service) Stop() error {
+	service.state = constant.States.Stopped
+	service.client.Close()
 	return nil
 }
 
-func (s *Service) Name() string {
-	return "Network"
+func (service *Service) Name() string {
+	return constant.EntityNames.Services.Network
 }
 
-func (s *Service) State() int {
-	return s.state
+func (service *Service) State() byte {
+	return service.state
 }

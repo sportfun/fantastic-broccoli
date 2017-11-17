@@ -25,15 +25,15 @@ func onConnectionReceiver(client *gosocketio.Channel, args interface{}, logger *
 	logger.Info(fmt.Sprintf("[Server] New client connected, client id is '%s' (%s)", client.Id(), client.Ip()))
 
 	packets := []webPacket{
-		{LinkId: "", Body: *object.NewNetworkObject(constant.CommandLink)},
-		{LinkId: "", Body: *object.NewNetworkObject(constant.CommandStartSession)},
-		{LinkId: "", Body: *object.NewNetworkObject(constant.CommandEndSession)},
+		{LinkId: "", Body: *object.NewNetworkObject(constant.NetCommand.Link)},
+		{LinkId: "", Body: *object.NewNetworkObject(constant.NetCommand.StartSession)},
+		{LinkId: "", Body: *object.NewNetworkObject(constant.NetCommand.EndSession)},
 	}
 
 	for _, packet := range packets {
 		time.Sleep(500 * time.Millisecond)
 		logger.Info(fmt.Sprintf("[Server] Send packet to client '%s' (%v)", client.Id(), packet))
-		client.Emit(constant.CommandChan, packet)
+		client.Emit(constant.Channels.Command, packet)
 	}
 
 	time.Sleep(2 * time.Second)
@@ -123,9 +123,9 @@ func TestService(t *testing.T) {
 	r := map[string]func(*gosocketio.Channel, interface{}){
 		gosocketio.OnConnection:    func(c *gosocketio.Channel, a interface{}) { onConnectionReceiver(c, a, l, &wg) },
 		gosocketio.OnDisconnection: func(c *gosocketio.Channel, a interface{}) { onDisconnectionReceiver(c, a, l) },
-		constant.CommandChan:       func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onCommandReceiver) },
-		constant.DataChan:          func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onDataReceiver) },
-		constant.ErrorChan:         func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onErrorReceiver) },
+		constant.Channels.Command:  func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onCommandReceiver) },
+		constant.Channels.Data:     func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onDataReceiver) },
+		constant.Channels.Error:    func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onErrorReceiver) },
 	}
 
 	go utils.Default.SocketIOServer(r)
@@ -147,20 +147,20 @@ func TestService(t *testing.T) {
 	}
 
 	wg.Wait()
-	coreNotifications := q.Notifications(constant.Core)
-	moduleNotifications := q.Notifications(constant.ModuleService)
+	coreNotifications := q.Notifications(constant.EntityNames.Core)
+	moduleNotifications := q.Notifications(constant.EntityNames.Services.Module)
 
 	utils.AssertEquals(t, 1, len(coreNotifications))
 	utils.AssertEquals(t, 2, len(moduleNotifications))
 
 	objNet := coreNotifications[0].Content().(object.NetworkObject)
-	utils.AssertEquals(t, constant.CommandLink, objNet.Command)
+	utils.AssertEquals(t, constant.NetCommand.Link, objNet.Command)
 	objNet = moduleNotifications[0].Content().(object.NetworkObject)
-	utils.AssertEquals(t, constant.CommandStartSession, objNet.Command)
+	utils.AssertEquals(t, constant.NetCommand.StartSession, objNet.Command)
 	objNet = moduleNotifications[1].Content().(object.NetworkObject)
-	utils.AssertEquals(t, constant.CommandEndSession, objNet.Command)
+	utils.AssertEquals(t, constant.NetCommand.EndSession, objNet.Command)
 
-	q.Notify(notification.NewNotification(constant.ModuleService, constant.NetworkService, object.NewDataObject("Example", "256")))
+	q.Notify(notification.NewNotification(constant.EntityNames.Services.Module, constant.EntityNames.Services.Network, object.NewDataObject("Example", "256")))
 	s.Process()
 	time.Sleep(time.Second)
 	do := pkt.Data.(object.DataObject)
@@ -168,7 +168,7 @@ func TestService(t *testing.T) {
 	utils.AssertEquals(t, "Example", do.Module)
 	utils.AssertEquals(t, "256", do.Value)
 
-	q.Notify(notification.NewNotification(constant.ModuleService, constant.NetworkService, object.NewErrorObject("Origin", fmt.Errorf("error"))))
+	q.Notify(notification.NewNotification(constant.EntityNames.Services.Module, constant.EntityNames.Services.Network, object.NewErrorObject("Origin", fmt.Errorf("error"))))
 	s.Process()
 	time.Sleep(time.Second)
 	de := pkt.Data.(object.ErrorObject)
