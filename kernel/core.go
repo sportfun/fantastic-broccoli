@@ -14,7 +14,7 @@ type Core struct {
 	logger     *zap.Logger
 	properties *properties.Properties
 
-	notifications service.NotificationQueue
+	notifications *service.NotificationQueue
 	internal      error
 	state         byte
 }
@@ -27,12 +27,12 @@ func (core *Core) Configure(services []service.Service, props *properties.Proper
 
 	core.services = services
 	core.logger = logger
-	core.notifications = service.NotificationQueue{}
+	core.notifications = service.NewNotificationQueue()
 
 	core.internal = nil
 	logger.Info("start services")
 	for _, s := range services {
-		if !core.checkIf(s, s.Start(&core.notifications, logger), IsStarted) ||
+		if !core.checkIf(s, s.Start(core.notifications, logger), IsStarted) ||
 			!core.checkIf(s, s.Configure(props), IsConfigured) {
 			return core.internal
 		}

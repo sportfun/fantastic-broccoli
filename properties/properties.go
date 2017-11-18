@@ -22,5 +22,5 @@ func LoadFrom(path string) *Properties {
 
 func WaitReconfiguration(properties *Properties) {
 	// Check if file is edited (https://godoc.org/github.com/fsnotify/fsnotify)
-	properties = LoadFrom(properties.originPath)
+	*properties = *LoadFrom(properties.originPath)
 }

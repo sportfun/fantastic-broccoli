@@ -11,6 +11,8 @@ import (
 )
 
 type _default struct{}
+type WSReceiver func(*gosocketio.Channel, interface{})
+type WSReceivers map[string]func(*gosocketio.Channel, interface{})
 
 var Default = _default{}
 
@@ -37,7 +39,7 @@ func (d *_default) Logger() *zap.Logger {
 	return logger
 }
 
-func (d *_default) SocketIOServer(receivers map[string]func(*gosocketio.Channel, interface{})) {
+func (d *_default) SocketIOServer(receivers WSReceivers) {
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
 	// create receiver

@@ -1,0 +1,14 @@
+{
+  "system": {
+    "link_id": "XXXX-XXXX-XXXX-XXXX",
+    "ip": "127.0.0.1",
+    "port": 8080,
+    "ssl": false
+  },
+  "modules": [
+    {
+      "name": "example",
+      "path": "resources/example.so"
+    }
+  ]
+}
