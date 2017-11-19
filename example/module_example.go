@@ -1,11 +1,13 @@
 package main
 
 import (
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/constant"
 	"github.com/xunleii/fantastic-broccoli/properties"
-	"go.uber.org/zap"
-	"time"
 )
 
 type ModuleExample struct {
@@ -68,7 +70,7 @@ func (m *ModuleExample) Stop() error {
 func (m *ModuleExample) StartSession() error {
 	if m.state == constant.States.Working {
 		// Previous session has not been ended
-		m.StopSession()
+		return nil
 	}
 
 	// Chan where we buffer 0x9 char
