@@ -1,9 +1,9 @@
 package network
 
 import (
-	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/constant"
 	"fmt"
 	"github.com/graarh/golang-socketio"
 	"go.uber.org/zap"
@@ -46,13 +46,13 @@ func (service *Service) onCommandChanHandler(client *gosocketio.Channel, args in
 	}
 }
 
-//TODO: Risk of concurrency (notification.Notify)
 func webPacketHandler(s *Service, packet webPacket) {
-	var netObj object.NetworkObject
+	var netObj object.CommandObject
 
 	switch {
 	case mapstructure.Decode(packet.Body, &netObj) == nil:
 		if target, exist := serviceCommandMap[netObj.Command]; exist {
+			s.logger.Debug("command handled", zap.String("target", target), zap.Any("object", netObj))
 			s.notifications.Notify(notification.NewNotification(s.Name(), target, netObj))
 		} else {
 			s.logger.Warn("unknown command",

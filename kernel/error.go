@@ -4,9 +4,9 @@ import (
 	"go.uber.org/zap"
 	"fmt"
 
-	"fantastic-broccoli/errors"
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/errors"
+	"github.com/xunleii/fantastic-broccoli/common/types/service"
+	"github.com/xunleii/fantastic-broccoli/constant"
 )
 
 type serviceError func(*Core, service.Service, error)

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 
-	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/constant"
 )
 
 func (service *Service) handle(notif *notification.Notification) error {
@@ -19,7 +19,7 @@ func (service *Service) handle(notif *notification.Notification) error {
 		service.logger.Warn("unhandled notification",
 			zap.String("where", string(notif.To())),
 			zap.String("from", string(notif.From())),
-			zap.String("message", fmt.Sprintf("%v", notif.Content())),
+			zap.String("message", fmt.Sprintf("%#v", notif.Content())),
 		)
 	}
 	return nil
@@ -29,7 +29,7 @@ func defaultNotificationHandler(service *Service, n *notification.Notification) 
 	var succeed = true
 
 	switch o := n.Content().(type) {
-	case *object.NetworkObject:
+	case *object.CommandObject:
 		succeed = service.emit(constant.Channels.Command, o)
 	case *object.DataObject:
 		succeed = service.emit(constant.Channels.Data, o)
@@ -39,7 +39,7 @@ func defaultNotificationHandler(service *Service, n *notification.Notification) 
 		service.logger.Warn("unknown content type",
 			zap.String("where", string(n.To())),
 			zap.String("from", string(n.From())),
-			zap.String("message", fmt.Sprintf("%v", n.Content())),
+			zap.String("message", fmt.Sprintf("%#v", n.Content())),
 		)
 	}
 

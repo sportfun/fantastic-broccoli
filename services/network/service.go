@@ -6,15 +6,17 @@ import (
 	"github.com/graarh/golang-socketio/transport"
 	"go.uber.org/zap"
 
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/common/types/service"
+	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/properties"
+	"sync"
 )
 
 type Service struct {
 	state  byte
 	linkId string
+	mut    sync.Mutex
 
 	logger        *zap.Logger
 	client        *gosocketio.Client
@@ -23,6 +25,7 @@ type Service struct {
 
 func (service *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
 	service.state = constant.States.Started
+	service.mut = sync.Mutex{}
 
 	service.notifications = notifications
 	service.logger = logger
@@ -46,7 +49,7 @@ func (service *Service) Configure(props *properties.Properties) error {
 		service.on(gosocketio.OnConnection, service.onConnectionHandler) &&
 			service.on(gosocketio.OnDisconnection, service.onDisconnectionHandler) &&
 			service.on(constant.Channels.Command, service.onCommandChanHandler) &&
-			service.emit(constant.Channels.Command, object.NewNetworkObject(constant.NetCommand.State, "started"))
+			service.emit(constant.Channels.Command, object.NewCommandObject(constant.NetCommand.State, "started"))
 
 	if !initiated {
 		return fmt.Errorf("impossible to initialise network")

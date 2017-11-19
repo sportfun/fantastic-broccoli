@@ -1,9 +1,9 @@
-package example
+package main
 
 import (
-	"fantastic-broccoli/common/types/module"
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/common/types/module"
+	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/properties"
 	"go.uber.org/zap"
 	"time"
 )
@@ -14,6 +14,7 @@ type ModuleExample struct {
 	logger        *zap.Logger
 	data          chan string
 	endRunner     chan bool
+	buffer        string
 }
 
 func (m *ModuleExample) Start(q *module.NotificationQueue, l *zap.Logger) error {
@@ -24,32 +25,37 @@ func (m *ModuleExample) Start(q *module.NotificationQueue, l *zap.Logger) error 
 	l.Info("module 'Example' started")
 	return nil
 }
+
 func (m *ModuleExample) Configure(properties *properties.Properties) error {
 	m.logger.Info("module 'Example' configured")
 	m.state = constant.States.Idle
 	return nil
 }
+
 func (m *ModuleExample) Process() error {
 	if m.state == constant.States.Idle {
-		m.logger.Error("session not started")
+		// Session not started
 		return nil
 	}
 
-	value := ""
 aggregator:
 	for {
 		select {
-		case s := <-m.data:
-			value += s
+		case val := <-m.data:
+			m.buffer += val
 		default:
 			break aggregator
 		}
 	}
-	m.logger.Info("process ended", zap.Int("nb_value", len(value)))
-	m.notifications.NotifyData(m.Name(), value)
+
+	if len(m.buffer) > 5 {
+		m.notifications.NotifyData(m.Name(), m.buffer)
+		m.buffer = ""
+	}
 
 	return nil
 }
+
 func (m *ModuleExample) Stop() error {
 	if m.state == constant.States.Working {
 		m.StopSession()
@@ -61,15 +67,14 @@ func (m *ModuleExample) Stop() error {
 
 func (m *ModuleExample) StartSession() error {
 	if m.state == constant.States.Working {
-		m.logger.Error("previous session has not been ended")
-		return nil
+		// Previous session has not been ended
+		m.StopSession()
 	}
-	m.logger.Info("start new session")
 
+	// Chan where we buffer 0x9 char
 	m.data = make(chan string, 0x9)
 	m.endRunner = make(chan bool, 1)
 	go func() {
-		defer m.logger.Info("end goroutine")
 		defer close(m.data)
 
 		for {
@@ -87,12 +92,13 @@ func (m *ModuleExample) StartSession() error {
 	m.state = constant.States.Working
 	return nil
 }
+
 func (m *ModuleExample) StopSession() error {
 	if m.state == constant.States.Idle {
+		// Session already stopped
 		return nil
 	}
 
-	m.logger.Info("end session")
 	m.endRunner <- true
 
 	close(m.endRunner)
@@ -103,6 +109,11 @@ func (m *ModuleExample) StopSession() error {
 func (m *ModuleExample) Name() string {
 	return "ModuleExample"
 }
+
 func (m *ModuleExample) State() byte {
 	return m.state
+}
+
+func ExportModule() module.Module {
+	return &ModuleExample{}
 }

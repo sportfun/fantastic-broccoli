@@ -2,13 +2,13 @@ package network
 
 import (
 	"testing"
-	"fantastic-broccoli/properties"
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/common/types/service"
+	"github.com/xunleii/fantastic-broccoli/utils"
 	"sync"
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/common/types/notification"
+	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification"
 	"time"
 	"fmt"
 	"github.com/graarh/golang-socketio"
@@ -25,9 +25,9 @@ func onConnectionReceiver(client *gosocketio.Channel, args interface{}, logger *
 	logger.Info(fmt.Sprintf("[Server] New client connected, client id is '%s' (%s)", client.Id(), client.Ip()))
 
 	packets := []webPacket{
-		{LinkId: "", Body: *object.NewNetworkObject(constant.NetCommand.Link)},
-		{LinkId: "", Body: *object.NewNetworkObject(constant.NetCommand.StartSession)},
-		{LinkId: "", Body: *object.NewNetworkObject(constant.NetCommand.EndSession)},
+		{LinkId: "", Body: *object.NewCommandObject(constant.NetCommand.Link)},
+		{LinkId: "", Body: *object.NewCommandObject(constant.NetCommand.StartSession)},
+		{LinkId: "", Body: *object.NewCommandObject(constant.NetCommand.EndSession)},
 	}
 
 	for _, packet := range packets {
@@ -70,7 +70,7 @@ func onGenericReceiver(
 }
 
 func onCommandReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
-	var netObj object.NetworkObject
+	var netObj object.CommandObject
 	if err := mapstructure.Decode(web.Body, &netObj); err != nil {
 		return err
 	}
@@ -153,11 +153,11 @@ func TestService(t *testing.T) {
 	utils.AssertEquals(t, 1, len(coreNotifications))
 	utils.AssertEquals(t, 2, len(moduleNotifications))
 
-	objNet := coreNotifications[0].Content().(object.NetworkObject)
+	objNet := coreNotifications[0].Content().(object.CommandObject)
 	utils.AssertEquals(t, constant.NetCommand.Link, objNet.Command)
-	objNet = moduleNotifications[0].Content().(object.NetworkObject)
+	objNet = moduleNotifications[0].Content().(object.CommandObject)
 	utils.AssertEquals(t, constant.NetCommand.StartSession, objNet.Command)
-	objNet = moduleNotifications[1].Content().(object.NetworkObject)
+	objNet = moduleNotifications[1].Content().(object.CommandObject)
 	utils.AssertEquals(t, constant.NetCommand.EndSession, objNet.Command)
 
 	q.Notify(notification.NewNotification(constant.EntityNames.Services.Module, constant.EntityNames.Services.Network, object.NewDataObject("Example", "256")))

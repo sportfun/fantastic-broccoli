@@ -1,14 +1,14 @@
-package example
+package main
 
 import (
 	"testing"
-	"fantastic-broccoli/common/types/module"
+	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"go.uber.org/zap"
-	"fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/properties"
 	"time"
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/utils"
-	"fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/constant"
 )
 
 func ImplSpecTest(t *testing.T, nProcess int, logger *zap.Logger, queue *module.NotificationQueue) {
@@ -36,7 +36,7 @@ func StartModuleTest(t *testing.T, m module.Module) (module.Module, *module.Noti
 	if err := m.Start(q, l); err != nil {
 		l.Fatal(err.Error())
 	}
-	utils.AssertEquals(t, constant.Started, m.State())
+	utils.AssertEquals(t, constant.States.Started, m.State())
 	if err := m.Configure(&properties.Properties{}); err != nil {
 		l.Fatal(err.Error())
 	}
@@ -48,15 +48,22 @@ func TestModuleExample(t *testing.T) {
 	m, q, l := StartModuleTest(t, &ModuleExample{})
 
 	// Error verification (Process without session)
+	// TODO: Explicit error knowable by the manager
 	m.Process()
 
 	m.StartSession()
+	// Error verification (Session already exist)
+	// TODO: Explicit error knowable by the manager
+	m.StartSession()
+
 	for i := 0; i < 0xF; i++ {
-		time.Sleep(time.Millisecond * 250)
+		time.Sleep(time.Millisecond * 500)
 		m.Process()
 	}
 
 	m.StopSession()
+	// Error verification (Process without session)
+	// TODO: Explicit error knowable by the manager
 	m.Process()
 
 	ImplSpecTest(t, 0xF, l, q)

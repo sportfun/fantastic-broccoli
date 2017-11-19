@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 
-	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/constant"
 )
 
 func (core *Core) handle(n *notification.Notification) {
@@ -23,9 +23,19 @@ func (core *Core) handle(n *notification.Notification) {
 }
 
 func netNotificationHandler(c *Core, n *notification.Notification) {
-	m := n.Content().(object.NetworkObject)
+	var commandObject object.CommandObject
 
-	switch m.Command {
+	switch obj := n.Content().(type) {
+	case object.CommandObject:
+		commandObject = obj
+	default:
+		c.logger.Error("invalid network command",
+			zap.String("where", string(constant.EntityNames.Core)),
+			zap.Any("content", n.Content()))
+
+	}
+
+	switch commandObject.Command {
 	case constant.NetCommand.Link:
 		c.notifications.Notify(notification.NewNotification(
 			constant.EntityNames.Core,
@@ -35,6 +45,6 @@ func netNotificationHandler(c *Core, n *notification.Notification) {
 	default:
 		c.logger.Error("unknown network command",
 			zap.String("where", string(constant.EntityNames.Core)),
-			zap.String("command", m.Command))
+			zap.String("command", commandObject.Command))
 	}
 }

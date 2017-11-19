@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/common/types/service"
+	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/properties"
 )
 
 type Core struct {
@@ -46,7 +46,7 @@ func (core *Core) Configure(services []service.Service, props *properties.Proper
 func (core *Core) Run() error {
 	core.state = constant.States.Working
 	for _, s := range core.services {
-		if core.checkIf(s, s.Process(), IsProcessed) {
+		if !core.checkIf(s, s.Process(), IsProcessed) {
 			return core.internal
 		}
 

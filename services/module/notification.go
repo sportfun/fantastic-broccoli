@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 
-	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/constant"
 )
 
 func (service *Service) handle(n *notification.Notification) {
@@ -22,7 +22,7 @@ func (service *Service) handle(n *notification.Notification) {
 }
 
 func netNotificationHandler(s *Service, n *notification.Notification) {
-	m := n.Content().(object.NetworkObject)
+	m := n.Content().(object.CommandObject)
 
 	switch m.Command {
 	case constant.NetCommand.StartSession:

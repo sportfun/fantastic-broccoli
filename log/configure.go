@@ -5,7 +5,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"os"
 
-	"fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/properties"
 )
 
 //Todo: Need implementation

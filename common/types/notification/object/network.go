@@ -1,15 +1,15 @@
 package object
 
-type NetworkObject struct {
+type CommandObject struct {
 	Command string   `json:"command" mapstructure:"command"`
 	Args    []string `json:"args" mapstructure:"args"`
 }
 
-func NewNetworkObject(command string, args ...string) *NetworkObject {
-	return &NetworkObject{Command: command, Args: args}
+func NewCommandObject(command string, args ...string) *CommandObject {
+	return &CommandObject{Command: command, Args: args}
 }
 
-func (networkObject *NetworkObject) AddArgument(args ...string) *NetworkObject {
+func (networkObject *CommandObject) AddArgument(args ...string) *CommandObject {
 	networkObject.Args = append(networkObject.Args, args...)
 	return networkObject
 }

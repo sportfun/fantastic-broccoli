@@ -4,15 +4,15 @@ import (
 	"flag"
 	"go.uber.org/zap"
 
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/errors"
-	"fantastic-broccoli/kernel"
-	"fantastic-broccoli/log"
-	"fantastic-broccoli/properties"
-	"fantastic-broccoli/services/module"
-	"fantastic-broccoli/services/network"
-	"fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/common/types/service"
+	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/errors"
+	"github.com/xunleii/fantastic-broccoli/kernel"
+	"github.com/xunleii/fantastic-broccoli/log"
+	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/services/module"
+	"github.com/xunleii/fantastic-broccoli/services/network"
+	"github.com/xunleii/fantastic-broccoli/utils"
 )
 
 var propertiesPath string

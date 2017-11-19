@@ -1,14 +1,14 @@
 package module
 
 import (
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/common/types/module"
-	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/example"
-	"fantastic-broccoli/properties"
-	"fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/common/types/module"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/common/types/service"
+	"github.com/xunleii/fantastic-broccoli/example"
+	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/utils"
 	"strconv"
 	"testing"
 	"time"
@@ -16,7 +16,7 @@ import (
 
 func TestService(t *testing.T) {
 	s := Service{}
-	ms := []module.Module{&example.ModuleExample{}, &example.ModuleExample{}}
+	ms := []module.Module{main.ExportModule(), main.ExportModule()}
 	p := properties.Properties{}
 	q := service.NewNotificationQueue()
 	b := notification.NewBuilder().From(constant.EntityNames.Services.Network).To(constant.EntityNames.Services.Module)
@@ -35,9 +35,9 @@ func TestService(t *testing.T) {
 	s.Process()
 	time.Sleep(250 * time.Millisecond)
 
-	q.Notify(b.With(*object.NewNetworkObject(constant.NetCommand.StartSession)).Build())
+	q.Notify(b.With(*object.NewCommandObject(constant.NetCommand.StartSession)).Build())
 	// Invalid: Session already started ... Only in logs
-	q.Notify(b.With(*object.NewNetworkObject(constant.NetCommand.StartSession)).Build())
+	q.Notify(b.With(*object.NewCommandObject(constant.NetCommand.StartSession)).Build())
 
 	s.Process()
 	s.Process()
@@ -53,7 +53,7 @@ func TestService(t *testing.T) {
 	utils.AssertEquals(t, 10, len(o.Value.(string)))
 
 	time.Sleep(250 * time.Millisecond)
-	q.Notify(b.With(*object.NewNetworkObject(constant.NetCommand.EndSession)).Build())
+	q.Notify(b.With(*object.NewCommandObject(constant.NetCommand.EndSession)).Build())
 	// Invalid: Session not started
 	s.Process()
 

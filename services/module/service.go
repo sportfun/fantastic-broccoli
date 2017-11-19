@@ -5,12 +5,12 @@ import (
 	"go.uber.org/zap"
 	"plugin"
 
-	"fantastic-broccoli/common/types/module"
-	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/common/types/service"
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/common/types/module"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/common/types/service"
+	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/properties"
 )
 
 var netBuilder = notification.NewBuilder().
@@ -104,14 +104,14 @@ func (service *Service) Process() error {
 
 	for _, notif := range service.messages.Notifications() {
 		switch obj := notif.Content().(type) {
-		case module.ErrorObject:
-			netBuilder.With(obj.ErrorObject)
+		case *module.ErrorObject:
+			netBuilder.With(&obj.ErrorObject)
 
 			if obj.ErrorLevel() == constant.ErrorLevels.Fatal {
 				mod := service.modules[notif.From()]
 				service.checkIf(mod, mod.Stop(), IsStopped)
 			}
-		case object.DataObject:
+		case *object.DataObject:
 			netBuilder.With(obj)
 		default:
 			continue

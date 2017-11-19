@@ -1,7 +1,7 @@
 package notification
 
 import (
-	"fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/utils"
 	"testing"
 )
 

@@ -1,8 +1,8 @@
 package service
 
 import (
-	"fantastic-broccoli/common/types/notification"
-	"fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification"
+	"github.com/xunleii/fantastic-broccoli/utils"
 	"testing"
 )
 

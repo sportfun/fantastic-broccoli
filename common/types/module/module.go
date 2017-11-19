@@ -1,7 +1,7 @@
 package module
 
 import (
-	"fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/properties"
 	"go.uber.org/zap"
 )
 

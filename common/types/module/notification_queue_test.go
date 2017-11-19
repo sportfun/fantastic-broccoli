@@ -1,9 +1,9 @@
 package module
 
 import (
-	"fantastic-broccoli/common/types/notification/object"
-	"fantastic-broccoli/constant"
-	"fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
+	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/utils"
 	"fmt"
 	"path"
 	"runtime"
