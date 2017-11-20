@@ -23,7 +23,6 @@ func LoadFrom(path string) *Properties {
 }
 
 func WaitReconfiguration(properties *Properties) {
-	log.Printf("monitoring")
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Fatalf("impossible to load or monitor file '%s': '%s'", properties.originPath, err)
@@ -36,12 +35,10 @@ func WaitReconfiguration(properties *Properties) {
 	}
 
 	for {
-		log.Printf("monitoring")
 		select {
 		case event := <-watcher.Events:
 			log.Printf("event: %s -> %s", event.Op, event.Name)
 			if event.Op&fsnotify.Write == fsnotify.Write {
-				log.Printf("reload file")
 				*properties = *LoadFrom(properties.originPath)
 				return
 			}
