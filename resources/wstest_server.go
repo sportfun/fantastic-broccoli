@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/xunleii/fantastic-broccoli/utils"
+	def "github.com/xunleii/fantastic-broccoli/utils/default"
 	"github.com/graarh/golang-socketio"
 	"github.com/xunleii/fantastic-broccoli/constant"
 	"fmt"
@@ -14,6 +14,7 @@ var online = map[string]*client{}
 
 type client struct {
 	isOnline bool
+	isReady  bool
 	data     [][]byte
 }
 
@@ -25,9 +26,9 @@ type webPacket struct {
 func OnConnection(c *gosocketio.Channel, a interface{}) {
 	fmt.Printf("[%s] New connection\n", c.Id())
 
-	online[c.Id()] = &client{isOnline: true, data: [][]byte{}}
-	fmt.Printf("[%s] Start testing loop\n", c.Id())
+	online[c.Id()] = &client{isOnline: true, isReady:false, data: [][]byte{}}
 
+	fmt.Printf("[%s] Start testing loop\n", c.Id())
 	for online[c.Id()].isOnline {
 		time.Sleep(5 * time.Second)
 		fmt.Printf("[%s] > send '%s'\n", c.Id(), constant.NetCommand.StartSession)
@@ -60,6 +61,9 @@ func OnCommand(c *gosocketio.Channel, a interface{}) {
 		return
 	}
 
+	if object.Command == constant.NetCommand.State {
+		online[c.Id()].isReady = len(object.Args) > 0 && object.Args[0] == "started"
+	}
 	fmt.Printf("[%s]\t %s -> %v\n", c.Id(), object.Command, object.Args)
 }
 
@@ -113,7 +117,7 @@ func toWSObj(c *gosocketio.Channel, packet interface{}) interface{} {
 }
 
 func main() {
-	utils.Default.SocketIOServer(utils.WSReceivers{
+	def.SocketIOServer(def.WSReceivers{
 		gosocketio.OnConnection:    OnConnection,
 		gosocketio.OnDisconnection: OnDisconnection,
 		constant.Channels.Command:  OnCommand,

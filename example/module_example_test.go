@@ -7,6 +7,7 @@ import (
 	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/utils/plugin"
 	"github.com/xunleii/fantastic-broccoli/utils"
 )
 
@@ -27,9 +28,9 @@ func PropertyFactoryImpl() *properties.Properties {
 }
 
 func TestModule(t *testing.T) {
-	utils.Plugin.Test(t, ExportModule(), PropertyFactoryImpl, SpecializedTestImpl, 5, 300*time.Millisecond)
+	plugin.Test(t, ExportModule(), PropertyFactoryImpl, SpecializedTestImpl, 5, 300*time.Millisecond)
 }
 
 func TestBenchmarkModule(t *testing.T) {
-	utils.Plugin.Benchmark(t, ExportModule(), PropertyFactoryImpl, 300*time.Millisecond)
+	plugin.Benchmark(t, ExportModule(), PropertyFactoryImpl, 300*time.Millisecond)
 }

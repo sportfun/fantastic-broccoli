@@ -1,4 +1,4 @@
-package utils
+package plugin
 
 import (
 	"testing"
@@ -9,15 +9,13 @@ import (
 	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/constant"
 	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/utils"
 )
 
-type pluginTools struct{}
 type PropertyFactory func() *properties.Properties
 type SpecializedTest func(*testing.T, int, *module.NotificationQueue)
 
-var Plugin = pluginTools{}
-
-func (pgt *pluginTools) Benchmark(
+func Benchmark(
 	t *testing.T,
 	m module.Module,
 	pfactory PropertyFactory,
@@ -71,12 +69,12 @@ func (pgt *pluginTools) Benchmark(
 	t.Logf("--- Benchmark results ---")
 
 	realTime := bench.T - tick*time.Duration(bench.N)
-	opPerSecond := time.Second / (realTime/time.Duration(bench.N))
+	opPerSecond := time.Second / (realTime / time.Duration(bench.N))
 	t.Logf("time: %dns\t\t\t%d ns/op (%d ops)", realTime, realTime/time.Duration(bench.N), opPerSecond)
 	t.Logf("memory: %dB\t\t\t%d allocs", bench.MemBytes, bench.MemAllocs)
 }
 
-func (pgt *pluginTools) Test(
+func Test(
 	t *testing.T,
 	m module.Module,
 	pfactory PropertyFactory,
@@ -94,7 +92,7 @@ func (pgt *pluginTools) Test(
 		t.Fatalf("! Failure during module starting - %s\n", err.Error())
 	}
 
-	AssertEquals(t, constant.States.Started, m.State())
+	utils.AssertEquals(t, constant.States.Started, m.State())
 	if err := m.Configure(pfactory()); err != nil {
 		t.Fatalf("! Failure during module configuration - %s\n", err.Error())
 	}

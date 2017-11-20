@@ -1,4 +1,4 @@
-package utils
+package _default
 
 import (
 	"go.uber.org/zap"
@@ -10,13 +10,10 @@ import (
 	"os"
 )
 
-type _default struct{}
 type WSReceiver func(*gosocketio.Channel, interface{})
 type WSReceivers map[string]func(*gosocketio.Channel, interface{})
 
-var Default = _default{}
-
-func (d *_default) Logger() *zap.Logger {
+func Logger() *zap.Logger {
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel
 	})
@@ -39,7 +36,7 @@ func (d *_default) Logger() *zap.Logger {
 	return logger
 }
 
-func (d *_default) SocketIOServer(receivers WSReceivers) {
+func SocketIOServer(receivers WSReceivers) {
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
 	// create receiver

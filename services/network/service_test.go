@@ -4,7 +4,7 @@ import (
 	"testing"
 	"github.com/xunleii/fantastic-broccoli/properties"
 	"github.com/xunleii/fantastic-broccoli/common/types/service"
-	"github.com/xunleii/fantastic-broccoli/utils"
+	def "github.com/xunleii/fantastic-broccoli/utils/default"
 	"sync"
 	"github.com/xunleii/fantastic-broccoli/constant"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
@@ -14,6 +14,7 @@ import (
 	"github.com/graarh/golang-socketio"
 	"go.uber.org/zap"
 	"github.com/mitchellh/mapstructure"
+	"github.com/xunleii/fantastic-broccoli/utils"
 )
 
 type watcher struct {
@@ -115,7 +116,7 @@ func onErrorReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
 }
 
 func TestService(t *testing.T) {
-	l := utils.Default.Logger()
+	l := def.Logger()
 	pkt := watcher{}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -128,7 +129,7 @@ func TestService(t *testing.T) {
 		constant.Channels.Error:    func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onErrorReceiver) },
 	}
 
-	go utils.Default.SocketIOServer(r)
+	go def.SocketIOServer(r)
 
 	s := Service{}
 	p := properties.Properties{
