@@ -34,6 +34,7 @@ func main() {
 
 configuration:
 	if hasFailed(core.Configure(services, props, logger)) {
+		core.Stop()
 		properties.WaitReconfiguration(props) // Wait until properties file has been changed
 		goto configuration
 	}
