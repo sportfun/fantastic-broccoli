@@ -2,14 +2,15 @@ package module
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 	"plugin"
 
+	"github.com/xunleii/fantastic-broccoli/common/types"
 	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/xunleii/fantastic-broccoli/common/types/service"
 	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/properties"
 )
 
@@ -21,14 +22,14 @@ type moduleContainer map[string]module.Module
 
 type Service struct {
 	modules moduleContainer
-	state   byte
+	state   types.StateType
 
 	messages      *module.NotificationQueue
 	notifications *service.NotificationQueue
-	logger        *zap.Logger
+	logger        log.Logger
 }
 
-func (service *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
+func (service *Service) Start(notifications *service.NotificationQueue, logger log.Logger) error {
 	service.modules = map[string]module.Module{}
 	service.state = constant.States.Started
 
@@ -134,6 +135,6 @@ func (service *Service) Name() string {
 	return constant.EntityNames.Services.Module
 }
 
-func (service *Service) State() byte {
+func (service *Service) State() types.StateType {
 	return service.state
 }

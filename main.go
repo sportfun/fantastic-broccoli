@@ -26,6 +26,7 @@ func init() {
 	flag.Parse()
 }
 
+// TODO: Change logger
 func main() {
 	core := kernel.Core{}
 	services := []service.Service{&network.Service{}, &module.Service{}}

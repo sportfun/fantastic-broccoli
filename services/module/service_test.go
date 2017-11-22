@@ -11,15 +11,16 @@ import (
 	"strconv"
 	"testing"
 	"github.com/xunleii/fantastic-broccoli/utils"
-	"go.uber.org/zap"
+	"github.com/xunleii/fantastic-broccoli/common/types"
+	"github.com/xunleii/fantastic-broccoli/log"
 )
 
 type ModuleImpl struct {
 	n *module.NotificationQueue
-	s byte
+	s types.StateType
 }
 
-func (m *ModuleImpl) Start(queue *module.NotificationQueue, logger *zap.Logger) error {
+func (m *ModuleImpl) Start(queue *module.NotificationQueue, logger log.Logger) error {
 	m.n = queue
 	m.s = constant.States.Idle
 	return nil
@@ -55,7 +56,7 @@ func (*ModuleImpl) Name() string {
 	return ""
 }
 
-func (m *ModuleImpl) State() byte {
+func (m *ModuleImpl) State() types.StateType {
 	return m.s
 }
 

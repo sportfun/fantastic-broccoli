@@ -1,43 +1,54 @@
 package module
 
 import (
-	"fmt"
-	"go.uber.org/zap"
-
 	"github.com/xunleii/fantastic-broccoli/common/types/notification"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/log"
+)
+
+var (
+	DebugNotificationHandled      = log.NewArgumentBinder("notification handled")
+	DebugStartSessionNotification = log.NewArgumentBinder("start session")
+	DebugEndSessionNotification   = log.NewArgumentBinder("stop session")
+	UnhandledNotificationOrigin   = log.NewArgumentBinder("unhandled notification origin (%s)")
+	InvalidNetworkNotification    = log.NewArgumentBinder("invalid network notification")
+	UnknownNetworkCommand         = log.NewArgumentBinder("unknown network command (%s)")
 )
 
 func (service *Service) handle(n *notification.Notification) {
+	service.logger.Debug(DebugNotificationHandled.More("notification", *n))
+
 	switch string(n.From()) {
 	case constant.EntityNames.Services.Network:
 		netNotificationHandler(service, n)
 	default:
-		service.logger.Warn("unhandled notification",
-			zap.String("where", string(n.To())),
-			zap.String("from", string(n.From())),
-			zap.String("message", fmt.Sprintf("%v", n.Content())))
+		service.logger.Warn(UnhandledNotificationOrigin.Bind(n.From()).More("content", n.Content()))
 	}
 }
 
-func netNotificationHandler(s *Service, n *notification.Notification) {
-	m := n.Content().(object.CommandObject)
+func netNotificationHandler(service *Service, n *notification.Notification) {
+	var commandObject *object.CommandObject
 
-	switch m.Command {
+	switch obj := n.Content().(type) {
+	case *object.CommandObject:
+		commandObject = obj
+	default:
+		service.logger.Error(InvalidNetworkNotification.More("content", n.Content()))
+	}
+
+	switch commandObject.Command {
 	case constant.NetCommand.StartSession:
-		s.logger.Debug("start session")
-		for _, m := range s.modules {
+		service.logger.Debug(DebugStartSessionNotification)
+		for _, m := range service.modules {
 			m.StartSession()
 		}
 	case constant.NetCommand.EndSession:
-		s.logger.Debug("end session")
-		for _, m := range s.modules {
+		service.logger.Debug(DebugEndSessionNotification)
+		for _, m := range service.modules {
 			m.StopSession()
 		}
 	default:
-		s.logger.Error("unknown network command",
-			zap.String("where", string(constant.EntityNames.Services.Module)),
-			zap.String("command", m.Command))
+		service.logger.Error(UnknownNetworkCommand.Bind(commandObject.Command))
 	}
 }

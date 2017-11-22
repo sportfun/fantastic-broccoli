@@ -2,30 +2,29 @@ package network
 
 import (
 	"fmt"
+
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
-	"go.uber.org/zap"
 
+	"github.com/xunleii/fantastic-broccoli/common/types"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/xunleii/fantastic-broccoli/common/types/service"
 	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/properties"
-	"sync"
 )
 
 type Service struct {
-	state  byte
+	state  types.StateType
 	linkId string
-	mut    sync.Mutex
 
-	logger        *zap.Logger
+	logger        log.Logger
 	client        *gosocketio.Client
 	notifications *service.NotificationQueue
 }
 
-func (service *Service) Start(notifications *service.NotificationQueue, logger *zap.Logger) error {
+func (service *Service) Start(notifications *service.NotificationQueue, logger log.Logger) error {
 	service.state = constant.States.Started
-	service.mut = sync.Mutex{}
 
 	service.notifications = notifications
 	service.logger = logger
@@ -48,8 +47,8 @@ func (service *Service) Configure(props *properties.Properties) error {
 	initiated :=
 		service.on(gosocketio.OnConnection, service.onConnectionHandler) &&
 			service.on(gosocketio.OnDisconnection, service.onDisconnectionHandler) &&
-			service.on(constant.Channels.Command, service.onCommandChanHandler) &&
-			service.emit(constant.Channels.Command, object.NewCommandObject(constant.NetCommand.State, "started"))
+			service.on(constant.Channels.Command.String(), service.onCommandChanHandler) &&
+			service.emit(constant.Channels.Command.String(), object.NewCommandObject(constant.NetCommand.State, "started"))
 
 	if !initiated {
 		return fmt.Errorf("impossible to initialise network")
@@ -80,6 +79,6 @@ func (service *Service) Name() string {
 	return constant.EntityNames.Services.Network
 }
 
-func (service *Service) State() byte {
+func (service *Service) State() types.StateType {
 	return service.state
 }

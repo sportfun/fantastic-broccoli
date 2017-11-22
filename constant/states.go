@@ -1,11 +1,13 @@
 package constant
 
+import "github.com/xunleii/fantastic-broccoli/common/types"
+
 var States = struct {
-	Started byte
-	Idle    byte
-	Working byte
-	Stopped byte
-	Panic   byte
+	Started types.StateType
+	Idle    types.StateType
+	Working types.StateType
+	Stopped types.StateType
+	Panic   types.StateType
 }{
 	Started: 0x1,
 	Idle:    0x2,
