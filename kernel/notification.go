@@ -8,20 +8,20 @@ import (
 )
 
 var (
-	DebugNotificationHandled    = log.NewArgumentBinder("notification handled")
-	UnhandledNotificationOrigin = log.NewArgumentBinder("unhandled notification origin (%s)")
-	InvalidNetworkNotification  = log.NewArgumentBinder("invalid network notification")
-	UnknownNetworkCommand       = log.NewArgumentBinder("unknown network command (%s)")
+	debugNotificationHandled    = log.NewArgumentBinder("notification handled")
+	unhandledNotificationOrigin = log.NewArgumentBinder("unhandled notification origin (%s)")
+	invalidNetworkNotification  = log.NewArgumentBinder("invalid network notification")
+	unknownNetworkCommand       = log.NewArgumentBinder("unknown network command (%s)")
 )
 
 func (core *Core) handle(n *notification.Notification) {
-	core.logger.Debug(DebugNotificationHandled.More("notification", *n))
+	core.logger.Debug(debugNotificationHandled.More("notification", *n))
 
 	switch string(n.From()) {
 	case constant.EntityNames.Services.Network:
 		netNotificationHandler(core, n)
 	default:
-		core.logger.Warn(UnhandledNotificationOrigin.Bind(n.From()).More("content", n.Content()))
+		core.logger.Warn(unhandledNotificationOrigin.Bind(n.From()).More("content", n.Content()))
 	}
 }
 
@@ -32,7 +32,7 @@ func netNotificationHandler(core *Core, n *notification.Notification) {
 	case *object.CommandObject:
 		commandObject = obj
 	default:
-		core.logger.Error(InvalidNetworkNotification.More("content", n.Content()))
+		core.logger.Error(invalidNetworkNotification.More("content", n.Content()))
 	}
 
 	switch commandObject.Command {
@@ -43,6 +43,6 @@ func netNotificationHandler(core *Core, n *notification.Notification) {
 			core.properties.System.LinkID,
 		))
 	default:
-		core.logger.Error(UnknownNetworkCommand.Bind(commandObject.Command))
+		core.logger.Error(unknownNetworkCommand.Bind(commandObject.Command))
 	}
 }

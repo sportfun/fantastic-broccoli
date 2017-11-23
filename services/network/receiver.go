@@ -18,22 +18,22 @@ var serviceCommandMap = map[types.CommandName]string{
 }
 
 var (
-	DebugDisconnectionHandled = log.NewArgumentBinder("disconnection handled")
-	DebugCommandHandled       = log.NewArgumentBinder("command packet handled")
-	DebugCommand              = log.NewArgumentBinder("valid command handled")
+	debugDisconnectionHandled = log.NewArgumentBinder("disconnection handled")
+	debugCommandHandled       = log.NewArgumentBinder("command packet handled")
+	debugCommand              = log.NewArgumentBinder("valid command handled")
 
-	SuccessfullyConnected = log.NewArgumentBinder("successfully connected to the server")
-	UnknownPacketType     = log.NewArgumentBinder("unknown packet type")
-	UnknownCommand        = log.NewArgumentBinder("unknown command '%s'")
-	UnknownWebPacketBody  = log.NewArgumentBinder("unknown web packet body type")
+	successfullyConnected = log.NewArgumentBinder("successfully connected to the server")
+	unknownPacketType     = log.NewArgumentBinder("unknown packet type")
+	unknownCommand        = log.NewArgumentBinder("unknown command '%s'")
+	unknownWebPacketBody  = log.NewArgumentBinder("unknown web packet body type")
 )
 
 func (service *Service) onConnectionHandler(client *gosocketio.Channel, args interface{}) {
-	service.logger.Info(SuccessfullyConnected.More("session_id", client.Id()))
+	service.logger.Info(successfullyConnected.More("session_id", client.Id()))
 }
 
 func (service *Service) onDisconnectionHandler(client *gosocketio.Channel) {
-	service.logger.Debug(DebugDisconnectionHandled.More("session_id", client.Id()))
+	service.logger.Debug(debugDisconnectionHandled.More("session_id", client.Id()))
 
 	if service.state != constant.States.Stopped {
 		service.notifications.Notify(notification.NewNotification(service.Name(), constant.EntityNames.Core, constant.NetCommand.RestartService))
@@ -41,7 +41,7 @@ func (service *Service) onDisconnectionHandler(client *gosocketio.Channel) {
 }
 
 func (service *Service) onCommandChanHandler(client *gosocketio.Channel, args interface{}) {
-	service.logger.Debug(DebugCommandHandled.More("session_id", client.Id()).More("packet", args))
+	service.logger.Debug(debugCommandHandled.More("session_id", client.Id()).More("packet", args))
 
 	var web webPacket
 
@@ -49,7 +49,7 @@ func (service *Service) onCommandChanHandler(client *gosocketio.Channel, args in
 	case mapstructure.Decode(args, &web) == nil:
 		webPacketHandler(service, web)
 	default:
-		service.logger.Warn(UnknownPacketType.More("session_id", client.Id()))
+		service.logger.Warn(unknownPacketType.More("session_id", client.Id()))
 	}
 }
 
@@ -59,12 +59,12 @@ func webPacketHandler(service *Service, packet webPacket) {
 	switch {
 	case mapstructure.Decode(packet.Body, &netObj) == nil:
 		if target, exist := serviceCommandMap[netObj.Command]; exist {
-			service.logger.Debug(DebugCommand.More("target", target).More("object", netObj))
+			service.logger.Debug(debugCommand.More("target", target).More("object", netObj))
 			service.notifications.Notify(notification.NewNotification(service.Name(), target, netObj))
 		} else {
-			service.logger.Warn(UnknownCommand.Bind(netObj.Command))
+			service.logger.Warn(unknownCommand.Bind(netObj.Command))
 		}
 	default:
-		service.logger.Warn(UnknownWebPacketBody.More("packet_body", netObj))
+		service.logger.Warn(unknownWebPacketBody.More("packet_body", netObj))
 	}
 }

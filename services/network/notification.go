@@ -10,13 +10,13 @@ import (
 )
 
 var (
-	DebugNotificationHandled    = log.NewArgumentBinder("notification handled")
-	UnhandledNotificationOrigin = log.NewArgumentBinder("unhandled notification origin (%s)")
-	UnknownContentType          = log.NewArgumentBinder("unknown content type")
+	debugNotificationHandled    = log.NewArgumentBinder("notification handled")
+	unhandledNotificationOrigin = log.NewArgumentBinder("unhandled notification origin (%s)")
+	unknownContentType          = log.NewArgumentBinder("unknown content type")
 )
 
 func (service *Service) handle(n *notification.Notification) error {
-	service.logger.Debug(DebugNotificationHandled.More("notification", *n))
+	service.logger.Debug(debugNotificationHandled.More("notification", *n))
 
 	switch string(n.From()) {
 	case constant.EntityNames.Services.Module:
@@ -24,7 +24,7 @@ func (service *Service) handle(n *notification.Notification) error {
 	case constant.EntityNames.Core:
 		return defaultNotificationHandler(service, n)
 	default:
-		service.logger.Warn(UnhandledNotificationOrigin.Bind(n.From()).More("content", n.Content()))
+		service.logger.Warn(unhandledNotificationOrigin.Bind(n.From()).More("content", n.Content()))
 	}
 	return nil
 }
@@ -40,7 +40,7 @@ func defaultNotificationHandler(service *Service, n *notification.Notification) 
 	case *object.ErrorObject:
 		succeed = service.emit(constant.Channels.Error.String(), *o)
 	default:
-		service.logger.Warn(UnknownContentType.More("packet", n.Content()))
+		service.logger.Warn(unknownContentType.More("packet", n.Content()))
 	}
 
 	if !succeed {

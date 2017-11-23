@@ -21,8 +21,10 @@ type Core struct {
 }
 
 var (
-	InfoStartServices   = log.NewArgumentBinder("start services")
-	InfoServicesStarted = log.NewArgumentBinder("services successfully started (%d services)")
+	infoStartServices   = log.NewArgumentBinder("start services")
+	infoServicesStarted = log.NewArgumentBinder("services successfully started (%d services)")
+	infoStopServices    = log.NewArgumentBinder("stop services")
+	infoServicesStopped = log.NewArgumentBinder("services successfully stopped (%d services)")
 )
 
 func (core *Core) Configure(services []service.Service, props *properties.Properties, logger log.Logger) error {
@@ -36,14 +38,14 @@ func (core *Core) Configure(services []service.Service, props *properties.Proper
 	core.notifications = service.NewNotificationQueue()
 
 	core.internal = nil
-	logger.Info(InfoStartServices)
+	logger.Info(infoStartServices)
 	for _, s := range services {
 		if !core.checkIf(s, s.Start(core.notifications, logger), IsStarted) ||
 			!core.checkIf(s, s.Configure(props), IsConfigured) {
 			return core.internal
 		}
 	}
-	logger.Info(InfoServicesStarted.Bind(len(services)))
+	logger.Info(infoServicesStarted.Bind(len(services)))
 
 	core.state = constant.States.Idle
 	return nil
@@ -65,11 +67,13 @@ func (core *Core) Run() error {
 }
 
 func (core *Core) Stop() error {
+	core.logger.Info(infoStopServices)
 	for _, s := range core.services {
 		if core.checkIf(s, s.Stop(), IsStopped) {
 			return core.internal
 		}
 	}
+	core.logger.Info(infoServicesStopped.Bind(len(core.services)))
 	core.state = constant.States.Stopped
 	return nil
 }

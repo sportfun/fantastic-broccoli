@@ -19,7 +19,7 @@ const (
 	ModuleLoading
 )
 
-var PluginFailureLog = log.NewArgumentBinder("%s")
+var pluginFailureLog = log.NewArgumentBinder("%s")
 
 func (service *Service) pluginFailure(t pluginError, err error, a ...interface{}) {
 	obj := object.NewErrorObject(constant.EntityNames.Services.Module)
@@ -32,7 +32,7 @@ func (service *Service) pluginFailure(t pluginError, err error, a ...interface{}
 	case SymbolLoading:
 		obj.Why(fmt.Errorf("failure during module loading ('%s'): %s", a, err.Error()))
 	}
-	service.logger.Error(PluginFailureLog.Bind(obj.Reason))
+	service.logger.Error(pluginFailureLog.Bind(obj.Reason))
 	service.notifications.Notify(netBuilder.With(obj).Build())
 }
 

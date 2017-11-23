@@ -10,11 +10,11 @@ import (
 type serviceError func(*Core, service.Service, error)
 
 var (
-	FailureServiceStarting      = log.NewArgumentBinder("failure during '%s' starting")
-	FailureServiceConfiguration = log.NewArgumentBinder("failure during '%s' configuration")
-	FailureServiceProcessing    = log.NewArgumentBinder("failure during '%s' processing")
-	FailureServiceEnding        = log.NewArgumentBinder("failure during '%s' ending")
-	KernelPanic                 = log.NewArgumentBinder("panic during %s %s")
+	failureServiceStarting      = log.NewArgumentBinder("failure during '%s' starting")
+	failureServiceConfiguration = log.NewArgumentBinder("failure during '%s' configuration")
+	failureServiceProcessing    = log.NewArgumentBinder("failure during '%s' processing")
+	failureServiceEnding        = log.NewArgumentBinder("failure during '%s' ending")
+	kernelPanic                 = log.NewArgumentBinder("panic during %s %s")
 )
 
 func (core *Core) checkIf(srv service.Service, err error, fnc serviceError) bool {
@@ -28,7 +28,7 @@ func (core *Core) checkIf(srv service.Service, err error, fnc serviceError) bool
 }
 
 func IsStarted(core *Core, srv service.Service, err error) {
-	core.logger.Error(FailureServiceStarting.Bind(srv.Name()).More("error", err))
+	core.logger.Error(failureServiceStarting.Bind(srv.Name()).More("error", err))
 
 	switch err := err.(type) {
 	case *errors.InternalError:
@@ -42,7 +42,7 @@ func IsStarted(core *Core, srv service.Service, err error) {
 }
 
 func IsConfigured(core *Core, srv service.Service, err error) {
-	core.logger.Error(FailureServiceConfiguration.Bind(srv.Name()).More("error", err))
+	core.logger.Error(failureServiceConfiguration.Bind(srv.Name()).More("error", err))
 
 	switch err := err.(type) {
 	case *errors.InternalError:
@@ -56,7 +56,7 @@ func IsConfigured(core *Core, srv service.Service, err error) {
 }
 
 func IsProcessed(core *Core, srv service.Service, err error) {
-	core.logger.Error(FailureServiceProcessing.Bind(srv.Name()).More("error", err))
+	core.logger.Error(failureServiceProcessing.Bind(srv.Name()).More("error", err))
 
 	switch err := err.(type) {
 	case *errors.InternalError:
@@ -66,11 +66,11 @@ func IsProcessed(core *Core, srv service.Service, err error) {
 }
 
 func IsStopped(core *Core, srv service.Service, err error) {
-	core.logger.Error(FailureServiceEnding.Bind(srv.Name()).More("error", err))
+	core.logger.Error(failureServiceEnding.Bind(srv.Name()).More("error", err))
 }
 
 func _panic(core *Core, err error, name string, when string) {
-	core.logger.Error(KernelPanic.Bind(name, when).More("error", err))
+	core.logger.Error(kernelPanic.Bind(name, when).More("error", err))
 
 	core.state = constant.States.Panic
 }

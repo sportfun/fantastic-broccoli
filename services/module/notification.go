@@ -8,22 +8,23 @@ import (
 )
 
 var (
-	DebugNotificationHandled      = log.NewArgumentBinder("notification handled")
-	DebugStartSessionNotification = log.NewArgumentBinder("start session")
-	DebugEndSessionNotification   = log.NewArgumentBinder("stop session")
-	UnhandledNotificationOrigin   = log.NewArgumentBinder("unhandled notification origin (%s)")
-	InvalidNetworkNotification    = log.NewArgumentBinder("invalid network notification")
-	UnknownNetworkCommand         = log.NewArgumentBinder("unknown network command (%s)")
+	debugNotificationHandled      = log.NewArgumentBinder("notification handled")
+	debugStartSessionNotification = log.NewArgumentBinder("start session")
+	debugEndSessionNotification   = log.NewArgumentBinder("stop session")
+	
+	unhandledNotificationOrigin = log.NewArgumentBinder("unhandled notification origin (%s)")
+	invalidNetworkNotification  = log.NewArgumentBinder("invalid network notification")
+	unknownNetworkCommand       = log.NewArgumentBinder("unknown network command (%s)")
 )
 
 func (service *Service) handle(n *notification.Notification) {
-	service.logger.Debug(DebugNotificationHandled.More("notification", *n))
+	service.logger.Debug(debugNotificationHandled.More("notification", *n))
 
 	switch string(n.From()) {
 	case constant.EntityNames.Services.Network:
 		netNotificationHandler(service, n)
 	default:
-		service.logger.Warn(UnhandledNotificationOrigin.Bind(n.From()).More("content", n.Content()))
+		service.logger.Warn(unhandledNotificationOrigin.Bind(n.From()).More("content", n.Content()))
 	}
 }
 
@@ -34,21 +35,21 @@ func netNotificationHandler(service *Service, n *notification.Notification) {
 	case *object.CommandObject:
 		commandObject = obj
 	default:
-		service.logger.Error(InvalidNetworkNotification.More("content", n.Content()))
+		service.logger.Error(invalidNetworkNotification.More("content", n.Content()))
 	}
 
 	switch commandObject.Command {
 	case constant.NetCommand.StartSession:
-		service.logger.Debug(DebugStartSessionNotification)
+		service.logger.Debug(debugStartSessionNotification)
 		for _, m := range service.modules {
 			m.StartSession()
 		}
 	case constant.NetCommand.EndSession:
-		service.logger.Debug(DebugEndSessionNotification)
+		service.logger.Debug(debugEndSessionNotification)
 		for _, m := range service.modules {
 			m.StopSession()
 		}
 	default:
-		service.logger.Error(UnknownNetworkCommand.Bind(commandObject.Command))
+		service.logger.Error(unknownNetworkCommand.Bind(commandObject.Command))
 	}
 }

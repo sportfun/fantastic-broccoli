@@ -30,4 +30,16 @@ func Configure(props *properties.Properties) *zap.Logger {
 
 	logger := zap.New(core)
 	defer logger.Sync()
-	return logger}
+	return logger
+}
+
+
+//TODO: Create loader for Production
+func newProdLogger(properties *properties.Properties) Logger {
+	return &loggerImpl{this: nil}
+}
+
+//TODO: Create loader for Dev
+func newDevLogger(properties *properties.Properties) Logger {
+	return &loggerImpl{this: nil}
+}

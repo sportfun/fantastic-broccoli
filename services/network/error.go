@@ -13,8 +13,8 @@ const (
 )
 
 var (
-	FailedToEmit              = log.NewArgumentBinder("failed to emit message: %s")
-	FailedToCreateChanHandler = log.NewArgumentBinder("failed to create channel handler: %s")
+	failedToEmit              = log.NewArgumentBinder("failed to emit message: %s")
+	failedToCreateChanHandler = log.NewArgumentBinder("failed to create channel handler: %s")
 )
 
 func (service *Service) checkIf(x interface{}, err error, fnc netError) bool {
@@ -27,9 +27,9 @@ func (service *Service) checkIf(x interface{}, err error, fnc netError) bool {
 }
 
 func IsEmitted(service *Service, x interface{}, err error) {
-	service.logger.Error(FailedToEmit.Bind(err.Error()))
+	service.logger.Error(failedToEmit.Bind(err.Error()))
 }
 
 func IsListening(service *Service, x interface{}, err error) {
-	service.logger.Error(FailedToCreateChanHandler.Bind(err.Error()))
+	service.logger.Error(failedToCreateChanHandler.Bind(err.Error()))
 }
