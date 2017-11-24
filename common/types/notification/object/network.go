@@ -1,11 +1,13 @@
 package object
 
+import "github.com/xunleii/fantastic-broccoli/common/types"
+
 type CommandObject struct {
-	Command string   `json:"command" mapstructure:"command"`
-	Args    []string `json:"args" mapstructure:"args"`
+	Command types.CommandName `json:"command" mapstructure:"command"`
+	Args    []string          `json:"args" mapstructure:"args"`
 }
 
-func NewCommandObject(command string, args ...string) *CommandObject {
+func NewCommandObject(command types.CommandName, args ...string) *CommandObject {
 	return &CommandObject{Command: command, Args: args}
 }
 

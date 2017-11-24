@@ -6,7 +6,7 @@ type webPacket struct {
 }
 
 func (service *Service) on(method string, f interface{}) bool {
-	return service.checkIf(nil, service.client.On(method, f), IsLitening)
+	return service.checkIf(nil, service.client.On(method, f), IsListening)
 }
 
 func (service *Service) emit(method string, body interface{}) bool {

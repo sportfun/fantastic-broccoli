@@ -2,25 +2,29 @@ package network
 
 import (
 	"fmt"
-	"go.uber.org/zap"
 
 	"github.com/xunleii/fantastic-broccoli/common/types/notification"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/log"
 )
 
-func (service *Service) handle(notif *notification.Notification) error {
-	switch string(notif.From()) {
+var (
+	debugNotificationHandled    = log.NewArgumentBinder("notification handled")
+	unhandledNotificationOrigin = log.NewArgumentBinder("unhandled notification origin (%s)")
+	unknownContentType          = log.NewArgumentBinder("unknown content type")
+)
+
+func (service *Service) handle(n *notification.Notification) error {
+	service.logger.Debug(debugNotificationHandled.More("notification", *n))
+
+	switch string(n.From()) {
 	case constant.EntityNames.Services.Module:
 		fallthrough
 	case constant.EntityNames.Core:
-		return defaultNotificationHandler(service, notif)
+		return defaultNotificationHandler(service, n)
 	default:
-		service.logger.Warn("unhandled notification",
-			zap.String("where", string(notif.To())),
-			zap.String("from", string(notif.From())),
-			zap.String("message", fmt.Sprintf("%#v", notif.Content())),
-		)
+		service.logger.Warn(unhandledNotificationOrigin.Bind(n.From()).More("content", n.Content()))
 	}
 	return nil
 }
@@ -30,17 +34,13 @@ func defaultNotificationHandler(service *Service, n *notification.Notification) 
 
 	switch o := n.Content().(type) {
 	case *object.CommandObject:
-		succeed = service.emit(constant.Channels.Command, o)
+		succeed = service.emit(constant.Channels.Command.String(), *o)
 	case *object.DataObject:
-		succeed = service.emit(constant.Channels.Data, o)
+		succeed = service.emit(constant.Channels.Data.String(), *o)
 	case *object.ErrorObject:
-		succeed = service.emit(constant.Channels.Error, o)
+		succeed = service.emit(constant.Channels.Error.String(), *o)
 	default:
-		service.logger.Warn("unknown content type",
-			zap.String("where", string(n.To())),
-			zap.String("from", string(n.From())),
-			zap.String("message", fmt.Sprintf("%#v", n.Content())),
-		)
+		service.logger.Warn(unknownContentType.More("packet", n.Content()))
 	}
 
 	if !succeed {

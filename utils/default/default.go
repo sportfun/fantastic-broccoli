@@ -13,6 +13,7 @@ import (
 type WSReceiver func(*gosocketio.Channel, interface{})
 type WSReceivers map[string]func(*gosocketio.Channel, interface{})
 
+// TODO: Change logger
 func Logger() *zap.Logger {
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel

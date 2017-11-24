@@ -1,6 +1,8 @@
 package network
 
-import "go.uber.org/zap"
+import (
+	"github.com/xunleii/fantastic-broccoli/log"
+)
 
 type errorType int
 type netError func(*Service, interface{}, error)
@@ -8,6 +10,11 @@ type netError func(*Service, interface{}, error)
 const (
 	SocketOn   errorType = iota
 	SocketEmit
+)
+
+var (
+	failedToEmit              = log.NewArgumentBinder("failed to emit message: %s")
+	failedToCreateChanHandler = log.NewArgumentBinder("failed to create channel handler: %s")
 )
 
 func (service *Service) checkIf(x interface{}, err error, fnc netError) bool {
@@ -20,9 +27,9 @@ func (service *Service) checkIf(x interface{}, err error, fnc netError) bool {
 }
 
 func IsEmitted(service *Service, x interface{}, err error) {
-	service.logger.Error("Failed to emit message", zap.String("reason", err.Error()))
+	service.logger.Error(failedToEmit.Bind(err.Error()))
 }
 
-func IsLitening(service *Service, x interface{}, err error) {
-	service.logger.Error("Failed to create channel handler", zap.String("reason", err.Error()))
+func IsListening(service *Service, x interface{}, err error) {
+	service.logger.Error(failedToCreateChanHandler.Bind(err.Error()))
 }

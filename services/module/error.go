@@ -1,11 +1,12 @@
 package module
 
 import (
+	"fmt"
+
+	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/xunleii/fantastic-broccoli/constant"
-	"fmt"
-	"github.com/xunleii/fantastic-broccoli/common/types/module"
-	"go.uber.org/zap"
+	"github.com/xunleii/fantastic-broccoli/log"
 )
 
 type pluginError byte
@@ -18,6 +19,8 @@ const (
 	ModuleLoading
 )
 
+var pluginFailureLog = log.NewArgumentBinder("%s")
+
 func (service *Service) pluginFailure(t pluginError, err error, a ...interface{}) {
 	obj := object.NewErrorObject(constant.EntityNames.Services.Module)
 
@@ -29,7 +32,7 @@ func (service *Service) pluginFailure(t pluginError, err error, a ...interface{}
 	case SymbolLoading:
 		obj.Why(fmt.Errorf("failure during module loading ('%s'): %s", a, err.Error()))
 	}
-	service.logger.Error(obj.Reason, zap.String("origin", obj.Origin))
+	service.logger.Error(pluginFailureLog.Bind(obj.Reason))
 	service.notifications.Notify(netBuilder.With(obj).Build())
 }
 

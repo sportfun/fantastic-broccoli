@@ -34,7 +34,7 @@ func onConnectionReceiver(client *gosocketio.Channel, args interface{}, logger *
 	for _, packet := range packets {
 		time.Sleep(500 * time.Millisecond)
 		logger.Info(fmt.Sprintf("[Server] Send packet to client '%s' (%v)", client.Id(), packet))
-		client.Emit(constant.Channels.Command, packet)
+		client.Emit(constant.Channels.Command.String(), packet)
 	}
 
 	time.Sleep(2 * time.Second)
@@ -70,6 +70,7 @@ func onGenericReceiver(
 	}
 }
 
+// TODO: Remove logger
 func onCommandReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
 	var netObj object.CommandObject
 	if err := mapstructure.Decode(web.Body, &netObj); err != nil {
@@ -79,12 +80,13 @@ func onCommandReceiver(logger *zap.Logger, web webPacket, watch *watcher) error 
 
 	logger.Info("[Server] Command handled",
 		zap.String("link_id", web.LinkId),
-		zap.String("command", netObj.Command),
+		zap.String("command", netObj.Command.String()),
 		zap.String("args", fmt.Sprint(netObj.Args)),
 	)
 	return nil
 }
 
+// TODO: Remove logger
 func onDataReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
 	var dataObj object.DataObject
 	if err := mapstructure.Decode(web.Body, &dataObj); err != nil {
@@ -100,6 +102,7 @@ func onDataReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
 	return nil
 }
 
+// TODO: Remove logger
 func onErrorReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
 	var errObj object.ErrorObject
 	if err := mapstructure.Decode(web.Body, &errObj); err != nil {
@@ -115,6 +118,7 @@ func onErrorReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
 	return nil
 }
 
+// TODO: Remove logger
 func TestService(t *testing.T) {
 	l := def.Logger()
 	pkt := watcher{}
@@ -133,7 +137,7 @@ func TestService(t *testing.T) {
 
 	s := Service{}
 	p := properties.Properties{
-		System: properties.SystemDefinition{
+		System: properties.systemDefinition{
 			LinkID:     "70ed3820-d487-42b9-92a8-ae9cbf55918c",
 			ServerIP:   "localhost",
 			ServerPort: 8080,

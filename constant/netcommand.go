@@ -1,11 +1,13 @@
 package constant
 
+import "github.com/xunleii/fantastic-broccoli/common/types"
+
 var NetCommand = struct {
-	State          string
-	Link           string
-	StartSession   string
-	EndSession     string
-	RestartService string
+	State          types.CommandName
+	Link           types.CommandName
+	StartSession   types.CommandName
+	EndSession     types.CommandName
+	RestartService types.CommandName
 }{
 	State:          "state",
 	Link:           "link",

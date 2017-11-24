@@ -3,33 +3,39 @@ package main
 import (
 	"time"
 
-	"go.uber.org/zap"
-
+	"github.com/xunleii/fantastic-broccoli/common/types"
 	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/properties"
 )
 
 type ModuleExample struct {
-	state         byte
+	logger        log.Logger
 	notifications *module.NotificationQueue
-	logger        *zap.Logger
-	data          chan string
-	endRunner     chan bool
-	buffer        string
+
+	buffer    string
+	data      chan string
+	endRunner chan bool
+	state     types.StateType
 }
 
-func (m *ModuleExample) Start(q *module.NotificationQueue, l *zap.Logger) error {
+var (
+	LogModuleStarted    = log.NewArgumentBinder("module 'Example' started")
+	LogModuleConfigured = log.NewArgumentBinder("module 'Example' started")
+)
+
+func (m *ModuleExample) Start(q *module.NotificationQueue, l log.Logger) error {
 	m.logger = l
 	m.notifications = q
 	m.state = constant.States.Started
 
-	l.Info("module 'Example' started")
+	l.Info(LogModuleStarted)
 	return nil
 }
 
 func (m *ModuleExample) Configure(properties *properties.Properties) error {
-	m.logger.Info("module 'Example' configured")
+	m.logger.Info(LogModuleConfigured)
 	m.state = constant.States.Idle
 	return nil
 }
@@ -112,7 +118,7 @@ func (m *ModuleExample) Name() string {
 	return "ModuleExample"
 }
 
-func (m *ModuleExample) State() byte {
+func (m *ModuleExample) State() types.StateType {
 	return m.state
 }
 

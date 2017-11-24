@@ -16,8 +16,9 @@ func NewNotificationQueue() *NotificationQueue {
 
 func (queue *NotificationQueue) Notify(notification *notification.Notification) {
 	queue.locker.Lock()
+	defer queue.locker.Unlock()
+
 	queue.notifications[notification.To()] = append(queue.notifications[notification.To()], notification)
-	queue.locker.Unlock()
 }
 
 func (queue *NotificationQueue) Notifications(name string) []*notification.Notification {
