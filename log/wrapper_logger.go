@@ -8,7 +8,7 @@ import (
 )
 
 type loggerImpl struct {
-	this zap.Logger
+	instance *zap.Logger
 }
 
 type infoWrapper func(string, interface{}) zapcore.Field
@@ -47,17 +47,17 @@ func toFields(binder argumentBinder) []zapcore.Field {
 }
 
 func (logger *loggerImpl) Debug(a argumentBinder) {
-	logger.this.Debug(a.getMessage(), toFields(a)...)
+	logger.instance.Debug(a.getMessage(), toFields(a)...)
 }
 
 func (logger *loggerImpl) Info(a argumentBinder) {
-	logger.this.Info(a.getMessage(), toFields(a)...)
+	logger.instance.Info(a.getMessage(), toFields(a)...)
 }
 
 func (logger *loggerImpl) Warn(a argumentBinder) {
-	logger.this.Warn(a.getMessage(), toFields(a)...)
+	logger.instance.Warn(a.getMessage(), toFields(a)...)
 }
 
 func (logger *loggerImpl) Error(a argumentBinder) {
-	logger.this.Error(a.getMessage(), toFields(a)...)
+	logger.instance.Error(a.getMessage(), toFields(a)...)
 }

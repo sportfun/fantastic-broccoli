@@ -137,7 +137,7 @@ func TestService(t *testing.T) {
 
 	s := Service{}
 	p := properties.Properties{
-		System: properties.SystemDefinition{
+		System: properties.systemDefinition{
 			LinkID:     "70ed3820-d487-42b9-92a8-ae9cbf55918c",
 			ServerIP:   "localhost",
 			ServerPort: 8080,
