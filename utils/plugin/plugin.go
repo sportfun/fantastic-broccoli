@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/properties"
 	"github.com/xunleii/fantastic-broccoli/utils"
-	"fmt"
 )
 
 type InternalLogger func(format string, a ...interface{})
@@ -123,16 +123,18 @@ func Test(t *testing.T, mod module.Module, nprocesses int, env *testEnvironment)
 	// Start tests
 	t.Logf("- Start tests\n")
 	// Error verification (Process without session)
-	// TODO: Explicit error knowable by the manager
-	// m.Process()
+	err := mod.Process()
+	utils.AssertNotEquals(t, err, nil)
+	utils.AssertEquals(t, constant.ErrorLevels.Warning, err.ErrorLevel())
 
 	t.Logf("\t- Start new session\n")
 	if err := mod.StartSession(); err != nil {
 		t.Fatalf("! Failure during starting session - %s\n", err.Error())
 	}
 	// Error verification (Session already exist)
-	// TODO: Explicit error knowable by the manager
-	// m.StartSession()
+	err = mod.StartSession()
+	utils.AssertNotEquals(t, err, nil)
+	utils.AssertEquals(t, constant.ErrorLevels.Warning, err.ErrorLevel())
 
 	t.Logf("\t- Processing loops [%d time(s)]\n", nprocesses)
 	for i := 0; i < nprocesses; i++ {
@@ -148,8 +150,13 @@ func Test(t *testing.T, mod module.Module, nprocesses int, env *testEnvironment)
 		t.Fatalf("! Failure during ending session - %s\n", err.Error())
 	}
 	// Error verification (Process without session)
-	// TODO: Explicit error knowable by the manager
-	// m.Process()
+	err = mod.Process()
+	utils.AssertNotEquals(t, err, nil)
+	utils.AssertEquals(t, constant.ErrorLevels.Warning, err.ErrorLevel())
+	// Error verification (Session already stopped)
+	err = mod.StopSession()
+	utils.AssertNotEquals(t, err, nil)
+	utils.AssertEquals(t, constant.ErrorLevels.Warning, err.ErrorLevel())
 
 
 

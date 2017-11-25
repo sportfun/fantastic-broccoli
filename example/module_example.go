@@ -40,7 +40,7 @@ var (
 
 // - Start
 
-func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) error {
+func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) module.Error {
 	m.logger = l
 	m.notifications = q
 	m.state = constant.States.Started
@@ -66,14 +66,14 @@ func loadConfItem(items map[string]interface{}, itemName string) (float64, error
 	return v, nil
 }
 
-func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
+func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) module.Error {
 	if properties.Conf == nil {
-		return fmt.Errorf("configuration needed for this module. RTFM")
+		return module.Crashed(fmt.Errorf("configuration needed for this module. RTFM"))
 	}
 
 	items, ok := properties.Conf.(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("configuration needed for this module. RTFM")
+		return module.Crashed(fmt.Errorf("configuration needed for this module. RTFM"))
 	}
 
 	var err error
@@ -84,7 +84,7 @@ func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
 		"rpm.precision": &m.engine.precision,
 	} {
 		if *v, err = loadConfItem(items, k); err != nil {
-			return err
+			return module.Crashed(err)
 		}
 	}
 
@@ -95,10 +95,9 @@ func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
 
 // - Process
 
-func (m *rpmGenerator) Process() error {
+func (m *rpmGenerator) Process() module.Error {
 	if m.state == constant.States.Idle {
-		// TODO: Implement better error management (return error type)
-		return nil
+		return module.Warned(fmt.Errorf("session not started"))
 	}
 
 	var rpm float64
@@ -124,7 +123,7 @@ aggregator:
 
 // - Stop
 
-func (m *rpmGenerator) Stop() error {
+func (m *rpmGenerator) Stop() module.Error {
 	if m.state == constant.States.Working {
 		m.StopSession()
 	}
@@ -135,13 +134,11 @@ func (m *rpmGenerator) Stop() error {
 
 // - Session
 
-func (m *rpmGenerator) StartSession() error {
+func (m *rpmGenerator) StartSession() module.Error {
 	if m.state == constant.States.Working {
-		// TODO: Implement better error management (return error type)
-		return nil
+		return module.Warned(fmt.Errorf("session already exist"))
 	}
 
-	// Chan where we buffer 0x9 char
 	m.data = make(chan float64, 0xff)
 	m.done = make(chan bool, 1)
 	go func() {
@@ -163,10 +160,9 @@ func (m *rpmGenerator) StartSession() error {
 	return nil
 }
 
-func (m *rpmGenerator) StopSession() error {
+func (m *rpmGenerator) StopSession() module.Error {
 	if m.state == constant.States.Idle {
-		// Session already stopped
-		return nil
+		return module.Warned(fmt.Errorf("session not started"))
 	}
 
 	m.done <- true

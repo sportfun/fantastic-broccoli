@@ -7,13 +7,13 @@ import (
 )
 
 type Module interface {
-	Start(queue *NotificationQueue, logger log.Logger) error
-	Configure(properties properties.ModuleDefinition) error
-	Process() error
-	Stop() error
+	Start(queue *NotificationQueue, logger log.Logger) Error
+	Configure(properties properties.ModuleDefinition) Error
+	Process() Error
+	Stop() Error
 
-	StartSession() error
-	StopSession() error
+	StartSession() Error
+	StopSession() Error
 
 	Name() string
 	State() types.StateType
