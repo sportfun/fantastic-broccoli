@@ -9,6 +9,7 @@ import (
 	"github.com/xunleii/fantastic-broccoli/properties"
 	"github.com/xunleii/fantastic-broccoli/utils/plugin"
 	"github.com/xunleii/fantastic-broccoli/utils"
+	"encoding/json"
 )
 
 func SpecializedTestImpl(t *testing.T, nprocesses int, queue *module.NotificationQueue) {
@@ -23,8 +24,14 @@ func SpecializedTestImpl(t *testing.T, nprocesses int, queue *module.Notificatio
 	}
 }
 
-func PropertyFactoryImpl() *properties.Properties {
-	return &properties.Properties{}
+func PropertyFactoryImpl() properties.ModuleDefinition {
+	var v interface{}
+	json.Unmarshal([]byte("{\"rpm.min\":120.5,\"rpm.max\":325.0,\"rpm.step\":50,\"rpm.precision\":100}"), &v)
+
+	return properties.ModuleDefinition{
+		Name: "RPM Generator",
+		Conf: v,
+	}
 }
 
 func TestModule(t *testing.T) {

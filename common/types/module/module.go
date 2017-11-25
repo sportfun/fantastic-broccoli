@@ -8,7 +8,7 @@ import (
 
 type Module interface {
 	Start(queue *NotificationQueue, logger log.Logger) error
-	Configure(properties *properties.Properties) error
+	Configure(properties properties.ModuleDefinition) error
 	Process() error
 	Stop() error
 

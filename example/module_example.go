@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/xunleii/fantastic-broccoli/common/types"
@@ -10,61 +12,119 @@ import (
 	"github.com/xunleii/fantastic-broccoli/properties"
 )
 
-type ModuleExample struct {
+type rpmEngine struct {
+	min       float64
+	max       float64
+	step      float64
+	precision float64
+
+	rand    *rand.Rand
+	lastval int
+}
+
+type rpmGenerator struct {
 	logger        log.Logger
 	notifications *module.NotificationQueue
+	state         types.StateType
 
-	buffer    string
-	data      chan string
-	endRunner chan bool
-	state     types.StateType
+	engine rpmEngine
+	data   chan float64
+	done   chan bool
 }
 
 var (
-	LogModuleStarted    = log.NewArgumentBinder("module 'Example' started")
-	LogModuleConfigured = log.NewArgumentBinder("module 'Example' started")
+	debugModuleStarted    = log.NewArgumentBinder("module '%s' started")
+	debugModuleConfigured = log.NewArgumentBinder("module '%s' configured")
+	debugRpmCalculated    = log.NewArgumentBinder("new rpm calculated")
 )
 
-func (m *ModuleExample) Start(q *module.NotificationQueue, l log.Logger) error {
+// - Start
+
+func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) error {
 	m.logger = l
 	m.notifications = q
 	m.state = constant.States.Started
+	m.engine.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	l.Info(LogModuleStarted)
+	l.Debug(debugModuleStarted.Bind(m.Name()))
 	return nil
 }
 
-func (m *ModuleExample) Configure(properties *properties.Properties) error {
-	m.logger.Info(LogModuleConfigured)
+// - Configure
+
+func loadConfItem(items map[string]interface{}, itemName string) (float64, error) {
+	_, ok := items[itemName]
+	if !ok {
+		return 0, fmt.Errorf("invalid value of '%s' in configuration", itemName)
+	}
+
+	v, ok := items[itemName].(float64)
+	if !ok {
+		return 0, fmt.Errorf("invalid value of '%s' in configuration", itemName)
+	}
+
+	return v, nil
+}
+
+func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
+	if properties.Conf == nil {
+		return fmt.Errorf("configuration needed for this module. RTFM")
+	}
+
+	items, ok := properties.Conf.(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("configuration needed for this module. RTFM")
+	}
+
+	var err error
+	for k, v := range map[string]*float64 {
+		"rpm.min": &m.engine.min,
+		"rpm.max": &m.engine.max,
+		"rpm.step": &m.engine.step,
+		"rpm.precision": &m.engine.precision,
+	} {
+		if *v, err = loadConfItem(items, k); err != nil {
+			return err
+		}
+	}
+
+	m.logger.Debug(debugModuleConfigured.Bind(m.Name()))
 	m.state = constant.States.Idle
 	return nil
 }
 
-func (m *ModuleExample) Process() error {
+// - Process
+
+func (m *rpmGenerator) Process() error {
 	if m.state == constant.States.Idle {
-		// Session not started
+		// TODO: Implement better error management (return error type)
 		return nil
 	}
+
+	var rpm float64
+	var nvalue int
 
 aggregator:
 	for {
 		select {
 		case val := <-m.data:
-			m.buffer += val
+			rpm += val
+			nvalue++
 		default:
 			break aggregator
 		}
 	}
 
-	if len(m.buffer) > 5 {
-		m.notifications.NotifyData(m.Name(), m.buffer)
-		m.buffer = ""
-	}
+	rpm = rpm / float64(nvalue)
+	m.logger.Debug(debugRpmCalculated.More("nb_value", nvalue).More("value", rpm))
 
+	m.notifications.NotifyData(m.Name(), "%f", rpm)
 	return nil
 }
 
-func (m *ModuleExample) Stop() error {
+// - Stop
+
+func (m *rpmGenerator) Stop() error {
 	if m.state == constant.States.Working {
 		m.StopSession()
 	}
@@ -73,24 +133,26 @@ func (m *ModuleExample) Stop() error {
 	return nil
 }
 
-func (m *ModuleExample) StartSession() error {
+// - Session
+
+func (m *rpmGenerator) StartSession() error {
 	if m.state == constant.States.Working {
-		// Previous session has not been ended
+		// TODO: Implement better error management (return error type)
 		return nil
 	}
 
 	// Chan where we buffer 0x9 char
-	m.data = make(chan string, 0x9)
-	m.endRunner = make(chan bool, 1)
+	m.data = make(chan float64, 0xff)
+	m.done = make(chan bool, 1)
 	go func() {
 		defer close(m.data)
 
 		for {
 			select {
-			case <-m.endRunner:
+			case <-m.done:
 				return
 			default:
-				m.data <- "|"
+				m.data <- m.engine.NewValue()
 			}
 
 			time.Sleep(50 * time.Millisecond)
@@ -101,27 +163,46 @@ func (m *ModuleExample) StartSession() error {
 	return nil
 }
 
-func (m *ModuleExample) StopSession() error {
+func (m *rpmGenerator) StopSession() error {
 	if m.state == constant.States.Idle {
 		// Session already stopped
 		return nil
 	}
 
-	m.endRunner <- true
+	m.done <- true
+	close(m.done)
 
-	close(m.endRunner)
 	m.state = constant.States.Idle
 	return nil
 }
 
-func (m *ModuleExample) Name() string {
-	return "ModuleExample"
+// - Properties
+
+func (m *rpmGenerator) Name() string {
+	return "RPM Generator"
 }
 
-func (m *ModuleExample) State() types.StateType {
+func (m *rpmGenerator) State() types.StateType {
 	return m.state
 }
 
+// - Engine
+
+func (e *rpmEngine) NewValue() float64 {
+	rpm := int(e.rand.Float64() * (e.max - e.min) * e.precision)
+
+	if e.lastval == 0 {
+		e.lastval = rpm
+		return e.min + float64(rpm/int(e.precision))
+	}
+
+	e.lastval = (int(e.lastval) - rpm) % int(e.step)
+
+	return e.min + float64(e.lastval/int(e.precision))
+}
+
+// - Exporter
+
 func ExportModule() module.Module {
-	return &ModuleExample{}
+	return &rpmGenerator{}
 }

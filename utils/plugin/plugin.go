@@ -4,15 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"go.uber.org/zap"
-
 	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/properties"
 	"github.com/xunleii/fantastic-broccoli/utils"
 )
 
-type PropertyFactory func() *properties.Properties
+type PropertyFactory func() properties.ModuleDefinition
 type SpecializedTest func(*testing.T, int, *module.NotificationQueue)
 
 func Benchmark(
@@ -26,7 +25,7 @@ func Benchmark(
 		t.Logf("-------------------------")
 		// Init environment
 		queue := module.NewNotificationQueue()
-		log, _ := zap.NewProduction()
+		log := log.NewLogger.Dev(nil)
 
 		// Start & Configure module
 		t.Logf("- Start module '%s'\n", m.Name())
@@ -84,7 +83,7 @@ func Test(
 ) {
 	// Init environment
 	queue := module.NewNotificationQueue()
-	log, _ := zap.NewProduction()
+	log := log.NewLogger.Dev(nil)
 
 	// Start & Configure module
 	t.Logf("- Start module '%s'\n", m.Name())

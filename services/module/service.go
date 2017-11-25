@@ -69,7 +69,7 @@ func loadModules(service *Service, props *properties.Properties) moduleContainer
 			continue
 		}
 
-		if !service.checkIf(module, module.Configure(props), IsConfigured) {
+		if !service.checkIf(module, module.Configure(moduleDefinition), IsConfigured) {
 			service.checkIf(module, module.Stop(), IsStopped)
 			delete(modules, module.Name())
 			continue
