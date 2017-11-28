@@ -23,7 +23,7 @@ func (binder *argumentBinderImpl) More(index string, data interface{}) argumentB
 }
 
 func (binder *argumentBinderImpl) getMessage() string {
-	return fmt.Sprintf(binder.format, binder.binds)
+	return fmt.Sprintf(binder.format, binder.binds...)
 }
 
 func (binder *argumentBinderImpl) getMoreInfo() map[string]interface{} {

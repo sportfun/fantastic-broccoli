@@ -55,7 +55,7 @@ func newZapCore(definition properties.LogDefinition) zapcore.Core {
 
 func newProdLogger(properties *properties.Properties) Logger {
 	if len(properties.Log) == 0 {
-		logger := newDevLogger()
+		logger := newDevLogger(properties)
 		logger.Error(&argumentBinderImpl{format: "No log configuration for production, switch to development logger"})
 		return logger
 	}
@@ -70,12 +70,12 @@ func newProdLogger(properties *properties.Properties) Logger {
 	return &loggerImpl{instance: logger}
 }
 
-func newDevLogger() Logger {
+func newDevLogger(*properties.Properties) Logger {
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.ErrorLevel
+		return lvl >= zapcore.WarnLevel
 	})
 	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl < zapcore.ErrorLevel
+		return lvl < zapcore.WarnLevel
 	})
 
 	consoleDebugging := zapcore.Lock(os.Stdout)
