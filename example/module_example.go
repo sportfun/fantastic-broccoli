@@ -32,6 +32,8 @@ type rpmGenerator struct {
 	done   chan bool
 }
 
+const tick = 50 * time.Millisecond
+
 var (
 	debugModuleStarted    = log.NewArgumentBinder("module '%s' started")
 	debugModuleConfigured = log.NewArgumentBinder("module '%s' configured")
@@ -40,7 +42,7 @@ var (
 
 // - Start
 
-func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) module.Error {
+func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) error {
 	m.logger = l
 	m.notifications = q
 	m.state = constant.States.Started
@@ -66,25 +68,32 @@ func loadConfItem(items map[string]interface{}, itemName string) (float64, error
 	return v, nil
 }
 
-func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) module.Error {
+func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
+	if m.state == constant.States.Stopped {
+		return nil
+	}
+
 	if properties.Conf == nil {
-		return module.Crashed(fmt.Errorf("configuration needed for this module. RTFM"))
+		m.state = constant.States.Panic
+		return fmt.Errorf("configuration needed for this module. RTFM")
 	}
 
 	items, ok := properties.Conf.(map[string]interface{})
 	if !ok {
-		return module.Crashed(fmt.Errorf("configuration needed for this module. RTFM"))
+		m.state = constant.States.Panic
+		return fmt.Errorf("valid configuration needed for this module. RTFM")
 	}
 
 	var err error
-	for k, v := range map[string]*float64 {
-		"rpm.min": &m.engine.min,
-		"rpm.max": &m.engine.max,
-		"rpm.step": &m.engine.step,
+	for k, v := range map[string]*float64{
+		"rpm.min":       &m.engine.min,
+		"rpm.max":       &m.engine.max,
+		"rpm.step":      &m.engine.step,
 		"rpm.precision": &m.engine.precision,
 	} {
 		if *v, err = loadConfItem(items, k); err != nil {
-			return module.Crashed(err)
+			m.state = constant.States.Panic
+			return err
 		}
 	}
 
@@ -95,9 +104,14 @@ func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) module.
 
 // - Process
 
-func (m *rpmGenerator) Process() module.Error {
-	if m.state == constant.States.Idle {
-		return module.Warned(fmt.Errorf("session not started"))
+func (m *rpmGenerator) Process() error {
+	if m.state == constant.States.Stopped {
+		return nil
+	}
+
+	if m.state != constant.States.Working {
+		m.state = constant.States.Failed
+		return fmt.Errorf("session not started")
 	}
 
 	var rpm float64
@@ -123,7 +137,7 @@ aggregator:
 
 // - Stop
 
-func (m *rpmGenerator) Stop() module.Error {
+func (m *rpmGenerator) Stop() error {
 	if m.state == constant.States.Working {
 		m.StopSession()
 	}
@@ -134,14 +148,22 @@ func (m *rpmGenerator) Stop() module.Error {
 
 // - Session
 
-func (m *rpmGenerator) StartSession() module.Error {
+func (m *rpmGenerator) StartSession() error {
+	if m.state == constant.States.Stopped {
+		return nil
+	}
+
 	if m.state == constant.States.Working {
-		return module.Warned(fmt.Errorf("session already exist"))
+		m.StopSession()
+		return fmt.Errorf("session already exist")
 	}
 
 	m.data = make(chan float64, 0xff)
 	m.done = make(chan bool, 1)
+
+	// TODO : Don't create multi goroutine !!! FIX IT
 	go func() {
+		defer log.NewLogger.Dev(nil).Debug(log.NewArgumentBinder("exit goroutine"))
 		defer close(m.data)
 
 		for {
@@ -152,7 +174,7 @@ func (m *rpmGenerator) StartSession() module.Error {
 				m.data <- m.engine.NewValue()
 			}
 
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(tick)
 		}
 	}()
 
@@ -160,9 +182,14 @@ func (m *rpmGenerator) StartSession() module.Error {
 	return nil
 }
 
-func (m *rpmGenerator) StopSession() module.Error {
-	if m.state == constant.States.Idle {
-		return module.Warned(fmt.Errorf("session not started"))
+func (m *rpmGenerator) StopSession() error {
+	if m.state == constant.States.Stopped {
+		return nil
+	}
+
+	if m.state != constant.States.Working {
+		m.state = constant.States.Idle
+		return fmt.Errorf("session not started")
 	}
 
 	m.done <- true

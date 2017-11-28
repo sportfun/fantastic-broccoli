@@ -7,11 +7,13 @@ var States = struct {
 	Idle    types.StateType
 	Working types.StateType
 	Stopped types.StateType
+	Failed  types.StateType
 	Panic   types.StateType
 }{
 	Started: 0x1,
 	Idle:    0x2,
 	Working: 0x4,
 	Stopped: 0x8,
-	Panic:   0x10,
+	Failed:  0x10,
+	Panic:   0x12,
 }
