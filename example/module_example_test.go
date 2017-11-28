@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"testing"
-	"time"
-
 	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/xunleii/fantastic-broccoli/properties"
@@ -13,7 +11,7 @@ import (
 	"github.com/xunleii/fantastic-broccoli/utils/plugin"
 )
 
-var environment = plugin.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, 300*time.Millisecond)
+var environment = plugin.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, tick*5)
 
 func definitionFactoryImpl(_type interface{}) properties.ModuleDefinition {
 	var v interface{}
@@ -25,7 +23,7 @@ func definitionFactoryImpl(_type interface{}) properties.ModuleDefinition {
 	case *testing.B:
 		json.Unmarshal([]byte("{\"rpm.min\":0,\"rpm.max\":1200.0,\"rpm.step\":250,\"rpm.precision\":1000}"), &v)
 
-	// For pre testing
+		// For pre testing
 	case string:
 		json.Unmarshal([]byte(_type.(string)), &v)
 
@@ -38,7 +36,6 @@ func definitionFactoryImpl(_type interface{}) properties.ModuleDefinition {
 		Conf: v,
 	}
 }
-
 
 func preTestImpl(t *testing.T, log plugin.InternalLogger, module module.Module) {
 	failure_l58 := definitionFactoryImpl("{\"rpm.max\":1200}")
@@ -57,11 +54,14 @@ func postTestImpl(t *testing.T, log plugin.InternalLogger, nprocesses int, modul
 	for _, notification := range notifications {
 		o := notification.Content().(*object.DataObject)
 
-		utils.AssertEquals(t, 5, len(o.Value.(string)), func(a interface{}, b interface{}) bool { return a.(int) <= b.(int) })
+		utils.AssertEquals(t, 5, len(o.Value.(string)),
+			utils.PredicateDefinition{
+				func(a interface{}, b interface{}) bool { return a.(int) <= b.(int) },
+				"Expected <= %v, but get %v",
+			})
 		log("data notified : {%#v} from '%s'", o.Value, o.Module)
 	}
 }
-
 
 func TestModule(t *testing.T) {
 	plugin.Test(t, ExportModule(), environment)

@@ -12,16 +12,6 @@ import (
 	"github.com/xunleii/fantastic-broccoli/properties"
 )
 
-type rpmEngine struct {
-	min       float64
-	max       float64
-	step      float64
-	precision float64
-
-	rand    *rand.Rand
-	lastval int
-}
-
 type rpmGenerator struct {
 	logger        log.Logger
 	notifications *module.NotificationQueue
@@ -29,7 +19,7 @@ type rpmGenerator struct {
 
 	engine rpmEngine
 	data   chan float64
-	done   chan bool
+	done   chan struct{}
 }
 
 const tick = 50 * time.Millisecond
@@ -38,11 +28,28 @@ var (
 	debugModuleStarted    = log.NewArgumentBinder("module '%s' started")
 	debugModuleConfigured = log.NewArgumentBinder("module '%s' configured")
 	debugRpmCalculated    = log.NewArgumentBinder("new rpm calculated")
+	debugSessionStarted   = log.NewArgumentBinder("session started")
+	debugSessionStopped   = log.NewArgumentBinder("session stopped")
+	debugModuleStopped    = log.NewArgumentBinder("module '%s' stopped")
 )
 
-// - Start
+func (m *rpmGenerator) isSet(a interface{}, name string) (error, bool) {
+	if a != nil {
+		return nil, true
+	}
+
+	m.state = constant.States.Panic
+	return fmt.Errorf("%s is not set", name), false
+}
 
 func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) error {
+	if err, isSet := m.isSet(q, "notification queue"); !isSet {
+		return err
+	}
+	if err, isSet := m.isSet(l, "logger"); !isSet {
+		return err
+	}
+
 	m.logger = l
 	m.notifications = q
 	m.state = constant.States.Started
@@ -52,27 +59,21 @@ func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) error {
 	return nil
 }
 
-// - Configure
-
-func loadConfItem(items map[string]interface{}, itemName string) (float64, error) {
-	_, ok := items[itemName]
+func loadConfigurationItem(items map[string]interface{}, name string) (float64, error) {
+	_, ok := items[name]
 	if !ok {
-		return 0, fmt.Errorf("invalid value of '%s' in configuration", itemName)
+		return 0, fmt.Errorf("invalid value of '%s' in configuration", name)
 	}
 
-	v, ok := items[itemName].(float64)
+	v, ok := items[name].(float64)
 	if !ok {
-		return 0, fmt.Errorf("invalid value of '%s' in configuration", itemName)
+		return 0, fmt.Errorf("invalid value of '%s' in configuration", name)
 	}
 
 	return v, nil
 }
 
 func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
-	if m.state == constant.States.Stopped {
-		return nil
-	}
-
 	if properties.Conf == nil {
 		m.state = constant.States.Panic
 		return fmt.Errorf("configuration needed for this module. RTFM")
@@ -91,7 +92,7 @@ func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
 		"rpm.step":      &m.engine.step,
 		"rpm.precision": &m.engine.precision,
 	} {
-		if *v, err = loadConfItem(items, k); err != nil {
+		if *v, err = loadConfigurationItem(items, k); err != nil {
 			m.state = constant.States.Panic
 			return err
 		}
@@ -102,68 +103,52 @@ func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
 	return nil
 }
 
-// - Process
+func (m *rpmGenerator) calcRpm() (float64, int) {
+	rpm := 0.
+	nvalue := 0
 
-func (m *rpmGenerator) Process() error {
-	if m.state == constant.States.Stopped {
-		return nil
-	}
-
-	if m.state != constant.States.Working {
-		m.state = constant.States.Failed
-		return fmt.Errorf("session not started")
-	}
-
-	var rpm float64
-	var nvalue int
-
-aggregator:
 	for {
 		select {
 		case val := <-m.data:
 			rpm += val
 			nvalue++
 		default:
-			break aggregator
+			return rpm / float64(nvalue), nvalue
 		}
 	}
+}
 
-	rpm = rpm / float64(nvalue)
+func (m *rpmGenerator) Process() error {
+	if m.state != constant.States.Working || m.data == nil {
+		return fmt.Errorf("session not started")
+	}
+
+	rpm, nvalue := m.calcRpm()
 	m.logger.Debug(debugRpmCalculated.More("nb_value", nvalue).More("value", rpm))
 
 	m.notifications.NotifyData(m.Name(), "%f", rpm)
 	return nil
 }
 
-// - Stop
-
 func (m *rpmGenerator) Stop() error {
 	if m.state == constant.States.Working {
 		m.StopSession()
 	}
 
+	m.logger.Debug(debugModuleStopped.Bind(m.Name()))
 	m.state = constant.States.Stopped
 	return nil
 }
 
-// - Session
-
 func (m *rpmGenerator) StartSession() error {
-	if m.state == constant.States.Stopped {
-		return nil
-	}
-
-	if m.state == constant.States.Working {
+	if m.state == constant.States.Working || m.data != nil {
 		m.StopSession()
 		return fmt.Errorf("session already exist")
 	}
 
-	m.data = make(chan float64, 0xff)
-	m.done = make(chan bool, 1)
-
-	// TODO : Don't create multi goroutine !!! FIX IT
+	m.logger.Debug(debugSessionStarted)
+	m.data, m.done = make(chan float64, 0xff), make(chan struct{}, 1)
 	go func() {
-		defer log.NewLogger.Dev(nil).Debug(log.NewArgumentBinder("exit goroutine"))
 		defer close(m.data)
 
 		for {
@@ -183,23 +168,19 @@ func (m *rpmGenerator) StartSession() error {
 }
 
 func (m *rpmGenerator) StopSession() error {
-	if m.state == constant.States.Stopped {
-		return nil
-	}
-
-	if m.state != constant.States.Working {
+	if m.state != constant.States.Working || m.done == nil {
 		m.state = constant.States.Idle
 		return fmt.Errorf("session not started")
 	}
 
-	m.done <- true
 	close(m.done)
+	m.done = nil
+	m.data = nil
 
+	m.logger.Debug(debugSessionStopped)
 	m.state = constant.States.Idle
 	return nil
 }
-
-// - Properties
 
 func (m *rpmGenerator) Name() string {
 	return "RPM Generator"
@@ -207,25 +188,4 @@ func (m *rpmGenerator) Name() string {
 
 func (m *rpmGenerator) State() types.StateType {
 	return m.state
-}
-
-// - Engine
-
-func (e *rpmEngine) NewValue() float64 {
-	rpm := int(e.rand.Float64() * (e.max - e.min) * e.precision)
-
-	if e.lastval == 0 {
-		e.lastval = rpm
-		return e.min + float64(rpm/int(e.precision))
-	}
-
-	e.lastval = (int(e.lastval) - rpm) % int(e.step)
-
-	return e.min + float64(e.lastval/int(e.precision))
-}
-
-// - Exporter
-
-func ExportModule() module.Module {
-	return &rpmGenerator{}
 }

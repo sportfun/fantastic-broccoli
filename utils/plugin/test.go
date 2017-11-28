@@ -71,7 +71,7 @@ func testStartSession(t *testing.T, mod module.Module) {
 	// Process failure : no session started
 	err := mod.Process()
 	utils.AssertNotEquals(t, err, nil)
-	utils.AssertEquals(t, constant.States.Failed, mod.State())
+	utils.AssertEquals(t, constant.States.Idle, mod.State())
 
 	// Start session successfully
 	t.Logf("\t- Start new session\n")
@@ -100,8 +100,8 @@ func testProcess(t *testing.T, mod module.Module, env *environment) {
 		if err := mod.Process(); err != nil {
 			switch mod.State() {
 			case constant.States.Panic:
-				t.Fatalf("! Failure during processing - %s\n", err.Error())
-			case constant.States.Failed:
+				t.Fatalf("! Panic during processing - %s\n", err.Error())
+			case constant.States.Working:
 				t.Logf("! Failure during processing - %s\n", err.Error())
 			default:
 				t.Fatalf("! Failure during processing - %s (invalid module state (0x%X))\n", err.Error(), mod.State())
@@ -121,7 +121,7 @@ func testStopSession(t *testing.T, mod module.Module) {
 	// Process failure : no session started
 	err := mod.Process()
 	utils.AssertNotEquals(t, err, nil)
-	utils.AssertEquals(t, constant.States.Failed, mod.State())
+	utils.AssertEquals(t, constant.States.Idle, mod.State())
 
 	// Stopping session failure : session already stopped
 	err = mod.StopSession()
