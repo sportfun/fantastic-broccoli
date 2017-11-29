@@ -17,4 +17,4 @@ install:
   - go get ./...
 
 script:
-  - go test -p 10 -timeout 20m -v ./...;
+  - go test -timeout 20m -v ./...;
