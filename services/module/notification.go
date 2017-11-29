@@ -36,6 +36,7 @@ func netNotificationHandler(service *Service, n *notification.Notification) {
 		commandObject = obj
 	default:
 		service.logger.Error(invalidNetworkNotification.More("content", n.Content()))
+		return
 	}
 
 	switch commandObject.Command {

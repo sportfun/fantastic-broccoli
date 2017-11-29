@@ -1,11 +1,11 @@
 package utils
 
 import (
+	"fmt"
 	"path"
 	"reflect"
 	"runtime"
 	"testing"
-	"fmt"
 )
 
 type Predicate func(interface{}, interface{}) bool

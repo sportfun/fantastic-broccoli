@@ -12,9 +12,9 @@ import (
 	"time"
 	"fmt"
 	"github.com/graarh/golang-socketio"
-	"go.uber.org/zap"
 	"github.com/mitchellh/mapstructure"
 	"github.com/xunleii/fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/log"
 )
 
 type watcher struct {
@@ -22,8 +22,21 @@ type watcher struct {
 	Data   interface{}
 }
 
-func onConnectionReceiver(client *gosocketio.Channel, args interface{}, logger *zap.Logger, waitGroup *sync.WaitGroup) {
-	logger.Info(fmt.Sprintf("[Server] New client connected, client id is '%s' (%s)", client.Id(), client.Ip()))
+var (
+	infoClientConnected    = log.NewArgumentBinder("[Server] New client connected, client id is '%s' (%s)")
+	infoClientDisconnected = log.NewArgumentBinder("[Server] %s (%s) disconnected")
+	infoSendPacket         = log.NewArgumentBinder("[Server] Send packet to client '%s' (%v)")
+
+	infoCommandHandled = log.NewArgumentBinder("[Server] Command handled")
+	infoDataHandled    = log.NewArgumentBinder("[Server] Data handled")
+	infoErrorHandled   = log.NewArgumentBinder("[Server] Error handled")
+
+	errorUnknownPacketBody = log.NewArgumentBinder("[Server] Message handled, but unknown web packet body type")
+	errorUnknownPacketType = log.NewArgumentBinder("[Server] Message handled, but unknown packet type")
+)
+
+func onConnectionReceiver(client *gosocketio.Channel, args interface{}, logger log.Logger, waitGroup *sync.WaitGroup) {
+	logger.Info(infoClientConnected.Bind(client.Id(), client.Ip()))
 
 	packets := []webPacket{
 		{LinkId: "", Body: *object.NewCommandObject(constant.NetCommand.Link)},
@@ -33,7 +46,7 @@ func onConnectionReceiver(client *gosocketio.Channel, args interface{}, logger *
 
 	for _, packet := range packets {
 		time.Sleep(500 * time.Millisecond)
-		logger.Info(fmt.Sprintf("[Server] Send packet to client '%s' (%v)", client.Id(), packet))
+		logger.Info(infoSendPacket.Bind(client.Id(), packet))
 		client.Emit(constant.Channels.Command.String(), packet)
 	}
 
@@ -41,14 +54,14 @@ func onConnectionReceiver(client *gosocketio.Channel, args interface{}, logger *
 	waitGroup.Done()
 }
 
-func onDisconnectionReceiver(client *gosocketio.Channel, args interface{}, logger *zap.Logger) {
-	logger.Info(fmt.Sprintf("[Server] %s (%s) disconnected", client.Id(), client.Ip()))
+func onDisconnectionReceiver(client *gosocketio.Channel, args interface{}, logger log.Logger) {
+	logger.Info(infoClientDisconnected.Bind(client.Id(), client.Ip()))
 }
 
 func onGenericReceiver(
 	args interface{},
-	l *zap.Logger, watch *watcher,
-	receiver func(*zap.Logger, webPacket, *watcher) error,
+	l log.Logger, watch *watcher,
+	receiver func(log.Logger, webPacket, *watcher) error,
 ) {
 	var web webPacket
 
@@ -57,87 +70,67 @@ func onGenericReceiver(
 		watch.LinkId = web.LinkId
 
 		if err := receiver(l, web, watch); err != nil {
-			l.Warn("[Server] Message handled, but unknown web packet body type",
-				zap.String("packet_body", fmt.Sprintf("%v", web.Body)),
-				zap.String("reason", err.Error()),
-			)
+			l.Warn(errorUnknownPacketBody.More("packer_body", web.Body).More("reason", err.Error()))
 		}
 
 	default:
-		l.Warn("[Server] Message handled, but unknown packet type",
-			zap.String("packet", fmt.Sprintf("%v", args)),
-		)
+		l.Warn(errorUnknownPacketType.More("packet", args))
 	}
 }
 
-// TODO: Remove logger
-func onCommandReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
+func onCommandReceiver(logger log.Logger, web webPacket, watch *watcher) error {
 	var netObj object.CommandObject
 	if err := mapstructure.Decode(web.Body, &netObj); err != nil {
 		return err
 	}
 	watch.Data = netObj
 
-	logger.Info("[Server] Command handled",
-		zap.String("link_id", web.LinkId),
-		zap.String("command", netObj.Command.String()),
-		zap.String("args", fmt.Sprint(netObj.Args)),
-	)
+	logger.Info(infoCommandHandled.More("link_id", web.LinkId).More("command", netObj.Command.String()).More("args", netObj.Args))
 	return nil
 }
 
-// TODO: Remove logger
-func onDataReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
+func onDataReceiver(logger log.Logger, web webPacket, watch *watcher) error {
 	var dataObj object.DataObject
 	if err := mapstructure.Decode(web.Body, &dataObj); err != nil {
 		return err
 	}
 	watch.Data = dataObj
 
-	logger.Info("[Server] Data handled",
-		zap.String("link_id", web.LinkId),
-		zap.String("module", dataObj.Module),
-		zap.String("value", fmt.Sprint(dataObj.Value)),
-	)
+	logger.Info(infoDataHandled.More("link_id", web.LinkId).More("module", dataObj.Module).More("value", dataObj.Value))
 	return nil
 }
 
-// TODO: Remove logger
-func onErrorReceiver(logger *zap.Logger, web webPacket, watch *watcher) error {
+func onErrorReceiver(logger log.Logger, web webPacket, watch *watcher) error {
 	var errObj object.ErrorObject
 	if err := mapstructure.Decode(web.Body, &errObj); err != nil {
 		return err
 	}
 	watch.Data = errObj
 
-	logger.Info("[Server] Error handled",
-		zap.String("link_id", web.LinkId),
-		zap.String("origin", errObj.Origin),
-		zap.String("reason", fmt.Sprint(errObj.Reason)),
-	)
+	logger.Info(infoErrorHandled.More("link_id", web.LinkId).More("origin", errObj.Origin).More("reason", errObj.Reason))
 	return nil
 }
 
 // TODO: Remove logger
 func TestService(t *testing.T) {
-	l := def.Logger()
+	l := log.NewLogger.Dev(nil)
 	pkt := watcher{}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 
 	r := map[string]func(*gosocketio.Channel, interface{}){
-		gosocketio.OnConnection:    func(c *gosocketio.Channel, a interface{}) { onConnectionReceiver(c, a, l, &wg) },
-		gosocketio.OnDisconnection: func(c *gosocketio.Channel, a interface{}) { onDisconnectionReceiver(c, a, l) },
-		constant.Channels.Command:  func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onCommandReceiver) },
-		constant.Channels.Data:     func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onDataReceiver) },
-		constant.Channels.Error:    func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onErrorReceiver) },
+		gosocketio.OnConnection:            func(c *gosocketio.Channel, a interface{}) { onConnectionReceiver(c, a, l, &wg) },
+		gosocketio.OnDisconnection:         func(c *gosocketio.Channel, a interface{}) { onDisconnectionReceiver(c, a, l) },
+		constant.Channels.Command.String(): func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onCommandReceiver) },
+		constant.Channels.Data.String():    func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onDataReceiver) },
+		constant.Channels.Error.String():   func(c *gosocketio.Channel, a interface{}) { onGenericReceiver(a, l, &pkt, onErrorReceiver) },
 	}
 
 	go def.SocketIOServer(r)
 
 	s := Service{}
 	p := properties.Properties{
-		System: properties.systemDefinition{
+		System: properties.SystemDefinition{
 			LinkID:     "70ed3820-d487-42b9-92a8-ae9cbf55918c",
 			ServerIP:   "localhost",
 			ServerPort: 8080,
@@ -148,7 +141,7 @@ func TestService(t *testing.T) {
 
 	s.Start(q, l)
 	if err := s.Configure(&p); err != nil {
-		l.Fatal(err.Error())
+		t.Fatal(err)
 	}
 
 	wg.Wait()

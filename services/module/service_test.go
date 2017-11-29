@@ -7,7 +7,6 @@ import (
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/xunleii/fantastic-broccoli/common/types/service"
 	"github.com/xunleii/fantastic-broccoli/properties"
-	def "github.com/xunleii/fantastic-broccoli/utils/default"
 	"strconv"
 	"testing"
 	"github.com/xunleii/fantastic-broccoli/utils"
@@ -26,7 +25,7 @@ func (m *ModuleImpl) Start(queue *module.NotificationQueue, logger log.Logger) e
 	return nil
 }
 
-func (*ModuleImpl) Configure(properties *properties.Properties) error {
+func (*ModuleImpl) Configure(properties.ModuleDefinition) error {
 	return nil
 }
 
@@ -63,16 +62,16 @@ func (m *ModuleImpl) State() types.StateType {
 func TestService(t *testing.T) {
 	s := Service{}
 	ms := []module.Module{&ModuleImpl{}, &ModuleImpl{}}
-	p := properties.Properties{}
+	p := properties.ModuleDefinition{}
 	q := service.NewNotificationQueue()
 	b := notification.NewBuilder().From(constant.EntityNames.Services.Network).To(constant.EntityNames.Services.Module)
-	l := def.Logger()
+	l := log.NewLogger.Dev(nil)
 
 	s.Start(q, l)
 	// Manually configuration
 	for i, m := range ms {
 		m.Start(s.messages, l)
-		m.Configure(&p)
+		m.Configure(p)
 		s.modules[m.Name()+strconv.Itoa(i)] = m
 	}
 	s.state = constant.States.Idle
@@ -80,7 +79,7 @@ func TestService(t *testing.T) {
 	// Invalid: Session not started
 	s.Process()
 
-	q.Notify(b.With(*object.NewCommandObject(constant.NetCommand.StartSession)).Build())
+	q.Notify(b.With(object.NewCommandObject(constant.NetCommand.StartSession)).Build())
 
 	s.Process()
 	s.Process()

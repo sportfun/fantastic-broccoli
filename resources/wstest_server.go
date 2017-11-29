@@ -8,6 +8,7 @@ import (
 	"time"
 	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
 	"github.com/mitchellh/mapstructure"
+	"github.com/xunleii/fantastic-broccoli/common/types"
 )
 
 var online = map[string]*client{}
@@ -32,10 +33,10 @@ func OnConnection(c *gosocketio.Channel, a interface{}) {
 	for online[c.Id()].isOnline {
 		time.Sleep(5 * time.Second)
 		fmt.Printf("[%s] > send '%s'\n", c.Id(), constant.NetCommand.StartSession)
-		c.Emit(constant.Channels.Command, cmdToWSObj(constant.NetCommand.StartSession))
+		c.Emit(constant.Channels.Command.String(), cmdToWSObj(constant.NetCommand.StartSession.String()))
 		time.Sleep(10 * time.Second)
 		fmt.Printf("[%s] > send '%s'\n", c.Id(), constant.NetCommand.EndSession)
-		c.Emit(constant.Channels.Command, cmdToWSObj(constant.NetCommand.EndSession))
+		c.Emit(constant.Channels.Command.String(), cmdToWSObj(constant.NetCommand.EndSession.String()))
 		// Statistiques
 	}
 
@@ -102,7 +103,7 @@ func OnError(c *gosocketio.Channel, a interface{}) {
 }
 
 func cmdToWSObj(command string, args ...string) webPacket {
-	return webPacket{"XXXX-XXXX-XXXX-XXXX", object.CommandObject{Command: command, Args: args}}
+	return webPacket{"XXXX-XXXX-XXXX-XXXX", object.CommandObject{Command: types.CommandName(command), Args: args}}
 }
 
 func toWSObj(c *gosocketio.Channel, packet interface{}) interface{} {
@@ -120,8 +121,8 @@ func main() {
 	def.SocketIOServer(def.WSReceivers{
 		gosocketio.OnConnection:    OnConnection,
 		gosocketio.OnDisconnection: OnDisconnection,
-		constant.Channels.Command:  OnCommand,
-		constant.Channels.Data:     OnData,
-		constant.Channels.Error:    OnError,
+		constant.Channels.Command.String():  OnCommand,
+		constant.Channels.Data.String():     OnData,
+		constant.Channels.Error.String():    OnError,
 	})
 }
