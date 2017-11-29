@@ -30,7 +30,7 @@ A module is a sort of package combining one (or more) metric sensor(s) with a pl
 
 ### How to develop a module ?
 
-To develop a plugin, you must implement [Module](https://github.com/xunleii/fantastic-broccoli/blob/master/common/types/module/module.go).
+To develop a plugin, you must implement [Module](common/types/module/module.go).
 
 
 #### 1. Module management
@@ -44,7 +44,7 @@ Start(*NotificationQueue, log.Logger) error
 >  * `log.Logger` : logger instance, used for logging information
 >
 > ##### Error management
->  * If an error occurs, you need to return an `error` and set the `Panic` state ([see example](https://github.com/xunleii/fantastic-broccoli/blob/master/example/module_example.go#L78))
+>  * If an error occurs, you need to return an `error` and set the `Panic` state ([see example](example/module_example.go#L78))
 
 
 In contrast, the last method called before module shutdown is `Stop`. It close, defer, kill, eat, ... all values to stop cleanly the module. If a session is running, don't forget to close it (`StopSession`).
