@@ -26,5 +26,4 @@ install:
 
 script:
   - travis_retry go test -timeout 20m -v ./...
-  - chmod +x coveralls.bash
-  - ./coveralls.bash
+  - chmod +x coveralls.bash && ./coveralls.bash
