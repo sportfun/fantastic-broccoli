@@ -4,12 +4,20 @@ dist: trusty
 os:
   - linux
 
-matrix:
-  include:
-    - go: 1.8.x
-    - go: 1.9.2
+go:
+  - 1.8.x
+  - 1.9.2
+
+env:
+  - COVERALLS_TOKEN=4jtI1GlvWFpvY5KYoHzlMWDbNYM6hypCW
+
+script:
+  - go test -race -v ./...
+  - ./coveralls.bash
 
 before_install:
+  - go get github.com/mattn/goveralls
+  - go get github.com/modocache/gover
   - go vet ./...
 
 install:
@@ -17,4 +25,6 @@ install:
   - go get ./...
 
 script:
-  - go test -timeout 20m -v ./...;
+  - travis_retry go test -timeout 20m -v ./...
+  - chmod +x coveralls.bash
+  - ./coveralls.bash
