@@ -1,10 +1,10 @@
 package module
 
 import (
-	"github.com/xunleii/fantastic-broccoli/env"
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/notification"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
+	"github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/notification"
+	"github.com/sportfun/gakisitor/notification/object"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 	unknownNetworkCommand       = log.NewArgumentBinder("unknown network command (%s)")
 )
 
-func (service *Service) handle(n *notification.Notification) {
+func (service *Manager) handle(n *notification.Notification) {
 	service.logger.Debug(debugNotificationHandled.More("notification", *n))
 
 	switch string(n.From()) {
@@ -28,7 +28,7 @@ func (service *Service) handle(n *notification.Notification) {
 	}
 }
 
-func netNotificationHandler(service *Service, n *notification.Notification) {
+func netNotificationHandler(service *Manager, n *notification.Notification) {
 	var commandObject *object.CommandObject
 
 	switch obj := n.Content().(type) {

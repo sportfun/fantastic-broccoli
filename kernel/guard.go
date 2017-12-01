@@ -1,9 +1,9 @@
 package kernel
 
 import (
-	"github.com/xunleii/fantastic-broccoli/env"
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/service"
+	"github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/service"
 )
 
 type serviceErrorHandler func(*Core, service.Service, error)

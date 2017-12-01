@@ -3,7 +3,7 @@ package service
 import (
 	"sync"
 
-	"github.com/xunleii/fantastic-broccoli/notification"
+	"github.com/sportfun/gakisitor/notification"
 )
 
 type NotificationQueue struct {

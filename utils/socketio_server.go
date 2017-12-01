@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
 	"log"
@@ -8,9 +9,9 @@ import (
 )
 
 type WSReceiver func(*gosocketio.Channel, interface{})
-type WSReceivers map[string]func(*gosocketio.Channel, interface{})
+type WSReceivers map[string]WSReceiver
 
-func SocketIOServer(receivers WSReceivers) {
+func SocketIOServer(receivers WSReceivers, port int32) {
 	server := gosocketio.NewServer(transport.GetDefaultWebsocketTransport())
 
 	// create receiver
@@ -21,5 +22,5 @@ func SocketIOServer(receivers WSReceivers) {
 	// start server
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/", server)
-	log.Fatal(http.ListenAndServe(":8080", serveMux))
+	log.Print(http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux))
 }

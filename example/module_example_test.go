@@ -5,28 +5,33 @@ import (
 	"log"
 	"testing"
 
-	"github.com/xunleii/fantastic-broccoli/config"
-	"github.com/xunleii/fantastic-broccoli/module"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
-	"github.com/xunleii/fantastic-broccoli/utils"
-	"github.com/xunleii/fantastic-broccoli/utils/plugin"
+	"github.com/sportfun/gakisitor/config"
+	"github.com/sportfun/gakisitor/module"
+	"github.com/sportfun/gakisitor/notification/object"
+	"github.com/sportfun/gakisitor/utils/module_test"
+	. "github.com/onsi/gomega"
+	"github.com/sportfun/gakisitor/notification"
 )
 
-var environment = plugin.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, tick*5)
+var environment = module_test.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, tick*5)
 
-func definitionFactoryImpl(_type interface{}) *config.ModuleDefinition {
+func TestModule(t *testing.T) {
+	module_test.Test(t, ExportModule(), environment)
+}
+
+func definitionFactoryImpl(obj interface{}) *config.ModuleDefinition {
 	var v interface{}
 
-	switch _type.(type) {
-	// For testing engine
+	switch obj.(type) {
 	case *testing.T:
 		json.Unmarshal([]byte("{\"rpm.min\":120,\"rpm.max\":500,\"rpm.step\":25,\"rpm.precision\":10}"), &v)
 	case *testing.B:
 		json.Unmarshal([]byte("{\"rpm.min\":0,\"rpm.max\":1200.0,\"rpm.step\":250,\"rpm.precision\":1000}"), &v)
 
-		// For pre testing
 	case string:
-		json.Unmarshal([]byte(_type.(string)), &v)
+		json.Unmarshal([]byte(obj.(string)), &v)
+	case nil:
+		v = nil
 
 	default:
 		log.Fatalf("unknown %#v, impossible to generate module definition", v)
@@ -38,36 +43,25 @@ func definitionFactoryImpl(_type interface{}) *config.ModuleDefinition {
 	}
 }
 
-func preTestImpl(t *testing.T, log plugin.InternalLogger, module module.Module) {
-	failure_l58 := definitionFactoryImpl("{\"rpm.max\":1200}")
-	failure_l63 := definitionFactoryImpl("{\"rpm.min\":\"0\",\"rpm.max\":\"1200\",\"rpm.step\":\"250\",\"rpm.precision\":\"1000\"}")
+func preTestImpl(t *testing.T, module module.Module) {
+	failure_l57 := definitionFactoryImpl("{\"rpm.max\":1200}")
+	failure_l62 := definitionFactoryImpl("{\"rpm.min\":\"0\",\"rpm.max\":\"1200\",\"rpm.step\":\"250\",\"rpm.precision\":\"1000\"}")
+	failure_l70 := definitionFactoryImpl(nil)
 
-	// failure at l.58
-	utils.AssertNotEquals(t, nil, module.Configure(failure_l58))
-	// failure at l.63
-	utils.AssertNotEquals(t, nil, module.Configure(failure_l63))
+	Expect(module.Configure(failure_l57)).Should(module_test.ExpectFor(module).Panic()) // failure at l.57
+	Expect(module.Configure(failure_l62)).Should(module_test.ExpectFor(module).Panic()) // failure at l.63
+	Expect(module.Configure(failure_l70)).Should(module_test.ExpectFor(module).Panic()) // failure at l.70
 }
 
-func postTestImpl(t *testing.T, logf plugin.InternalLogger, nprocesses int, module module.Module, queue *module.NotificationQueue) {
+func postTestImpl(t *testing.T, nprocesses int, module module.Module, queue *module.NotificationQueue) {
 	notifications := queue.Notifications()
 
-	utils.AssertEquals(t, nprocesses, len(notifications))
-	for _, notification := range notifications {
-		o := notification.Content().(*object.DataObject)
+	Expect(notifications).Should(HaveLen(nprocesses))
 
-		utils.AssertEquals(t, 5, len(o.Value.(string)),
-			utils.PredicateDefinition{
-				Predicate: func(a interface{}, b interface{}) bool { return a.(int) <= b.(int) },
-				Message:   "Expected <= %v, but get %v",
-			})
-		logf("data notified : {%#v} from '%s'", o.Value, o.Module)
+	for _, n := range notifications {
+		Expect(n).Should(WithTransform(
+			func(n *notification.Notification) string { return n.Content().(*object.DataObject).Value.(string) },
+			HaveLen(10),
+		))
 	}
-}
-
-func TestModule(t *testing.T) {
-	plugin.Test(t, ExportModule(), environment)
-}
-
-func TestBenchmarkModule(t *testing.T) {
-	plugin.Benchmark(t, ExportModule(), environment)
 }

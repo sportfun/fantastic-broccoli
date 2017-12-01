@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"github.com/graarh/golang-socketio"
 	"github.com/mitchellh/mapstructure"
-	"github.com/xunleii/fantastic-broccoli/.constant"
-	"github.com/xunleii/fantastic-broccoli/common/types"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
-	def "github.com/xunleii/fantastic-broccoli/utils/default"
+	"github.com/sportfun/gakisitor/.constant"
+	"github.com/sportfun/gakisitor/common/types"
+	"github.com/sportfun/gakisitor/notification/object"
+	def "github.com/sportfun/gakisitor/utils/default"
 	"time"
 )
 

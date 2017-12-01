@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 
-	"github.com/xunleii/fantastic-broccoli/kernel"
+	"github.com/sportfun/gakisitor/kernel"
 
-	_ "github.com/xunleii/fantastic-broccoli/service/network"
+	_ "github.com/sportfun/gakisitor/service/network"
 
-	_ "github.com/xunleii/fantastic-broccoli/service/module"
+	_ "github.com/sportfun/gakisitor/service/module"
 )
 
 var Core kernel.Core

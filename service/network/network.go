@@ -6,15 +6,15 @@ import (
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
 
-	"github.com/xunleii/fantastic-broccoli/config"
-	"github.com/xunleii/fantastic-broccoli/env"
-	"github.com/xunleii/fantastic-broccoli/kernel"
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
-	"github.com/xunleii/fantastic-broccoli/service"
+	"github.com/sportfun/gakisitor/config"
+	"github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/kernel"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/notification/object"
+	"github.com/sportfun/gakisitor/service"
 )
 
-type Service struct {
+type Network struct {
 	state  byte
 	linkId string
 
@@ -24,10 +24,10 @@ type Service struct {
 }
 
 func init() {
-	kernel.RegisterService(&Service{})
+	kernel.RegisterService(&Network{})
 }
 
-func (service *Service) Start(notifications *service.NotificationQueue, logger log.Logger) error {
+func (service *Network) Start(notifications *service.NotificationQueue, logger log.Logger) error {
 	service.state = env.StartedState
 
 	service.notifications = notifications
@@ -36,8 +36,13 @@ func (service *Service) Start(notifications *service.NotificationQueue, logger l
 	return nil
 }
 
-func (service *Service) Configure(config *config.GAkisitorConfig) error {
+func (service *Network) Configure(config *config.GAkisitorConfig) error {
 	var err error
+
+	if config == nil {
+		service.state = env.PanicState
+		return fmt.Errorf("configuration not defined")
+	}
 
 	service.linkId = config.System.LinkID
 	service.client, err = gosocketio.Dial(
@@ -45,6 +50,7 @@ func (service *Service) Configure(config *config.GAkisitorConfig) error {
 		transport.GetDefaultWebsocketTransport(),
 	)
 	if err != nil {
+		service.state = env.PanicState
 		return err
 	}
 
@@ -55,6 +61,7 @@ func (service *Service) Configure(config *config.GAkisitorConfig) error {
 			service.emit(OnCommand, object.NewCommandObject(env.StateCmd, "started"))
 
 	if !initiated {
+		service.state = env.PanicState
 		return fmt.Errorf("impossible to initialise network")
 	}
 
@@ -62,7 +69,7 @@ func (service *Service) Configure(config *config.GAkisitorConfig) error {
 	return nil
 }
 
-func (service *Service) Process() error {
+func (service *Network) Process() error {
 	service.state = env.WorkingState
 	for _, n := range service.notifications.Notifications(env.NetworkServiceEntity) {
 		if err := service.handle(n); err != nil {
@@ -73,7 +80,7 @@ func (service *Service) Process() error {
 	return nil
 }
 
-func (service *Service) Stop() error {
+func (service *Network) Stop() error {
 	service.state = env.StoppedState
 
 	if service.client != nil {
@@ -82,10 +89,10 @@ func (service *Service) Stop() error {
 	return nil
 }
 
-func (service *Service) Name() string {
+func (service *Network) Name() string {
 	return env.NetworkServiceEntity
 }
 
-func (service *Service) State() byte {
+func (service *Network) State() byte {
 	return service.state
 }

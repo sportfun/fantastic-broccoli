@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"os"
-
 	"github.com/fsnotify/fsnotify"
+	"fmt"
 )
 
 // RawConfig is a type for unknowing configuration
@@ -49,6 +48,7 @@ type LogDefinition struct {
 	Format   string `json:"format"`
 	Encoding string `json:"encoding"`
 	Level    string `json:"level"`
+	Raw      RawConfig
 }
 
 // FilePtr return a pointer of the configuration file path
@@ -62,36 +62,34 @@ func (p *GAkisitorConfig) IsLoaded() bool {
 }
 
 // Load performs the loading file and unmarshal it into itself
-func (p *GAkisitorConfig) Load() {
+func (p *GAkisitorConfig) Load() error {
 	p.isLoaded = false
 
 	raw, err := ioutil.ReadFile(p.file)
 	if err != nil {
-		return
+		return fmt.Errorf("impossible to read the configuration file: %s", err.Error())
 	}
 
 	if err := json.Unmarshal(raw, p); err != nil {
-		log.SetOutput(os.Stderr)
-		log.Printf("impossible to unmarshal the configuration file: %s", err.Error())
-		log.SetOutput(os.Stdout)
-		return
+		return fmt.Errorf("impossible to unmarshal the configuration file: %s", err.Error())
 	}
 	p.isLoaded = true
+	return nil
 }
 
 // WaitReconfiguration wait until the configuration file was
 // modified. Next, this function reload the file
 // TODO: Add timeout
-func (p *GAkisitorConfig) WaitReconfiguration() {
+func (p *GAkisitorConfig) WaitReconfiguration() error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		log.Fatalf("impossible to load or monitor file '%s': '%s'", p.file, err.Error())
+		return fmt.Errorf("impossible to load or monitor file '%s': '%s'", p.file, err.Error())
 	}
 	defer watcher.Close()
 
 	err = watcher.Add(p.file)
 	if err != nil {
-		log.Fatalf("impossible to load or monitor file '%s': '%s'", p.file, err.Error())
+		return fmt.Errorf("impossible to load or  monitor file '%s': '%s'", p.file, err.Error())
 	}
 
 	for {
@@ -99,7 +97,7 @@ func (p *GAkisitorConfig) WaitReconfiguration() {
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				p.Load()
-				return
+				return nil
 			}
 		case err := <-watcher.Errors:
 			log.Printf("error during file monitoring: '%s'", err.Error())

@@ -6,8 +6,8 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/xunleii/fantastic-broccoli/notification"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
+	"github.com/sportfun/gakisitor/notification"
+	"github.com/sportfun/gakisitor/notification/object"
 )
 
 var builder = notification.NewBuilder().

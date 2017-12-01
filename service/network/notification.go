@@ -3,10 +3,10 @@ package network
 import (
 	"fmt"
 
-	"github.com/xunleii/fantastic-broccoli/env"
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/notification"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
+	"github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/notification"
+	"github.com/sportfun/gakisitor/notification/object"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 	unknownContentType          = log.NewArgumentBinder("unknown content type")
 )
 
-func (service *Service) handle(n *notification.Notification) error {
+func (service *Network) handle(n *notification.Notification) error {
 	service.logger.Debug(debugNotificationHandled.More("notification", *n))
 
 	switch string(n.From()) {
@@ -29,7 +29,7 @@ func (service *Service) handle(n *notification.Notification) error {
 	return nil
 }
 
-func defaultNotificationHandler(service *Service, n *notification.Notification) error {
+func defaultNotificationHandler(service *Network, n *notification.Notification) error {
 	var succeed = true
 
 	switch o := n.Content().(type) {

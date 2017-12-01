@@ -1,10 +1,10 @@
 package kernel
 
 import (
-	"github.com/xunleii/fantastic-broccoli/env"
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/notification"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
+	"github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/notification"
+	"github.com/sportfun/gakisitor/notification/object"
 )
 
 var (

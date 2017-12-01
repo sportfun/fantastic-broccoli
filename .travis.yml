@@ -8,22 +8,21 @@ go:
   - 1.8.x
   - 1.9.2
 
-env:
-  - COVERALLS_TOKEN=4jtI1GlvWFpvY5KYoHzlMWDbNYM6hypCW
-
-script:
-  - go test -race -v ./...
-  - ./coveralls.bash
-
-before_install:
-  - go get github.com/mattn/goveralls
-  - go get github.com/modocache/gover
-  - go vet ./...
-
 install:
-  - export CI=TRAVIS
+  - go get -u github.com/schrej/godacov
+  - go get -u github.com/haya14busa/goverage
   - go get ./...
 
+before_script:
+  - curl -H User-Agent:bot -H Content-Type:application/json -d "{\"username\":\"Travis CI\",\"avatar_url\":\"http://i.imgur.com/kOfUGNS.png\",\"embeds\":[{\"color\":15588927,\"author\":{\"name\":\"Build $TRAVIS_JOB_NUMBER - Pending\",\"url\":\"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"},\"title\":\"$TRAVIS_REPO_SLUG:$TRAVIS_BRANCH\",\"url\":\"https://github.com/$TRAVIS_REPO_SLUG/tree/$TRAVIS_BRANCH\",\"description\":\"[${TRAVIS_COMMIT:0:7}](https://github.com/$TRAVIS_REPO_SLUG/commit/$TRAVIS_COMMIT) $TRAVIS_COMMIT_MESSAGE\",\"footer\":{\"text\":\"$(date +%c)\"}}]}" https://discordapp.com/api/webhooks/$DISCORD_WEBHOOK_CHANNEL_ID/$DISCORD_WEBHOOK_TOKEN
+
 script:
-  - travis_retry go test -timeout 20m -v ./...
-  - chmod +x coveralls.bash && ./coveralls.bash
+  - travis_retry go test -timeout 5m -v ./...
+  - goverage -v -coverprofile=coverage.out ./...
+  - godacov -t $CODACY_TOKEN -r ./coverage.out -c $TRAVIS_COMMIT
+
+after_success:
+  - curl -H User-Agent:bot -H Content-Type:application/json -d "{\"username\":\"Travis CI\",\"avatar_url\":\"http://i.imgur.com/kOfUGNS.png\",\"embeds\":[{\"color\":3779158,\"author\":{\"name\":\"Build $TRAVIS_JOB_NUMBER - Passed/Fixed\",\"url\":\"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"},\"title\":\"$TRAVIS_REPO_SLUG:$TRAVIS_BRANCH\",\"url\":\"https://github.com/$TRAVIS_REPO_SLUG/tree/$TRAVIS_BRANCH\",\"description\":\"[${TRAVIS_COMMIT:0:7}](https://github.com/$TRAVIS_REPO_SLUG/commit/$TRAVIS_COMMIT) $TRAVIS_COMMIT_MESSAGE\",\"footer\":{\"text\":\"$(date +%c)\"}}]}" https://discordapp.com/api/webhooks/$DISCORD_WEBHOOK_CHANNEL_ID/$DISCORD_WEBHOOK_TOKEN
+
+after_failure:
+  - curl -H User-Agent:bot -H Content-Type:application/json -d "{\"username\":\"Travis CI\",\"avatar_url\":\"http://i.imgur.com/kOfUGNS.png\",\"embeds\":[{\"color\":14370117,\"author\":{\"name\":\"Build $TRAVIS_JOB_NUMBER - Failed/Broken/Still Failing\",\"url\":\"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"},\"title\":\"$TRAVIS_REPO_SLUG:$TRAVIS_BRANCH\",\"url\":\"https://github.com/$TRAVIS_REPO_SLUG/tree/$TRAVIS_BRANCH\",\"description\":\"[${TRAVIS_COMMIT:0:7}](https://github.com/$TRAVIS_REPO_SLUG/commit/$TRAVIS_COMMIT) $TRAVIS_COMMIT_MESSAGE\",\"footer\":{\"text\":\"$(date +%c)\"}}]}" https://discordapp.com/api/webhooks/$DISCORD_WEBHOOK_CHANNEL_ID/$DISCORD_WEBHOOK_TOKEN

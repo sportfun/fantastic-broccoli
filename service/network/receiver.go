@@ -4,10 +4,10 @@ import (
 	"github.com/graarh/golang-socketio"
 	"github.com/mitchellh/mapstructure"
 
-	"github.com/xunleii/fantastic-broccoli/env"
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/notification"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
+	"github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/notification"
+	"github.com/sportfun/gakisitor/notification/object"
 )
 
 var serviceCommandMapper = map[string]string{
@@ -16,54 +16,61 @@ var serviceCommandMapper = map[string]string{
 	env.EndSessionCmd:   env.ModuleServiceEntity,
 }
 
-var (
-	debugDisconnectionHandled = log.NewArgumentBinder("disconnection handled")
-	debugCommandHandled       = log.NewArgumentBinder("command packet handled")
-	debugCommand              = log.NewArgumentBinder("valid command handled")
+const (
+	debugDisconnectionHandled = "disconnection handled"
+	debugCommandHandled       = "command packet handled"
+	debugCommand              = "valid command handled"
 
-	successfullyConnected = log.NewArgumentBinder("successfully connected to the server")
-	unknownPacketType     = log.NewArgumentBinder("unknown packet type")
-	unknownCommand        = log.NewArgumentBinder("unknown command '%s'")
-	unknownWebPacketBody  = log.NewArgumentBinder("unknown web packet body type")
+	successfullyConnected = "successfully connected to the server"
+	unknownPacketType     = "unknown packet type"
+	unknownCommand        = "unknown command '%s'"
+	unknownWebPacketBody  = "unknown web packet body type"
 )
 
-func (service *Service) onConnectionHandler(client *gosocketio.Channel, args interface{}) {
-	service.logger.Info(successfullyConnected.More("session_id", client.Id()))
+func (service *Network) onConnectionHandler(client *gosocketio.Channel, args interface{}) {
+	service.logger.Info(log.NewArgumentBinder(successfullyConnected).More("session_id", client.Id()))
 }
 
-func (service *Service) onDisconnectionHandler(client *gosocketio.Channel) {
-	service.logger.Debug(debugDisconnectionHandled.More("session_id", client.Id()))
+func (service *Network) onDisconnectionHandler(client *gosocketio.Channel) {
+	service.logger.Debugf(debugDisconnectionHandled)
 
 	if service.state != env.StoppedState {
 		service.notifications.Notify(notification.NewNotification(service.Name(), env.CoreEntity, env.RestartServiceCmd))
 	}
 }
 
-func (service *Service) onCommandChanHandler(client *gosocketio.Channel, args interface{}) {
-	service.logger.Debug(debugCommandHandled.More("session_id", client.Id()).More("packet", args))
+func (service *Network) onCommandChanHandler(client *gosocketio.Channel, args interface{}) {
+	service.logger.Debug(log.NewArgumentBinder(debugCommandHandled).More("session_id", client.Id()).More("packet", args))
 
-	var web webPacket
+	var web websocket
 
 	switch {
 	case mapstructure.Decode(args, &web) == nil:
+		if web.LinkId == "" {
+			break
+		}
 		webPacketHandler(service, web)
-	default:
-		service.logger.Warn(unknownPacketType.More("session_id", client.Id()))
+		return
 	}
+	service.logger.Warn(log.NewArgumentBinder(unknownPacketType).More("session_id", client.Id()))
 }
 
-func webPacketHandler(service *Service, packet webPacket) {
+func webPacketHandler(service *Network, packet websocket) {
 	var netObj object.CommandObject
 
 	switch {
 	case mapstructure.Decode(packet.Body, &netObj) == nil:
+		if netObj.Command == "" {
+			break
+		}
+
 		if target, exist := serviceCommandMapper[netObj.Command]; exist {
-			service.logger.Debug(debugCommand.More("target", target).More("object", netObj))
+			service.logger.Debug(log.NewArgumentBinder(debugCommand).More("target", target).More("object", netObj))
 			service.notifications.Notify(notification.NewNotification(service.Name(), target, netObj))
 		} else {
-			service.logger.Warn(unknownCommand.Bind(netObj.Command))
+			service.logger.Warnf(unknownCommand, netObj.Command)
 		}
-	default:
-		service.logger.Warn(unknownWebPacketBody.More("packet_body", netObj))
+		return
 	}
+	service.logger.Warn(log.NewArgumentBinder(unknownWebPacketBody).More("packet_body", netObj))
 }

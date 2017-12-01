@@ -1,6 +1,6 @@
 package main
 
-import "github.com/xunleii/fantastic-broccoli/module"
+import "github.com/sportfun/gakisitor/module"
 
 func ExportModule() module.Module {
 	return &rpmGenerator{}

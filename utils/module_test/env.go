@@ -1,17 +1,17 @@
-package plugin
+package module_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/xunleii/fantastic-broccoli/config"
-	"github.com/xunleii/fantastic-broccoli/module"
+	"github.com/sportfun/gakisitor/config"
+	"github.com/sportfun/gakisitor/module"
+	"github.com/sportfun/gakisitor/log"
 )
 
-type InternalLogger func(format string, a ...interface{})
 type definitionFactory func(interface{}) *config.ModuleDefinition
-type preTest func(*testing.T, InternalLogger, module.Module)
-type postTest func(*testing.T, InternalLogger, int, module.Module, *module.NotificationQueue)
+type preTest func(*testing.T, module.Module)
+type postTest func(*testing.T, int, module.Module, *module.NotificationQueue)
 
 type environment struct {
 	definition definitionFactory
@@ -21,6 +21,10 @@ type environment struct {
 		pre  preTest
 		post postTest
 	}
+
+	module module.Module
+	queue  *module.NotificationQueue
+	logger log.Logger
 }
 
 // Create new test environment for module

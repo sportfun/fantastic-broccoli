@@ -1,17 +1,17 @@
-package plugin
+package module_test
 
 import (
 	"testing"
 	"time"
 
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/module"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/module"
 )
 
 // Custom module benchmark tool
-func Benchmark(t *testing.T, mod module.Module, env *environment) {
+func Benchmark(root *testing.B, mod module.Module, env *environment) {
 
-	t.Logf("--- Execute Benchmark ---")
+	root.Logf("--- Execute Benchmark ---")
 	bench := testing.Benchmark(func(b *testing.B) {
 
 		// Init environment
@@ -20,16 +20,16 @@ func Benchmark(t *testing.T, mod module.Module, env *environment) {
 
 		// Start & Configure module
 		if err := mod.Start(queue, logger); err != nil {
-			t.Fatalf("! Failure during module starting - %s\n", err.Error())
+			root.Fatalf("! Failure during module starting - %s\n", err.Error())
 		}
 
 		if err := mod.Configure(env.definition(b)); err != nil {
-			t.Fatalf("! Failure during module configuration - %s\n", err.Error())
+			root.Fatalf("! Failure during module configuration - %s\n", err.Error())
 		}
 
 		// Start bench
 		if err := mod.StartSession(); err != nil {
-			t.Fatalf("! Failure during starting session - %s\n", err.Error())
+			root.Fatalf("! Failure during starting session - %s\n", err.Error())
 		}
 
 		b.ResetTimer()
@@ -37,7 +37,7 @@ func Benchmark(t *testing.T, mod module.Module, env *environment) {
 		for i := 0; i < b.N; i++ {
 			if err := mod.Process(); err != nil {
 				// TODO: Failure only if critical (v.1.X)
-				t.Logf("! Failure during processing - %s\n", err.Error())
+				root.Logf("! Failure during processing - %s\n", err.Error())
 			}
 			time.Sleep(env.tick)
 		}
@@ -48,10 +48,10 @@ func Benchmark(t *testing.T, mod module.Module, env *environment) {
 
 	})
 
-	t.Logf("--- Benchmark results ---")
+	root.Logf("--- Benchmark results ---")
 
 	realTime := bench.T - env.tick*time.Duration(bench.N)
 	opPerSecond := time.Second / (realTime / time.Duration(bench.N))
-	t.Logf("time: %dns\t\t\t%d ns/op (%d ops)", realTime, realTime/time.Duration(bench.N), opPerSecond)
-	t.Logf("memory: %dB\t\t\t%d allocs", bench.MemBytes, bench.MemAllocs)
+	root.Logf("time: %dns\t\t\t%d ns/op (%d op/s)", realTime, realTime/time.Duration(bench.N), opPerSecond)
+	root.Logf("memory: %dB\t\t\t%d allocs", bench.MemBytes, bench.MemAllocs)
 }

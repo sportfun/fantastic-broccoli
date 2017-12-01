@@ -1,11 +1,11 @@
 # GAkisitor [(SportsFun)](https://charlestati.github.io/eip-showcase/index.html)
 
-[![Version](https://img.shields.io/badge/version-alpha-orange.svg)](https://github.com/xunleii/fantastic-broccoli/milestones)
+[![Version](https://img.shields.io/badge/version-alpha-orange.svg)](https://github.com/sportfun/gakisitor/milestones)
 [![License](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
-[![GoDoc](https://godoc.org/github.com/xunleii/fantastic-broccoli?status.svg)](https://godoc.org/github.com/xunleii/fantastic-broccoli)
-[![Build Status](https://travis-ci.org/xunleii/fantastic-broccoli.svg?branch=master)](https://travis-ci.org/xunleii/fantastic-broccoli)
-[![Coverage Status](https://coveralls.io/repos/github/xunleii/fantastic-broccoli/badge.svg?branch=master)](https://coveralls.io/github/xunleii/fantastic-broccoli?branch=master)
-[![Go Report Card](https://goreportcard.com/badge/github.com/xunleii/fantastic-broccoli)](https://goreportcard.com/report/github.com/xunleii/fantastic-broccoli)
+[![GoDoc](https://godoc.org/github.com/sportfun/gakisitor?status.svg)](https://godoc.org/github.com/sportfun/gakisitor)
+[![Build Status](https://travis-ci.org/sportfun/gakisitor.svg?branch=master)](https://travis-ci.org/sportfun/gakisitor)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/9b630adf92f84adfaf89ceed51352304)](https://www.codacy.com/app/xunleii/gakisitor?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=sportfun/gakisitor&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/9b630adf92f84adfaf89ceed51352304)](https://www.codacy.com/app/xunleii/gakisitor?utm_source=github.com&utm_medium=referral&utm_content=sportfun/gakisitor&utm_campaign=Badge_Coverage)
 
 GAkisitor is a Go service for connecting sports equipment to a SportsFun game session
 

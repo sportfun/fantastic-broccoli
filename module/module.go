@@ -1,8 +1,8 @@
 package module
 
 import (
-	"github.com/xunleii/fantastic-broccoli/config"
-	"github.com/xunleii/fantastic-broccoli/log"
+	"github.com/sportfun/gakisitor/config"
+	"github.com/sportfun/gakisitor/log"
 )
 
 type Module interface {

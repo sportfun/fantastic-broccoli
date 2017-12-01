@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/xunleii/fantastic-broccoli/config"
-	"github.com/xunleii/fantastic-broccoli/env"
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/module"
+	"github.com/sportfun/gakisitor/config"
+	"github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/module"
 )
 
 type rpmGenerator struct {
@@ -32,21 +32,14 @@ var (
 	debugModuleStopped    = log.NewArgumentBinder("module '%s' stopped")
 )
 
-func (m *rpmGenerator) isSet(a interface{}, name string) (error, bool) {
-	if a != nil {
-		return nil, true
-	}
-
-	m.state = env.PanicState
-	return fmt.Errorf("%s is not set", name), false
-}
-
 func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) error {
-	if err, isSet := m.isSet(q, "notification queue"); !isSet {
-		return err
+	if q == nil {
+		m.state = env.PanicState
+		return fmt.Errorf("notification queue is not set")
 	}
-	if err, isSet := m.isSet(l, "logger"); !isSet {
-		return err
+	if l == nil {
+		m.state = env.PanicState
+		return fmt.Errorf("logger is not set")
 	}
 
 	m.logger = l
@@ -146,16 +139,18 @@ func (m *rpmGenerator) StartSession() error {
 	}
 
 	m.logger.Debug(debugSessionStarted)
-	m.data, m.done = make(chan float64, 0xff), make(chan struct{}, 1)
+	data, done := make(chan float64, 0xff), make(chan struct{}, 1)
+	m.data, m.done = data, done
+
 	go func() {
-		defer close(m.data)
+		defer close(data)
 
 		for {
 			select {
-			case <-m.done:
+			case <-done:
 				return
 			default:
-				m.data <- m.engine.NewValue()
+				data <- m.engine.NewValue()
 			}
 
 			time.Sleep(tick)
