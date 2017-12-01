@@ -4,7 +4,9 @@ import (
 	"flag"
 
 	"github.com/xunleii/fantastic-broccoli/kernel"
+
 	_ "github.com/xunleii/fantastic-broccoli/service/network"
+
 	_ "github.com/xunleii/fantastic-broccoli/service/module"
 )
 

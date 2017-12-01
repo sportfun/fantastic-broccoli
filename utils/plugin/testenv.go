@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xunleii/fantastic-broccoli/module"
 	"github.com/xunleii/fantastic-broccoli/config"
+	"github.com/xunleii/fantastic-broccoli/module"
 )
 
 type InternalLogger func(format string, a ...interface{})

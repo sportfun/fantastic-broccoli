@@ -1,9 +1,9 @@
 package kernel
 
 import (
+	"github.com/xunleii/fantastic-broccoli/env"
 	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/service"
-	"github.com/xunleii/fantastic-broccoli/env"
 )
 
 type serviceErrorHandler func(*Core, service.Service, error)

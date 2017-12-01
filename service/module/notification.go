@@ -1,10 +1,10 @@
 package module
 
 import (
+	"github.com/xunleii/fantastic-broccoli/env"
 	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/notification"
 	"github.com/xunleii/fantastic-broccoli/notification/object"
-	"github.com/xunleii/fantastic-broccoli/env"
 )
 
 var (

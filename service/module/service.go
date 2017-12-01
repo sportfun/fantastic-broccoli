@@ -6,12 +6,12 @@ import (
 
 	"github.com/xunleii/fantastic-broccoli/config"
 	"github.com/xunleii/fantastic-broccoli/env"
+	"github.com/xunleii/fantastic-broccoli/kernel"
 	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/module"
 	"github.com/xunleii/fantastic-broccoli/notification"
 	"github.com/xunleii/fantastic-broccoli/notification/object"
 	"github.com/xunleii/fantastic-broccoli/service"
-	"github.com/xunleii/fantastic-broccoli/kernel"
 )
 
 var netBuilder = notification.NewBuilder().

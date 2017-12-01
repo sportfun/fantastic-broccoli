@@ -13,7 +13,7 @@ type pluginError byte
 type moduleError func(*Service, module.Module, error, *object.ErrorObject)
 
 const (
-	NoModule      = iota
+	NoModule = iota
 	PluginLoading
 	SymbolLoading
 	ModuleLoading

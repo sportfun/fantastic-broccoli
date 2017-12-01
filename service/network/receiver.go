@@ -4,10 +4,10 @@ import (
 	"github.com/graarh/golang-socketio"
 	"github.com/mitchellh/mapstructure"
 
+	"github.com/xunleii/fantastic-broccoli/env"
 	"github.com/xunleii/fantastic-broccoli/log"
 	"github.com/xunleii/fantastic-broccoli/notification"
 	"github.com/xunleii/fantastic-broccoli/notification/object"
-	"github.com/xunleii/fantastic-broccoli/env"
 )
 
 var serviceCommandMapper = map[string]string{

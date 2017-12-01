@@ -5,10 +5,10 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/module"
 	"github.com/xunleii/fantastic-broccoli/config"
 	"github.com/xunleii/fantastic-broccoli/env"
+	"github.com/xunleii/fantastic-broccoli/log"
+	"github.com/xunleii/fantastic-broccoli/module"
 )
 
 type rpmGenerator struct {

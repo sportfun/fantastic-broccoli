@@ -2,18 +2,20 @@ package network
 
 import (
 	"fmt"
-	"github.com/graarh/golang-socketio"
-	"github.com/mitchellh/mapstructure"
-	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/notification"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
-	"github.com/xunleii/fantastic-broccoli/config"
-	"github.com/xunleii/fantastic-broccoli/service"
-	"github.com/xunleii/fantastic-broccoli/utils"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/graarh/golang-socketio"
+	"github.com/mitchellh/mapstructure"
+
+	"github.com/xunleii/fantastic-broccoli/config"
 	"github.com/xunleii/fantastic-broccoli/env"
+	"github.com/xunleii/fantastic-broccoli/log"
+	"github.com/xunleii/fantastic-broccoli/notification"
+	"github.com/xunleii/fantastic-broccoli/notification/object"
+	"github.com/xunleii/fantastic-broccoli/service"
+	"github.com/xunleii/fantastic-broccoli/utils"
 )
 
 type watcher struct {

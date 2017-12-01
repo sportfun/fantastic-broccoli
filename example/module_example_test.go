@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/xunleii/fantastic-broccoli/module"
-	"github.com/xunleii/fantastic-broccoli/notification/object"
-	"github.com/xunleii/fantastic-broccoli/config"
-	"github.com/xunleii/fantastic-broccoli/utils"
-	"github.com/xunleii/fantastic-broccoli/utils/plugin"
 	"log"
 	"testing"
+
+	"github.com/xunleii/fantastic-broccoli/config"
+	"github.com/xunleii/fantastic-broccoli/module"
+	"github.com/xunleii/fantastic-broccoli/notification/object"
+	"github.com/xunleii/fantastic-broccoli/utils"
+	"github.com/xunleii/fantastic-broccoli/utils/plugin"
 )
 
 var environment = plugin.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, tick*5)
