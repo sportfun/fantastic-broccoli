@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xunleii/fantastic-broccoli/common/types/module"
-	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/module"
+	"github.com/xunleii/fantastic-broccoli/config"
 )
 
 type InternalLogger func(format string, a ...interface{})
-type definitionFactory func(interface{}) properties.ModuleDefinition
+type definitionFactory func(interface{}) *config.ModuleDefinition
 type preTest func(*testing.T, InternalLogger, module.Module)
 type postTest func(*testing.T, InternalLogger, int, module.Module, *module.NotificationQueue)
 

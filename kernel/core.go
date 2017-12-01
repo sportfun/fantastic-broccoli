@@ -3,81 +3,69 @@ package kernel
 import (
 	"fmt"
 
-	"github.com/xunleii/fantastic-broccoli/common/types"
-	"github.com/xunleii/fantastic-broccoli/common/types/service"
-	"github.com/xunleii/fantastic-broccoli/constant"
+	"github.com/xunleii/fantastic-broccoli/config"
+	"github.com/xunleii/fantastic-broccoli/env"
 	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/service"
 )
+
+type retryCounter struct {
+	current int
+	max     int
+}
+
+type component struct {
+	core *Core
+}
 
 type Core struct {
-	services   []service.Service
-	logger     log.Logger
-	properties *properties.Properties
+	config config.GAkisitorConfig
+	retry  retryCounter
 
+	controller *controller
+	guard      *guard
+
+	logger        log.Logger
 	notifications *service.NotificationQueue
-	internal      error
-	state         types.StateType
+	state         byte
 }
 
-var (
-	infoStartServices   = log.NewArgumentBinder("start services")
-	infoServicesStarted = log.NewArgumentBinder("services successfully started (%d services)")
-	infoStopServices    = log.NewArgumentBinder("stop services")
-	infoServicesStopped = log.NewArgumentBinder("services successfully stopped (%d services)")
-)
+var services []service.Service
 
-func (core *Core) Configure(services []service.Service, props *properties.Properties, logger log.Logger) error {
-	// Property file can be not loaded (props.IsLoaded = false) if file not found or invalid
-	if !props.IsLoaded() {
-		return fmt.Errorf("properties not loaded")
+func (core *Core) Parameter(name string) interface{} {
+	switch name {
+	case "config":
+		return core.config.FilePtr()
+	case "retry_max":
+		return &core.retry.max
+	default:
+		panic(fmt.Sprintf("unkown parameter '%s' at init ... Shutdown service", name))
 	}
-
-	core.services = services
-	core.logger = logger
-	core.notifications = service.NewNotificationQueue()
-
-	core.internal = nil
-	logger.Info(infoStartServices)
-	for _, s := range services {
-		if !core.checkIf(s, s.Start(core.notifications, logger), IsStarted) ||
-			!core.checkIf(s, s.Configure(props), IsConfigured) {
-			return core.internal
-		}
-	}
-	logger.Info(infoServicesStarted.Bind(len(services)))
-
-	core.state = constant.States.Idle
-	return nil
 }
 
-func (core *Core) Run() error {
-	core.state = constant.States.Working
-	for _, s := range core.services {
-		if !core.checkIf(s, s.Process(), IsProcessed) {
-			return core.internal
-		}
-
-		for _, n := range core.notifications.Notifications(constant.EntityNames.Core) {
-			core.handle(n)
-		}
-	}
-	core.state = constant.States.Idle
-	return nil
+func (core *Core) Init() {
+	core.guard = &guard{component: component{core: core}}
+	core.controller = &controller{component: component{core: core}, guard: core.guard}
 }
 
-func (core *Core) Stop() error {
-	core.logger.Info(infoStopServices)
-	for _, s := range core.services {
-		if core.checkIf(s, s.Stop(), IsStopped) {
-			return core.internal
-		}
-	}
-	core.logger.Info(infoServicesStopped.Bind(len(core.services)))
-	core.state = constant.States.Stopped
-	return nil
+func (core *Core) Run() {
+	core.controller.configure()
+	core.controller.run()
 }
 
-func (core *Core) State() types.StateType {
-	return core.state
+func (core *Core) Restart() {
+	core.controller.stop()
+	core.controller.configure()
+}
+
+func (core *Core) Stop() {
+	core.controller.stop()
+}
+
+func (core *Core) isRunning() bool {
+	return core.state != env.StoppedState && core.state != env.PanicState
+}
+
+func RegisterService(service service.Service) {
+	services = append(services, service)
 }

@@ -2,18 +2,18 @@ package main
 
 import (
 	"encoding/json"
-	"log"
-	"testing"
-	"github.com/xunleii/fantastic-broccoli/common/types/module"
-	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
-	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/module"
+	"github.com/xunleii/fantastic-broccoli/notification/object"
+	"github.com/xunleii/fantastic-broccoli/config"
 	"github.com/xunleii/fantastic-broccoli/utils"
 	"github.com/xunleii/fantastic-broccoli/utils/plugin"
+	"log"
+	"testing"
 )
 
 var environment = plugin.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, tick*5)
 
-func definitionFactoryImpl(_type interface{}) properties.ModuleDefinition {
+func definitionFactoryImpl(_type interface{}) *config.ModuleDefinition {
 	var v interface{}
 
 	switch _type.(type) {
@@ -31,9 +31,9 @@ func definitionFactoryImpl(_type interface{}) properties.ModuleDefinition {
 		log.Fatalf("unknown %#v, impossible to generate module definition", v)
 	}
 
-	return properties.ModuleDefinition{
-		Name: "RPM Generator",
-		Conf: v,
+	return &config.ModuleDefinition{
+		Name:   "RPM Generator",
+		Config: v,
 	}
 }
 
@@ -47,7 +47,7 @@ func preTestImpl(t *testing.T, log plugin.InternalLogger, module module.Module) 
 	utils.AssertNotEquals(t, nil, module.Configure(failure_l63))
 }
 
-func postTestImpl(t *testing.T, log plugin.InternalLogger, nprocesses int, module module.Module, queue *module.NotificationQueue) {
+func postTestImpl(t *testing.T, logf plugin.InternalLogger, nprocesses int, module module.Module, queue *module.NotificationQueue) {
 	notifications := queue.Notifications()
 
 	utils.AssertEquals(t, nprocesses, len(notifications))
@@ -56,10 +56,10 @@ func postTestImpl(t *testing.T, log plugin.InternalLogger, nprocesses int, modul
 
 		utils.AssertEquals(t, 5, len(o.Value.(string)),
 			utils.PredicateDefinition{
-				func(a interface{}, b interface{}) bool { return a.(int) <= b.(int) },
-				"Expected <= %v, but get %v",
+				Predicate: func(a interface{}, b interface{}) bool { return a.(int) <= b.(int) },
+				Message:   "Expected <= %v, but get %v",
 			})
-		log("data notified : {%#v} from '%s'", o.Value, o.Module)
+		logf("data notified : {%#v} from '%s'", o.Value, o.Module)
 	}
 }
 

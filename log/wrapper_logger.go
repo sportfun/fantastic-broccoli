@@ -36,6 +36,10 @@ func toFields(binder argumentBinder) []zapcore.Field {
 	var fields []zapcore.Field
 
 	for i, v := range binder.getMoreInfo() {
+		if v == nil {
+			continue
+		}
+
 		if fnc, ok := typeWrapping[reflect.TypeOf(v).Kind()]; ok {
 			fields = append(fields, fnc(i, v))
 		} else {

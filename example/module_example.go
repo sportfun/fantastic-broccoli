@@ -5,17 +5,16 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/xunleii/fantastic-broccoli/common/types"
-	"github.com/xunleii/fantastic-broccoli/common/types/module"
-	"github.com/xunleii/fantastic-broccoli/constant"
 	"github.com/xunleii/fantastic-broccoli/log"
-	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/module"
+	"github.com/xunleii/fantastic-broccoli/config"
+	"github.com/xunleii/fantastic-broccoli/env"
 )
 
 type rpmGenerator struct {
 	logger        log.Logger
 	notifications *module.NotificationQueue
-	state         types.StateType
+	state         byte
 
 	engine rpmEngine
 	data   chan float64
@@ -38,7 +37,7 @@ func (m *rpmGenerator) isSet(a interface{}, name string) (error, bool) {
 		return nil, true
 	}
 
-	m.state = constant.States.Panic
+	m.state = env.PanicState
 	return fmt.Errorf("%s is not set", name), false
 }
 
@@ -52,7 +51,7 @@ func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) error {
 
 	m.logger = l
 	m.notifications = q
-	m.state = constant.States.Started
+	m.state = env.StartedState
 	m.engine.rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	l.Debug(debugModuleStarted.Bind(m.Name()))
@@ -73,15 +72,15 @@ func loadConfigurationItem(items map[string]interface{}, name string) (float64, 
 	return v, nil
 }
 
-func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
-	if properties.Conf == nil {
-		m.state = constant.States.Panic
+func (m *rpmGenerator) Configure(properties *config.ModuleDefinition) error {
+	if properties.Config == nil {
+		m.state = env.PanicState
 		return fmt.Errorf("configuration needed for this module. RTFM")
 	}
 
-	items, ok := properties.Conf.(map[string]interface{})
+	items, ok := properties.Config.(map[string]interface{})
 	if !ok {
-		m.state = constant.States.Panic
+		m.state = env.PanicState
 		return fmt.Errorf("valid configuration needed for this module. RTFM")
 	}
 
@@ -93,13 +92,13 @@ func (m *rpmGenerator) Configure(properties properties.ModuleDefinition) error {
 		"rpm.precision": &m.engine.precision,
 	} {
 		if *v, err = loadConfigurationItem(items, k); err != nil {
-			m.state = constant.States.Panic
+			m.state = env.PanicState
 			return err
 		}
 	}
 
 	m.logger.Debug(debugModuleConfigured.Bind(m.Name()))
-	m.state = constant.States.Idle
+	m.state = env.IdleState
 	return nil
 }
 
@@ -119,7 +118,7 @@ func (m *rpmGenerator) calcRpm() (float64, int) {
 }
 
 func (m *rpmGenerator) Process() error {
-	if m.state != constant.States.Working || m.data == nil {
+	if m.state != env.WorkingState || m.data == nil {
 		return fmt.Errorf("session not started")
 	}
 
@@ -131,17 +130,17 @@ func (m *rpmGenerator) Process() error {
 }
 
 func (m *rpmGenerator) Stop() error {
-	if m.state == constant.States.Working {
+	if m.state == env.WorkingState {
 		m.StopSession()
 	}
 
 	m.logger.Debug(debugModuleStopped.Bind(m.Name()))
-	m.state = constant.States.Stopped
+	m.state = env.StoppedState
 	return nil
 }
 
 func (m *rpmGenerator) StartSession() error {
-	if m.state == constant.States.Working || m.data != nil {
+	if m.state == env.WorkingState || m.data != nil {
 		m.StopSession()
 		return fmt.Errorf("session already exist")
 	}
@@ -163,13 +162,13 @@ func (m *rpmGenerator) StartSession() error {
 		}
 	}()
 
-	m.state = constant.States.Working
+	m.state = env.WorkingState
 	return nil
 }
 
 func (m *rpmGenerator) StopSession() error {
-	if m.state != constant.States.Working || m.done == nil {
-		m.state = constant.States.Idle
+	if m.state != env.WorkingState || m.done == nil {
+		m.state = env.IdleState
 		return fmt.Errorf("session not started")
 	}
 
@@ -178,7 +177,7 @@ func (m *rpmGenerator) StopSession() error {
 	m.data = nil
 
 	m.logger.Debug(debugSessionStopped)
-	m.state = constant.States.Idle
+	m.state = env.IdleState
 	return nil
 }
 
@@ -186,6 +185,6 @@ func (m *rpmGenerator) Name() string {
 	return "RPM Generator"
 }
 
-func (m *rpmGenerator) State() types.StateType {
+func (m *rpmGenerator) State() byte {
 	return m.state
 }

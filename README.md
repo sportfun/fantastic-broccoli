@@ -30,7 +30,7 @@ A module is a sort of package combining one (or more) metric sensor(s) with a pl
 
 ### How to develop a module ?
 
-To develop a plugin, you must implement [Module](common/types/module/module.go).
+To develop a plugin, you must implement [Module](module/module.go).
 
 
 #### 1. Module management

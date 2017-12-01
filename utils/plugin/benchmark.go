@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xunleii/fantastic-broccoli/common/types/module"
 	"github.com/xunleii/fantastic-broccoli/log"
+	"github.com/xunleii/fantastic-broccoli/module"
 )
 
 // Custom module benchmark tool
@@ -16,7 +16,7 @@ func Benchmark(t *testing.T, mod module.Module, env *environment) {
 
 		// Init environment
 		queue := module.NewNotificationQueue()
-		logger := log.NewLogger.Dev(nil)
+		logger := log.NewDevelopment()
 
 		// Start & Configure module
 		if err := mod.Start(queue, logger); err != nil {

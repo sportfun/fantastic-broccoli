@@ -6,8 +6,7 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-
-	"github.com/xunleii/fantastic-broccoli/properties"
+	"github.com/xunleii/fantastic-broccoli/config"
 )
 
 var errorLevelMapping = map[string]zapcore.Level{
@@ -23,7 +22,7 @@ var fileNameMapping = map[string]*os.File{
 	"stderr": os.Stderr,
 }
 
-func newZapCore(definition properties.LogDefinition) zapcore.Core {
+func newZapCore(definition config.LogDefinition) zapcore.Core {
 	var encoder zapcore.Encoder
 	switch definition.Encoding {
 	case "json":
@@ -53,15 +52,15 @@ func newZapCore(definition properties.LogDefinition) zapcore.Core {
 	return zapcore.NewCore(encoder, writer, levelEnabler)
 }
 
-func newProdLogger(properties *properties.Properties) Logger {
-	if len(properties.Log) == 0 {
-		logger := newDevLogger(properties)
+func NewProduction(properties ...config.LogDefinition) Logger {
+	if len(properties) == 0 {
+		logger := NewDevelopment()
 		logger.Error(&argumentBinderImpl{format: "No log configuration for production, switch to development logger"})
 		return logger
 	}
 
 	var cores []zapcore.Core
-	for _, definition := range properties.Log {
+	for _, definition := range properties {
 		cores = append(cores, newZapCore(definition))
 	}
 
@@ -70,7 +69,7 @@ func newProdLogger(properties *properties.Properties) Logger {
 	return &loggerImpl{instance: logger}
 }
 
-func newDevLogger(*properties.Properties) Logger {
+func NewDevelopment(properties ...config.LogDefinition) Logger {
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.WarnLevel
 	})
