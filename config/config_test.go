@@ -23,8 +23,8 @@ func TestGAkisitorConfig_Load(t *testing.T) {
 		Error   string
 		Matcher OmegaMatcher
 	}{
-		{File: "", Error: "impossible to read the configuration file: open : The system cannot find the file specified.", Matcher: BeFalse()},
-		{File: "./none", Error: "impossible to read the configuration file: open ./none: The system cannot find the file specified.", Matcher: BeFalse()},
+		{File: "", Error: "impossible to read the configuration file: open :", Matcher: BeFalse()},
+		{File: "./none", Error: "impossible to read the configuration file: open ./none:", Matcher: BeFalse()},
 		{File: invalidResourceConfigPath, Error: "impossible to unmarshal the configuration file: invalid character 'u' looking for beginning of value", Matcher: BeFalse()},
 		{File: resourceConfigPath, Error: "", Matcher: BeTrue()},
 	}
@@ -36,7 +36,7 @@ func TestGAkisitorConfig_Load(t *testing.T) {
 		if tc.Error == "" {
 			Expect(config.Load()).Should(Succeed())
 		} else {
-			Expect(config.Load()).Should(MatchError(tc.Error))
+			Expect(config.Load()).Should(MatchError(MatchRegexp(tc.Error)))
 		}
 		Expect(config.IsLoaded()).Should(tc.Matcher)
 	}
