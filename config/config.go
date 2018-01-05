@@ -6,13 +6,14 @@ import (
 	"log"
 	"github.com/fsnotify/fsnotify"
 	"fmt"
+	"time"
 )
 
 // RawConfig is a type for unknowing configuration
 type RawConfig interface{}
 
 // GAkisitorConfig is the configuration that comes from loading
-// the configuration file
+// the configuration File
 type GAkisitorConfig struct {
 	file     string // path to the file where this configuration was loaded from
 	isLoaded bool   // loading state of this configuration
@@ -44,7 +45,7 @@ type ModuleDefinition struct {
 // LogDefinition define log information, used during logger
 // instantiation
 type LogDefinition struct {
-	File     string `json:"file"`
+	File     string `json:"File"`
 	Format   string `json:"format"`
 	Encoding string `json:"encoding"`
 	Level    string `json:"level"`
@@ -79,8 +80,7 @@ func (p *GAkisitorConfig) Load() error {
 
 // WaitReconfiguration wait until the configuration file was
 // modified. Next, this function reload the file
-// TODO: Add timeout
-func (p *GAkisitorConfig) WaitReconfiguration() error {
+func (p *GAkisitorConfig) WaitReconfiguration(d time.Duration) error {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return fmt.Errorf("impossible to load or monitor file '%s': '%s'", p.file, err.Error())
@@ -94,13 +94,16 @@ func (p *GAkisitorConfig) WaitReconfiguration() error {
 
 	for {
 		select {
+		case <-time.After(d):
+			p.Load()
+			return nil
 		case event := <-watcher.Events:
 			if event.Op&fsnotify.Write == fsnotify.Write {
 				p.Load()
 				return nil
 			}
 		case err := <-watcher.Errors:
-			log.Printf("error during file monitoring: '%s'", err.Error())
+			log.Printf("error during File monitoring: '%s'", err.Error())
 		}
 	}
 }

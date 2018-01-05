@@ -6,6 +6,7 @@ import (
 	"github.com/sportfun/gakisitor/env"
 	"github.com/sportfun/gakisitor/log"
 	"github.com/sportfun/gakisitor/service"
+	"time"
 )
 
 type controller struct {
@@ -46,7 +47,7 @@ func (c *controller) configure() {
 configuration:
 	if c.guard.hasFailed(c.tryConfigure()) {
 		c.core.Stop()
-		c.core.config.WaitReconfiguration()
+		c.core.config.WaitReconfiguration(100*time.Millisecond)
 		goto configuration
 	}
 }
