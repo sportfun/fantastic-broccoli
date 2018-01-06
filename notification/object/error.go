@@ -6,7 +6,7 @@ type ErrorObject struct {
 }
 
 func NewErrorObject(origin string, reason ...error) *ErrorObject {
-	if len(reason) > 0 {
+	if len(reason) > 0 && reason[0] != nil {
 		return &ErrorObject{Origin: origin, Reason: reason[0].Error()}
 	}
 	return &ErrorObject{Origin: origin, Reason: ""}

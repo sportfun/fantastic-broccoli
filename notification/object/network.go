@@ -6,6 +6,9 @@ type CommandObject struct {
 }
 
 func NewCommandObject(command string, args ...string) *CommandObject {
+	if len(args) == 0 {
+		return &CommandObject{Command: command, Args: []string{}}
+	}
 	return &CommandObject{Command: command, Args: args}
 }
 
