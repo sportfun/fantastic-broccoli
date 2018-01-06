@@ -12,12 +12,17 @@ var (
 	debugStartSessionNotification = log.NewArgumentBinder("start session")
 	debugEndSessionNotification   = log.NewArgumentBinder("stop session")
 
+	nilNotification             = log.NewArgumentBinder("unexpected nil notification")
 	unhandledNotificationOrigin = log.NewArgumentBinder("unhandled notification origin (%s)")
 	invalidNetworkNotification  = log.NewArgumentBinder("invalid network notification")
 	unknownNetworkCommand       = log.NewArgumentBinder("unknown network command (%s)")
 )
 
 func (service *Manager) handle(n *notification.Notification) {
+	if n == nil {
+		service.logger.Warn(nilNotification)
+		return
+	}
 	service.logger.Debug(debugNotificationHandled.More("notification", *n))
 
 	switch string(n.From()) {

@@ -31,6 +31,8 @@ func (service *Manager) pluginFailure(t pluginError, err error, pluginName strin
 		obj.Why(fmt.Errorf("failure during plugin loading ('%s'): %s", pluginName, err.Error()))
 	case SymbolLoading:
 		obj.Why(fmt.Errorf("failure during symbol loading ('%s'): %s", pluginName, err.Error()))
+	default:
+		obj.Why(fmt.Errorf("unknown error type from ('%s'): %s", pluginName, err.Error()))
 	}
 	service.logger.Error(pluginFailureLog.Bind(obj.Reason))
 	service.notifications.Notify(netBuilder.With(obj).Build())
