@@ -66,24 +66,21 @@ var (
 func TestManager_Configure(t *testing.T) {
 	RegisterTestingT(t)
 
-	buffer := ""
-	logger := log.NewTest(&buffer)
+	logger := log.NewDevelopment()
 
 	testCases := []struct {
 		Configuration config.GAkisitorConfig
 		State         byte
 		Error         error
-		Log           string
 	}{
-		{Configuration: validConfiguration, State: env.IdleState, Error: nil, Log: "DEBUG	module 'RPM Generator' configured"},
+		{Configuration: validConfiguration, State: env.IdleState, Error: nil},
 
-		{Configuration: noFile, State: env.PanicState, Error: fmt.Errorf("no module charged"), Log: ""},
-		{Configuration: noExport, State: env.PanicState, Error: fmt.Errorf("no module charged"), Log: ""},
-		{Configuration: noConfig, State: env.PanicState, Error: fmt.Errorf("no module charged"), Log: ""},
+		{Configuration: noFile, State: env.PanicState, Error: fmt.Errorf("no module charged")},
+		{Configuration: noExport, State: env.PanicState, Error: fmt.Errorf("no module charged")},
+		{Configuration: noConfig, State: env.PanicState, Error: fmt.Errorf("no module charged")},
 	}
 
 	for _, tc := range testCases {
-		buffer = ""
 		manager := Manager{}
 
 		Expect(manager.Start(service.NewNotificationQueue(), logger)).Should(Succeed())
@@ -95,7 +92,6 @@ func TestManager_Configure(t *testing.T) {
 			Expect(manager.Configure(&tc.Configuration)).Should(MatchError(tc.Error))
 		}
 
-		Expect(buffer).Should(MatchRegexp(tc.Log))
 		Expect(manager.State()).Should(Equal(tc.State))
 	}
 }
