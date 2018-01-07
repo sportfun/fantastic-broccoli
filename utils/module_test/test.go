@@ -1,11 +1,9 @@
 package module_test
 
 import (
-	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/sportfun/gakisitor/config"
 	. "github.com/sportfun/gakisitor/env"
 	"github.com/sportfun/gakisitor/log"
 	"github.com/sportfun/gakisitor/module"
@@ -59,23 +57,13 @@ func start(t *testing.T, e *environment) {
 }
 
 func configure(t *testing.T, e *environment) {
-	unmarshall := func(s string) interface{} { var v interface{}; json.Unmarshal([]byte(s), &v); return v }
-
-	nilDefinition := &config.ModuleDefinition{Config: nil}
-	emptyDefinition := &config.ModuleDefinition{Config: unmarshall("{}")}
-	invalidDefinition := &config.ModuleDefinition{Config: unmarshall("{\"no_key_def\":true}")}
-
-	Expect(e.module.Configure(nilDefinition)).Should(ExpectFor(e.module).Panic())     // failed: NIL definition
-	Expect(e.module.Configure(emptyDefinition)).Should(ExpectFor(e.module).Panic())   // failed: empty definition
-	Expect(e.module.Configure(invalidDefinition)).Should(ExpectFor(e.module).Panic()) // failed: invalid definition
-
 	Expect(e.module.Configure(e.definition(t))).Should(ExpectFor(e.module).SucceedWith(IdleState)) // succeed: configure the module
 }
 
 func startSessions(t *testing.T, e *environment) {
 	Expect(e.module).Should(HaveState(IdleState))
 
-	Expect(e.module.Process()).Should(ExpectFor(e.module).FailedWith(IdleState))          // failed: no session started
+	Expect(e.module.Process()).Should(ExpectFor(e.module).SucceedWith(IdleState))         // failed: no session started, but no need to return error
 	Expect(e.module.StartSession()).Should(ExpectFor(e.module).SucceedWith(WorkingState)) // succeed: start session successfully
 	Expect(e.module.StartSession()).Should(ExpectFor(e.module).FailedWith(IdleState))     // failed: session already started
 	Expect(e.module.StartSession()).Should(ExpectFor(e.module).SucceedWith(WorkingState)) // succeed: start session successfully
@@ -94,7 +82,7 @@ func stopSession(t *testing.T, e *environment) {
 	Expect(e.module).Should(HaveState(WorkingState))
 
 	Expect(e.module.StopSession()).Should(ExpectFor(e.module).SucceedWith(IdleState)) // succeed: stop session successfully
-	Expect(e.module.Process()).Should(ExpectFor(e.module).FailedWith(IdleState))      // failed: no session started
+	Expect(e.module.Process()).Should(ExpectFor(e.module).SucceedWith(IdleState))     // failed: no session started, but no need to return error
 	Expect(e.module.StopSession()).Should(ExpectFor(e.module).FailedWith(IdleState))  // failed: session already stopped
 }
 

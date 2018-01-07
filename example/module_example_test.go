@@ -44,13 +44,24 @@ func definitionFactoryImpl(obj interface{}) *config.ModuleDefinition {
 }
 
 func preTestImpl(t *testing.T, module module.Module) {
+	unmarshall := func(s string) interface{} { var v interface{}; json.Unmarshal([]byte(s), &v); return v }
+
+	nilDefinition := &config.ModuleDefinition{Config: nil}
+	emptyDefinition := &config.ModuleDefinition{Config: unmarshall("{}")}
+	invalidDefinition := &config.ModuleDefinition{Config: unmarshall("{\"no_key_def\":true}")}
+
 	failure_l57 := definitionFactoryImpl("{\"rpm.max\":1200}")
 	failure_l62 := definitionFactoryImpl("{\"rpm.min\":\"0\",\"rpm.max\":\"1200\",\"rpm.step\":\"250\",\"rpm.precision\":\"1000\"}")
 	failure_l70 := definitionFactoryImpl(nil)
 
+	Expect(module.Configure(nilDefinition)).Should(module_test.ExpectFor(module).Panic())     // failed: NIL definition
+	Expect(module.Configure(emptyDefinition)).Should(module_test.ExpectFor(module).Panic())   // failed: empty definition
+	Expect(module.Configure(invalidDefinition)).Should(module_test.ExpectFor(module).Panic()) // failed: invalid definition
+
 	Expect(module.Configure(failure_l57)).Should(module_test.ExpectFor(module).Panic()) // failure at l.57
 	Expect(module.Configure(failure_l62)).Should(module_test.ExpectFor(module).Panic()) // failure at l.63
 	Expect(module.Configure(failure_l70)).Should(module_test.ExpectFor(module).Panic()) // failure at l.70
+
 }
 
 func postTestImpl(t *testing.T, nprocesses int, module module.Module, queue *module.NotificationQueue) {

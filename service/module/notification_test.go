@@ -23,8 +23,8 @@ func TestManager_Notification(t *testing.T) {
 		Predicate    func() bool
 		Log          string
 	}{
-		{Notification: builder.With(object.NewCommandObject(env.StartSessionCmd)).Build(), Predicate: func() bool { return module.inSession }, Log: "DEBUG	start session"},
-		{Notification: builder.With(object.NewCommandObject(env.EndSessionCmd)).Build(), Predicate: func() bool { return !module.inSession }, Log: "DEBUG	stop session"},
+		{Notification: builder.With(object.NewCommandObject(env.StartSessionCmd)).Build(), Predicate: func() bool { return module.InSession }, Log: "DEBUG	start session"},
+		{Notification: builder.With(object.NewCommandObject(env.EndSessionCmd)).Build(), Predicate: func() bool { return !module.InSession }, Log: "DEBUG	stop session"},
 
 		{Notification: nil, Predicate: func() bool { return true }, Log: "WARN	unexpected nil notification"},
 		{Notification: notification.NewNotification("...", "", nil), Predicate: func() bool { return true }, Log: "WARN	unhandled notification origin (...)"},

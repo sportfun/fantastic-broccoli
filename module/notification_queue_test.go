@@ -22,6 +22,7 @@ func TestNotificationQueue(t *testing.T) {
 	RegisterTestingT(t)
 
 	queue := NewNotificationQueue()
+	NotifyError := func(l string, f string, a ...interface{}) { queue.NotifyError(nil, l, f, a...) }
 	testCases := []struct {
 		Notifier  func(string, string, ...interface{})
 		FParam    string
@@ -33,9 +34,9 @@ func TestNotificationQueue(t *testing.T) {
 		{Notifier: queue.NotifyData, FParam: "", Format: "data value: %v", Arguments: []interface{}{87 + 6i}, Object: object.NewDataObject("", "data value: (87+6i)")},
 		{Notifier: queue.NotifyData, FParam: "module name", Format: "value", Arguments: []interface{}{}, Object: object.NewDataObject("module name", "value")},
 
-		{Notifier: queue.NotifyError, FParam: ErrorLevel, Format: "error message: %s", Arguments: []interface{}{"failure"}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:36", fmt.Errorf("error message: failure")), ErrorLevel}},
-		{Notifier: queue.NotifyError, FParam: WarningLevel, Format: "warning message: %s", Arguments: []interface{}{"failure"}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:36", fmt.Errorf("warning message: failure")), WarningLevel}},
-		{Notifier: queue.NotifyError, FParam: CriticalLevel, Format: "critical error", Arguments: []interface{}{}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:36", fmt.Errorf("critical error")), CriticalLevel}},
+		{Notifier: NotifyError, FParam: ErrorLevel, Format: "error message: %s", Arguments: []interface{}{"failure"}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:25", fmt.Errorf("error message: failure")), ErrorLevel, nil}},
+		{Notifier: NotifyError, FParam: WarningLevel, Format: "warning message: %s", Arguments: []interface{}{"failure"}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:25", fmt.Errorf("warning message: failure")), WarningLevel, nil}},
+		{Notifier: NotifyError, FParam: CriticalLevel, Format: "critical error", Arguments: []interface{}{}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:25", fmt.Errorf("critical error")), CriticalLevel, nil}},
 	}
 
 	for _, tc := range testCases {

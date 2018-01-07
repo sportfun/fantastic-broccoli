@@ -113,8 +113,10 @@ func (service *Manager) Process() error {
 			netBuilder.With(&obj.ErrorObject)
 
 			if obj.ErrorLevel() == env.FatalLevel {
-				mod := service.modules[notif.From()]
-				service.checkIf(mod, mod.Stop(), isStopped)
+				mod := obj.From()
+				if mod != nil {
+					service.checkIf(mod, mod.Stop(), isStopped)
+				}
 			}
 		case *object.DataObject:
 			netBuilder.With(obj)

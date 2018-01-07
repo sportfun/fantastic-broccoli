@@ -30,6 +30,8 @@ var (
 	debugSessionStarted   = log.NewArgumentBinder("session started")
 	debugSessionStopped   = log.NewArgumentBinder("session stopped")
 	debugModuleStopped    = log.NewArgumentBinder("module '%s' stopped")
+
+	warnSessionNotStarted = log.NewArgumentBinder("session not started")
 )
 
 func (m *rpmGenerator) Start(q *module.NotificationQueue, l log.Logger) error {
@@ -112,7 +114,8 @@ func (m *rpmGenerator) calcRpm() (float64, int) {
 
 func (m *rpmGenerator) Process() error {
 	if m.state != env.WorkingState || m.data == nil {
-		return fmt.Errorf("session not started")
+		m.logger.Warn(warnSessionNotStarted)
+		return nil
 	}
 
 	rpm, nvalue := m.calcRpm()

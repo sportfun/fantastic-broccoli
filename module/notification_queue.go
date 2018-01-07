@@ -17,10 +17,15 @@ var builder = notification.NewBuilder().
 type ErrorObject struct {
 	object.ErrorObject
 	errorLevel string
+	origin     Module
 }
 
 func (obj *ErrorObject) ErrorLevel() string {
 	return obj.errorLevel
+}
+
+func (obj *ErrorObject) From() Module {
+	return obj.origin
 }
 
 type NotificationQueue struct {
@@ -32,14 +37,14 @@ func NewNotificationQueue() *NotificationQueue {
 	return &NotificationQueue{}
 }
 
-func (queue *NotificationQueue) NotifyError(level string, format string, a ...interface{}) {
+func (queue *NotificationQueue) NotifyError(module Module, level string, format string, a ...interface{}) {
 	queue.locker.Lock()
 	defer queue.locker.Unlock()
 
 	_, caller, line, _ := runtime.Caller(1)
 	origin := fmt.Sprintf("%s:%d", path.Base(caller), line)
 
-	errorObject := &ErrorObject{*object.NewErrorObject(origin, fmt.Errorf(format, a...)), level}
+	errorObject := &ErrorObject{*object.NewErrorObject(origin, fmt.Errorf(format, a...)), level, module}
 	queue.notifications = append(queue.notifications, builder.With(errorObject).Build())
 }
 

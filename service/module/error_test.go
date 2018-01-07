@@ -9,23 +9,7 @@ import (
 	"github.com/sportfun/gakisitor/env"
 	"fmt"
 	"github.com/sportfun/gakisitor/notification/object"
-	"github.com/sportfun/gakisitor/module"
-	"github.com/sportfun/gakisitor/config"
 )
-
-type tModule struct {
-	name      string
-	inSession bool
-}
-
-func (*tModule) Start(*module.NotificationQueue, log.Logger) error { panic("implement me") }
-func (*tModule) Configure(*config.ModuleDefinition) error          { panic("implement me") }
-func (*tModule) Process() error                                    { panic("implement me") }
-func (*tModule) Stop() error                                       { panic("implement me") }
-func (m *tModule) StartSession() error                             { m.inSession = true; return nil }
-func (m *tModule) StopSession() error                              { m.inSession = false; return nil }
-func (m *tModule) Name() string                                    { return m.name }
-func (*tModule) State() byte                                       { panic("implement me") }
 
 func TestManager_PluginFailure(t *testing.T) {
 	RegisterTestingT(t)
