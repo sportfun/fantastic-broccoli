@@ -31,7 +31,7 @@ func (service *Network) onConnectionHandler(client *gosocketio.Channel, args int
 	service.logger.Info(log.NewArgumentBinder(successfullyConnected).More("session_id", client.Id()))
 }
 
-func (service *Network) onDisconnectionHandler(client *gosocketio.Channel) {
+func (service *Network) onDisconnectionHandler(client *gosocketio.Channel, _ interface{}) {
 	service.logger.Debugf(debugDisconnectionHandled)
 
 	if service.state != env.StoppedState {
