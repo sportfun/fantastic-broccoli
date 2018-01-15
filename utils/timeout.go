@@ -9,6 +9,7 @@ import (
 
 var TimeoutPrecision = 50 * time.Millisecond
 
+// TODO: Use gomega library
 func ReleaseIfTimeout(t testing.TB, duration time.Duration, fnc func(t testing.TB)) {
 	volatile := NewOneTimeVolatile(nil)
 
