@@ -16,11 +16,6 @@ import (
 	"time"
 )
 
-const (
-	IPAddress = "localhost"
-	Port      = 8888
-)
-
 func TestManager_Notification(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -32,11 +27,12 @@ func TestManager_Notification(t *testing.T) {
 		OnCommand: receiver,
 		OnError:   receiver,
 	}
-	go utils.SocketIOServer(receivers, Port)
+	port := int32(Port + 0x0F)
+	go utils.SocketIOServer(receivers, port)
 
 	bufferLog := ""
 	socket, err := gosocketio.Dial(
-		gosocketio.GetUrl(IPAddress, Port, false),
+		gosocketio.GetUrl(IPAddress, int(port), false),
 		transport.GetDefaultWebsocketTransport(),
 	)
 	Expect(err).Should(Succeed())

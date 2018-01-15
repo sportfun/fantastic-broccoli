@@ -25,7 +25,7 @@ func TestNetwork_SocketIO_On(t *testing.T) {
 			channel.Emit(o["method"].(string), o["data"])
 		},
 	}
-	port := int32(Port + 0x0F)
+	port := int32(Port + 0x1F)
 	go utils.SocketIOServer(receivers, port)
 
 	// Configure socket
@@ -120,7 +120,7 @@ func TestNetwork_SocketIO_Emit(t *testing.T) {
 			wg.Done()
 		},
 	}
-	port := int32(Port + 0x1F)
+	port := int32(Port + 0x2F)
 	go utils.SocketIOServer(receivers, port)
 
 	// Configure socket
