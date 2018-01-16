@@ -1,8 +1,8 @@
 package notification
 
 import (
-	"testing"
 	. "github.com/onsi/gomega"
+	"testing"
 )
 
 func TestNotification(t *testing.T) {

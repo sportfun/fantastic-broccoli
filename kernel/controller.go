@@ -47,7 +47,7 @@ func (c *controller) configure() {
 configuration:
 	if c.guard.hasFailed(c.tryConfigure()) {
 		c.core.Stop()
-		c.core.config.WaitReconfiguration(100*time.Millisecond)
+		c.core.config.WaitReconfiguration(100 * time.Millisecond)
 		goto configuration
 	}
 }

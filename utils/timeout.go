@@ -1,10 +1,10 @@
 package utils
 
 import (
+	"reflect"
+	"runtime"
 	"testing"
 	"time"
-	"runtime"
-	"reflect"
 )
 
 var TimeoutPrecision = 50 * time.Millisecond

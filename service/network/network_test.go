@@ -1,15 +1,15 @@
 package network
 
 import (
-	"testing"
 	. "github.com/onsi/gomega"
-	"github.com/sportfun/gakisitor/log"
-	"github.com/sportfun/gakisitor/service"
-	. "github.com/sportfun/gakisitor/env"
 	"github.com/sportfun/gakisitor/config"
-	"github.com/sportfun/gakisitor/utils"
+	. "github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/log"
 	"github.com/sportfun/gakisitor/notification"
 	"github.com/sportfun/gakisitor/notification/object"
+	"github.com/sportfun/gakisitor/service"
+	"github.com/sportfun/gakisitor/utils"
+	"testing"
 )
 
 const (

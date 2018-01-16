@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/onsi/gomega"
 	. "github.com/sportfun/gakisitor/env"
 	"github.com/sportfun/gakisitor/log"
 	"github.com/sportfun/gakisitor/module"
-	. "github.com/onsi/gomega"
 )
 
 var NProcesses = 5

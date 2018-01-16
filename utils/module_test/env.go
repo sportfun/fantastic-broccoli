@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/sportfun/gakisitor/config"
-	"github.com/sportfun/gakisitor/module"
 	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/module"
 )
 
 type definitionFactory func(interface{}) *config.ModuleDefinition

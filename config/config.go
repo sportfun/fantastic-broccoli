@@ -2,10 +2,10 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"io/ioutil"
 	"log"
-	"github.com/fsnotify/fsnotify"
-	"fmt"
 	"time"
 )
 

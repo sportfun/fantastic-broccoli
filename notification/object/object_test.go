@@ -1,11 +1,11 @@
 package object
 
 import (
-	"testing"
-	. "github.com/onsi/gomega"
 	"encoding/json"
 	"fmt"
 	"github.com/mitchellh/mapstructure"
+	. "github.com/onsi/gomega"
+	"testing"
 )
 
 func TestNotificationObject_Deserialization(t *testing.T) {

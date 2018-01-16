@@ -52,18 +52,30 @@ func toFields(binder argumentBinder) []zapcore.Field {
 	return fields
 }
 
-func (logger *loggerImpl) Debug(a argumentBinder) { logger.instance.Debug(a.getMessage(), toFields(a)...) }
+func (logger *loggerImpl) Debug(a argumentBinder) {
+	logger.instance.Debug(a.getMessage(), toFields(a)...)
+}
 
-func (logger *loggerImpl) Debugf(f string, a ...interface{}) { logger.instance.Debug(fmt.Sprintf(f, a...)) }
+func (logger *loggerImpl) Debugf(f string, a ...interface{}) {
+	logger.instance.Debug(fmt.Sprintf(f, a...))
+}
 
 func (logger *loggerImpl) Info(a argumentBinder) { logger.instance.Info(a.getMessage(), toFields(a)...) }
 
-func (logger *loggerImpl) Infof(f string, a ...interface{}) { logger.instance.Info(fmt.Sprintf(f, a...)) }
+func (logger *loggerImpl) Infof(f string, a ...interface{}) {
+	logger.instance.Info(fmt.Sprintf(f, a...))
+}
 
 func (logger *loggerImpl) Warn(a argumentBinder) { logger.instance.Warn(a.getMessage(), toFields(a)...) }
 
-func (logger *loggerImpl) Warnf(f string, a ...interface{}) { logger.instance.Warn(fmt.Sprintf(f, a...)) }
+func (logger *loggerImpl) Warnf(f string, a ...interface{}) {
+	logger.instance.Warn(fmt.Sprintf(f, a...))
+}
 
-func (logger *loggerImpl) Error(a argumentBinder) { logger.instance.Error(a.getMessage(), toFields(a)...) }
+func (logger *loggerImpl) Error(a argumentBinder) {
+	logger.instance.Error(a.getMessage(), toFields(a)...)
+}
 
-func (logger *loggerImpl) Errorf(f string, a ...interface{}) { logger.instance.Error(fmt.Sprintf(f, a...)) }
+func (logger *loggerImpl) Errorf(f string, a ...interface{}) {
+	logger.instance.Error(fmt.Sprintf(f, a...))
+}

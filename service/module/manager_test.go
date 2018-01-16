@@ -1,17 +1,17 @@
 package module
 
 import (
-	"testing"
-	"github.com/sportfun/gakisitor/log"
-	"github.com/sportfun/gakisitor/service"
+	"fmt"
 	. "github.com/onsi/gomega"
-	. "github.com/sportfun/gakisitor/env"
-	"github.com/sportfun/gakisitor/module"
 	"github.com/sportfun/gakisitor/config"
+	. "github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/module"
 	"github.com/sportfun/gakisitor/notification"
 	"github.com/sportfun/gakisitor/notification/object"
+	"github.com/sportfun/gakisitor/service"
 	"github.com/sportfun/gakisitor/utils/module_test"
-	"fmt"
+	"testing"
 )
 
 type tModule struct {

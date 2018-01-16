@@ -1,9 +1,9 @@
 package log
 
 import (
-	"testing"
 	. "github.com/onsi/gomega"
 	"github.com/sportfun/gakisitor/config"
+	"testing"
 )
 
 func TestNewArgumentBinder(t *testing.T) {

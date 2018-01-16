@@ -1,11 +1,11 @@
 package module_test
 
 import (
-	"github.com/sportfun/gakisitor/module"
-	. "github.com/sportfun/gakisitor/env"
-	"github.com/onsi/gomega/types"
-	"github.com/onsi/gomega/format"
 	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/format"
+	"github.com/onsi/gomega/types"
+	. "github.com/sportfun/gakisitor/env"
+	"github.com/sportfun/gakisitor/module"
 )
 
 var statesName = map[byte]string{

@@ -1,18 +1,18 @@
 package network
 
 import (
-	"testing"
-	. "github.com/onsi/gomega"
-	"github.com/sportfun/gakisitor/service"
-	"github.com/sportfun/gakisitor/log"
+	"encoding/json"
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
-	"github.com/sportfun/gakisitor/notification"
+	. "github.com/onsi/gomega"
 	"github.com/sportfun/gakisitor/env"
-	"encoding/json"
+	"github.com/sportfun/gakisitor/log"
+	"github.com/sportfun/gakisitor/notification"
 	"github.com/sportfun/gakisitor/notification/object"
+	"github.com/sportfun/gakisitor/service"
 	"github.com/sportfun/gakisitor/utils"
 	"sync"
+	"testing"
 	"time"
 )
 

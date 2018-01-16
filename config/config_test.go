@@ -1,11 +1,11 @@
 package config
 
 import (
-	"testing"
 	. "github.com/onsi/gomega"
-	"io/ioutil"
-	"time"
 	"github.com/sportfun/gakisitor/utils"
+	"io/ioutil"
+	"testing"
+	"time"
 )
 
 const (

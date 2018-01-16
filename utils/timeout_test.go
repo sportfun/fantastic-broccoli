@@ -1,9 +1,9 @@
 package utils
 
 import (
+	. "github.com/onsi/gomega"
 	"testing"
 	"time"
-	. "github.com/onsi/gomega"
 )
 
 type exT struct {

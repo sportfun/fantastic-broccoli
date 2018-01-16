@@ -5,12 +5,12 @@ import (
 	"log"
 	"testing"
 
+	. "github.com/onsi/gomega"
 	"github.com/sportfun/gakisitor/config"
 	"github.com/sportfun/gakisitor/module"
+	"github.com/sportfun/gakisitor/notification"
 	"github.com/sportfun/gakisitor/notification/object"
 	"github.com/sportfun/gakisitor/utils/module_test"
-	. "github.com/onsi/gomega"
-	"github.com/sportfun/gakisitor/notification"
 )
 
 var environment = module_test.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, tick*5)

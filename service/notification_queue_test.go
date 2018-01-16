@@ -1,9 +1,9 @@
 package service
 
 import (
-	"testing"
 	. "github.com/onsi/gomega"
 	"github.com/sportfun/gakisitor/notification"
+	"testing"
 )
 
 func TestNotificationQueue(t *testing.T) {
@@ -14,7 +14,7 @@ func TestNotificationQueue(t *testing.T) {
 
 	testCases := []struct {
 		Notifications []*notification.Notification
-		Result map[string]struct {
+		Result        map[string]struct {
 			Number  int
 			Content []interface{}
 		}
@@ -35,7 +35,7 @@ func TestNotificationQueue(t *testing.T) {
 				Content []interface{}
 			}{
 				"AAA": {Number: 3, Content: []interface{}{0, "data", ""}},
-				"BBB": {Number: 3, Content: []interface{}{1, 3+2i, struct{ A int }{A: 29}}},
+				"BBB": {Number: 3, Content: []interface{}{1, 3 + 2i, struct{ A int }{A: 29}}},
 				"CCC": {Number: 1, Content: []interface{}{1}},
 			},
 		},

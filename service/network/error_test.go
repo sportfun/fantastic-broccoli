@@ -1,11 +1,11 @@
 package network
 
 import (
-	"testing"
+	"fmt"
 	. "github.com/onsi/gomega"
 	"github.com/sportfun/gakisitor/log"
 	"github.com/sportfun/gakisitor/service"
-	"fmt"
+	"testing"
 )
 
 func TestNetwork_ModuleError(t *testing.T) {

@@ -1,12 +1,12 @@
 package log
 
 import (
-	"go.uber.org/zap/zapcore"
+	"github.com/sportfun/gakisitor/config"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"os"
 	"strings"
 	"time"
-	"os"
-	"github.com/sportfun/gakisitor/config"
 )
 
 type writeSyncedImpl struct {

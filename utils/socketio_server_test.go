@@ -3,10 +3,10 @@ package utils
 import (
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
+	. "github.com/onsi/gomega"
 	"sync"
 	"testing"
 	"time"
-	. "github.com/onsi/gomega"
 )
 
 func TestSocketIOServer(t *testing.T) {

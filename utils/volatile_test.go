@@ -1,9 +1,9 @@
 package utils
 
 import (
+	. "github.com/onsi/gomega"
 	"sync"
 	"testing"
-	. "github.com/onsi/gomega"
 )
 
 func TestVolatile(t *testing.T) {

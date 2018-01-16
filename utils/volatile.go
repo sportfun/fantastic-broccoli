@@ -1,8 +1,8 @@
 package utils
 
 import (
-	"sync"
 	"fmt"
+	"sync"
 )
 
 type Volatile interface {

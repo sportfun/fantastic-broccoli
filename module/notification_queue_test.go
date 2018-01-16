@@ -1,14 +1,14 @@
 package module
 
 import (
-	"testing"
+	"fmt"
 	. "github.com/onsi/gomega"
+	. "github.com/sportfun/gakisitor/env"
 	"github.com/sportfun/gakisitor/notification"
 	"github.com/sportfun/gakisitor/notification/object"
-	. "github.com/sportfun/gakisitor/env"
-	"fmt"
-	"sync"
 	"github.com/sportfun/gakisitor/utils"
+	"sync"
+	"testing"
 )
 
 func TestErrorObject_ErrorLevel(t *testing.T) {
