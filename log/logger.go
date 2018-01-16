@@ -1,7 +1,5 @@
 package log
 
-import "github.com/xunleii/fantastic-broccoli/properties"
-
 type argumentBinder interface {
 	Bind(a ...interface{}) argumentBinder
 	More(index string, data interface{}) argumentBinder
@@ -11,17 +9,11 @@ type argumentBinder interface {
 
 type Logger interface {
 	Debug(argumentBinder)
+	Debugf(format string, a ...interface{})
 	Info(argumentBinder)
+	Infof(format string, a ...interface{})
 	Warn(argumentBinder)
+	Warnf(format string, a ...interface{})
 	Error(argumentBinder)
-}
-
-type loggerFactory func(*properties.Properties) Logger
-
-var NewLogger = struct {
-	Prod loggerFactory
-	Dev  loggerFactory
-}{
-	Prod: newProdLogger,
-	Dev:  newDevLogger,
+	Errorf(format string, a ...interface{})
 }

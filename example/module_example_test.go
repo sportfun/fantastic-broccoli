@@ -4,69 +4,75 @@ import (
 	"encoding/json"
 	"log"
 	"testing"
-	"github.com/xunleii/fantastic-broccoli/common/types/module"
-	"github.com/xunleii/fantastic-broccoli/common/types/notification/object"
-	"github.com/xunleii/fantastic-broccoli/properties"
-	"github.com/xunleii/fantastic-broccoli/utils"
-	"github.com/xunleii/fantastic-broccoli/utils/plugin"
+
+	. "github.com/onsi/gomega"
+	"github.com/sportfun/gakisitor/config"
+	"github.com/sportfun/gakisitor/module"
+	"github.com/sportfun/gakisitor/notification"
+	"github.com/sportfun/gakisitor/notification/object"
+	"github.com/sportfun/gakisitor/utils/module_test"
 )
 
-var environment = plugin.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, tick*5)
+var environment = module_test.NewEnvironment(definitionFactoryImpl, preTestImpl, postTestImpl, tick*5)
 
-func definitionFactoryImpl(_type interface{}) properties.ModuleDefinition {
+func TestModule(t *testing.T) {
+	module_test.Test(t, ExportModule(), environment)
+}
+
+func definitionFactoryImpl(obj interface{}) *config.ModuleDefinition {
 	var v interface{}
 
-	switch _type.(type) {
-	// For testing engine
+	switch obj.(type) {
 	case *testing.T:
 		json.Unmarshal([]byte("{\"rpm.min\":120,\"rpm.max\":500,\"rpm.step\":25,\"rpm.precision\":10}"), &v)
 	case *testing.B:
 		json.Unmarshal([]byte("{\"rpm.min\":0,\"rpm.max\":1200.0,\"rpm.step\":250,\"rpm.precision\":1000}"), &v)
 
-		// For pre testing
 	case string:
-		json.Unmarshal([]byte(_type.(string)), &v)
+		json.Unmarshal([]byte(obj.(string)), &v)
+	case nil:
+		v = nil
 
 	default:
 		log.Fatalf("unknown %#v, impossible to generate module definition", v)
 	}
 
-	return properties.ModuleDefinition{
-		Name: "RPM Generator",
-		Conf: v,
+	return &config.ModuleDefinition{
+		Name:   "RPM Generator",
+		Config: v,
 	}
 }
 
-func preTestImpl(t *testing.T, log plugin.InternalLogger, module module.Module) {
-	failure_l58 := definitionFactoryImpl("{\"rpm.max\":1200}")
-	failure_l63 := definitionFactoryImpl("{\"rpm.min\":\"0\",\"rpm.max\":\"1200\",\"rpm.step\":\"250\",\"rpm.precision\":\"1000\"}")
+func preTestImpl(t *testing.T, module module.Module) {
+	unmarshall := func(s string) interface{} { var v interface{}; json.Unmarshal([]byte(s), &v); return v }
 
-	// failure at l.58
-	utils.AssertNotEquals(t, nil, module.Configure(failure_l58))
-	// failure at l.63
-	utils.AssertNotEquals(t, nil, module.Configure(failure_l63))
+	nilDefinition := &config.ModuleDefinition{Config: nil}
+	emptyDefinition := &config.ModuleDefinition{Config: unmarshall("{}")}
+	invalidDefinition := &config.ModuleDefinition{Config: unmarshall("{\"no_key_def\":true}")}
+
+	failure_l57 := definitionFactoryImpl("{\"rpm.max\":1200}")
+	failure_l62 := definitionFactoryImpl("{\"rpm.min\":\"0\",\"rpm.max\":\"1200\",\"rpm.step\":\"250\",\"rpm.precision\":\"1000\"}")
+	failure_l70 := definitionFactoryImpl(nil)
+
+	Expect(module.Configure(nilDefinition)).Should(module_test.ExpectFor(module).Panic())     // failed: NIL definition
+	Expect(module.Configure(emptyDefinition)).Should(module_test.ExpectFor(module).Panic())   // failed: empty definition
+	Expect(module.Configure(invalidDefinition)).Should(module_test.ExpectFor(module).Panic()) // failed: invalid definition
+
+	Expect(module.Configure(failure_l57)).Should(module_test.ExpectFor(module).Panic()) // failure at l.57
+	Expect(module.Configure(failure_l62)).Should(module_test.ExpectFor(module).Panic()) // failure at l.63
+	Expect(module.Configure(failure_l70)).Should(module_test.ExpectFor(module).Panic()) // failure at l.70
+
 }
 
-func postTestImpl(t *testing.T, log plugin.InternalLogger, nprocesses int, module module.Module, queue *module.NotificationQueue) {
+func postTestImpl(t *testing.T, nprocesses int, module module.Module, queue *module.NotificationQueue) {
 	notifications := queue.Notifications()
 
-	utils.AssertEquals(t, nprocesses, len(notifications))
-	for _, notification := range notifications {
-		o := notification.Content().(*object.DataObject)
+	Expect(notifications).Should(HaveLen(nprocesses))
 
-		utils.AssertEquals(t, 5, len(o.Value.(string)),
-			utils.PredicateDefinition{
-				func(a interface{}, b interface{}) bool { return a.(int) <= b.(int) },
-				"Expected <= %v, but get %v",
-			})
-		log("data notified : {%#v} from '%s'", o.Value, o.Module)
+	for _, n := range notifications {
+		Expect(n).Should(WithTransform(
+			func(n *notification.Notification) string { return n.Content().(*object.DataObject).Value.(string) },
+			HaveLen(10),
+		))
 	}
-}
-
-func TestModule(t *testing.T) {
-	plugin.Test(t, ExportModule(), environment)
-}
-
-func TestBenchmarkModule(t *testing.T) {
-	plugin.Benchmark(t, ExportModule(), environment)
 }

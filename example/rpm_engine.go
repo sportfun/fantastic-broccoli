@@ -12,7 +12,6 @@ type rpmEngine struct {
 	lastval int
 }
 
-
 func (e *rpmEngine) NewValue() float64 {
 	rpm := int(e.rand.Float64() * (e.max - e.min) * e.precision)
 
@@ -25,4 +24,3 @@ func (e *rpmEngine) NewValue() float64 {
 
 	return e.min + float64(e.lastval/int(e.precision))
 }
-

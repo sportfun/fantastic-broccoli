@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"reflect"
 
 	"go.uber.org/zap"
@@ -8,7 +9,8 @@ import (
 )
 
 type loggerImpl struct {
-	instance *zap.Logger
+	instance      *zap.Logger
+	forProduction bool
 }
 
 type infoWrapper func(string, interface{}) zapcore.Field
@@ -36,6 +38,10 @@ func toFields(binder argumentBinder) []zapcore.Field {
 	var fields []zapcore.Field
 
 	for i, v := range binder.getMoreInfo() {
+		if v == nil {
+			continue
+		}
+
 		if fnc, ok := typeWrapping[reflect.TypeOf(v).Kind()]; ok {
 			fields = append(fields, fnc(i, v))
 		} else {
@@ -50,14 +56,26 @@ func (logger *loggerImpl) Debug(a argumentBinder) {
 	logger.instance.Debug(a.getMessage(), toFields(a)...)
 }
 
-func (logger *loggerImpl) Info(a argumentBinder) {
-	logger.instance.Info(a.getMessage(), toFields(a)...)
+func (logger *loggerImpl) Debugf(f string, a ...interface{}) {
+	logger.instance.Debug(fmt.Sprintf(f, a...))
 }
 
-func (logger *loggerImpl) Warn(a argumentBinder) {
-	logger.instance.Warn(a.getMessage(), toFields(a)...)
+func (logger *loggerImpl) Info(a argumentBinder) { logger.instance.Info(a.getMessage(), toFields(a)...) }
+
+func (logger *loggerImpl) Infof(f string, a ...interface{}) {
+	logger.instance.Info(fmt.Sprintf(f, a...))
+}
+
+func (logger *loggerImpl) Warn(a argumentBinder) { logger.instance.Warn(a.getMessage(), toFields(a)...) }
+
+func (logger *loggerImpl) Warnf(f string, a ...interface{}) {
+	logger.instance.Warn(fmt.Sprintf(f, a...))
 }
 
 func (logger *loggerImpl) Error(a argumentBinder) {
 	logger.instance.Error(a.getMessage(), toFields(a)...)
+}
+
+func (logger *loggerImpl) Errorf(f string, a ...interface{}) {
+	logger.instance.Error(fmt.Sprintf(f, a...))
 }

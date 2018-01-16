@@ -1,0 +1,128 @@
+package main
+
+import (
+	"fmt"
+	"github.com/graarh/golang-socketio"
+	"github.com/mitchellh/mapstructure"
+	"github.com/sportfun/gakisitor/.constant"
+	"github.com/sportfun/gakisitor/common/types"
+	"github.com/sportfun/gakisitor/notification/object"
+	def "github.com/sportfun/gakisitor/utils/default"
+	"time"
+)
+
+var online = map[string]*client{}
+
+type client struct {
+	isOnline bool
+	isReady  bool
+	data     [][]byte
+}
+
+type webPacket struct {
+	LinkId string      `json:"link_id" mapstructure:"link_id"`
+	Body   interface{} `json:"body" mapstructure:"body"`
+}
+
+func OnConnection(c *gosocketio.Channel, a interface{}) {
+	fmt.Printf("[%s] New connection\n", c.Id())
+
+	online[c.Id()] = &client{isOnline: true, isReady: false, data: [][]byte{}}
+
+	fmt.Printf("[%s] Start testing loop\n", c.Id())
+	for online[c.Id()].isOnline {
+		time.Sleep(5 * time.Second)
+		fmt.Printf("[%s] > send '%s'\n", c.Id(), _constant.NetCommand.StartSession)
+		c.Emit(_constant.Channels.Command.String(), cmdToWSObj(_constant.NetCommand.StartSession.String()))
+		time.Sleep(10 * time.Second)
+		fmt.Printf("[%s] > send '%s'\n", c.Id(), _constant.NetCommand.EndSession)
+		c.Emit(_constant.Channels.Command.String(), cmdToWSObj(_constant.NetCommand.EndSession.String()))
+		// Statistiques
+	}
+
+	fmt.Printf("[%s] End testing loop\n", c.Id())
+}
+
+func OnDisconnection(c *gosocketio.Channel, a interface{}) {
+	fmt.Printf("[%s] Disconnected\n", c.Id())
+	online[c.Id()].isOnline = false
+}
+
+func OnCommand(c *gosocketio.Channel, a interface{}) {
+	fmt.Printf("[%s] Command received\n", c.Id())
+
+	var obj interface{}
+	if obj = toWSObj(c, a); obj == nil {
+		return
+	}
+
+	var object object.CommandObject
+	if err := mapstructure.Decode(obj, &object); err != nil {
+		fmt.Printf("[%s]\t Invalid command (%#v) (%s)\n", c.Id(), obj, err.Error())
+		return
+	}
+
+	if object.Command == _constant.NetCommand.State {
+		online[c.Id()].isReady = len(object.Args) > 0 && object.Args[0] == "started"
+	}
+	fmt.Printf("[%s]\t %s -> %v\n", c.Id(), object.Command, object.Args)
+}
+
+func OnData(c *gosocketio.Channel, a interface{}) {
+	fmt.Printf("[%s] Data received\n", c.Id())
+
+	var obj interface{}
+	if obj = toWSObj(c, a); obj == nil {
+		return
+	}
+
+	var object object.DataObject
+	if err := mapstructure.Decode(obj, &object); err != nil {
+		fmt.Printf("[%s]\t Invalid data (%#v) (%s)\n", c.Id(), obj, err.Error())
+		return
+	}
+
+	fmt.Printf("[%s]\t %s -> %#v\n", c.Id(), object.Module, object.Value)
+}
+
+func OnError(c *gosocketio.Channel, a interface{}) {
+	fmt.Printf("[%s] Error received\n", c.Id())
+
+	var obj interface{}
+	if obj = toWSObj(c, a); obj == nil {
+		return
+	}
+
+	var object object.ErrorObject
+	if err := mapstructure.Decode(obj, &object); err != nil {
+		fmt.Printf("[%s]\t Invalid error (%#v) (%s)\n", c.Id(), obj, err.Error())
+		return
+	}
+
+	fmt.Printf("[%s]\t %s -> %s", c.Id(), object.Origin, object.Reason)
+}
+
+func cmdToWSObj(command string, args ...string) webPacket {
+	return webPacket{"XXXX-XXXX-XXXX-XXXX", object.CommandObject{Command: types.CommandName(command), Args: args}}
+}
+
+func toWSObj(c *gosocketio.Channel, packet interface{}) interface{} {
+	var ws webPacket
+
+	if err := mapstructure.Decode(packet, &ws); err != nil {
+		fmt.Printf("[%s]\t Invalid packet (%#v) (%s)\n", c.Id(), ws, err)
+		return nil
+	}
+
+	return ws.Body
+}
+
+func main() {
+	def.SocketIOServer(def.WSReceivers{
+		gosocketio.OnConnection:             OnConnection,
+		gosocketio.OnDisconnection:          OnDisconnection,
+		_constant.Channels.Command.String(): OnCommand,
+		_constant.Channels.Data.String():    OnData,
+		_constant.Channels.Error.String():   OnError,
+	})
+}
