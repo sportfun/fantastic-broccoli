@@ -6,7 +6,6 @@ import (
 	. "github.com/sportfun/gakisitor/env"
 	"github.com/sportfun/gakisitor/notification"
 	"github.com/sportfun/gakisitor/notification/object"
-	"github.com/sportfun/gakisitor/utils"
 	"sync"
 	"testing"
 )
@@ -34,9 +33,9 @@ func TestNotificationQueue(t *testing.T) {
 		{Notifier: queue.NotifyData, FParam: "", Format: "data value: %v", Arguments: []interface{}{87 + 6i}, Object: object.NewDataObject("", "data value: (87+6i)")},
 		{Notifier: queue.NotifyData, FParam: "module name", Format: "value", Arguments: []interface{}{}, Object: object.NewDataObject("module name", "value")},
 
-		{Notifier: NotifyError, FParam: ErrorLevel, Format: "error message: %s", Arguments: []interface{}{"failure"}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:25", fmt.Errorf("error message: failure")), ErrorLevel, nil}},
-		{Notifier: NotifyError, FParam: WarningLevel, Format: "warning message: %s", Arguments: []interface{}{"failure"}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:25", fmt.Errorf("warning message: failure")), WarningLevel, nil}},
-		{Notifier: NotifyError, FParam: CriticalLevel, Format: "critical error", Arguments: []interface{}{}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:25", fmt.Errorf("critical error")), CriticalLevel, nil}},
+		{Notifier: NotifyError, FParam: ErrorLevel, Format: "error message: %s", Arguments: []interface{}{"failure"}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:24", fmt.Errorf("error message: failure")), ErrorLevel, nil}},
+		{Notifier: NotifyError, FParam: WarningLevel, Format: "warning message: %s", Arguments: []interface{}{"failure"}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:24", fmt.Errorf("warning message: failure")), WarningLevel, nil}},
+		{Notifier: NotifyError, FParam: CriticalLevel, Format: "critical error", Arguments: []interface{}{}, Object: &ErrorObject{*object.NewErrorObject("notification_queue_test.go:24", fmt.Errorf("critical error")), CriticalLevel, nil}},
 	}
 
 	for _, tc := range testCases {
@@ -48,19 +47,15 @@ func TestNotificationQueue(t *testing.T) {
 
 func TestNotificationQueue_RaceCondition(t *testing.T) {
 	queue := NewNotificationQueue()
-	wg := sync.WaitGroup{}
-	inc := utils.NewIncrementVolatile(0).(utils.Incremental)
+	sync_all := sync.WaitGroup{}
 
-	wg.Add(0xF0)
+	sync_all.Add(0xFF)
 	for i := 0; i < 0xFF; i++ {
 		go func() {
 			queue.NotifyData("origin", "%v", false)
-			if inc.Get().(int) < 0xF0 {
-				inc.Inc(1)
-				wg.Done()
-			}
+			sync_all.Done()
 		}()
+		queue.Notifications()
 	}
-	wg.Wait()
-	queue.Notifications()
+	sync_all.Wait()
 }

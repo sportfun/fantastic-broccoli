@@ -24,53 +24,12 @@ func TestOneTimeVolatile(t *testing.T) {
 	Expect(volatile.Get()).Should(BeNil())
 }
 
-func TestIncrementVolatile(t *testing.T) {
-	RegisterTestingT(t)
-
-	volatile := NewIncrementVolatile(0).(Incremental)
-	Expect(volatile.Set(0)).Should(Succeed())
-
-	Expect(volatile.Set("another type")).Should(MatchError("increment volatile can be only set with integer"))
-	Expect(volatile.Get()).Should(Equal(0))
-
-	volatile.Inc(1)
-	Expect(volatile.Get()).Should(Equal(1))
-
-	volatile.Inc(3)
-	Expect(volatile.Get()).Should(Equal(4))
-}
-
 func TestVolatile_RaceCondition(t *testing.T) {
 	volatileRaceCondition(NewVolatile(nil))
 }
 
 func TestOneTimeVolatile_RaceCondition(t *testing.T) {
 	volatileRaceCondition(NewOneTimeVolatile(nil))
-}
-
-func TestIncrementVolatile_RaceCondition(t *testing.T) {
-	volatile := NewIncrementVolatile(0).(Incremental)
-	wg := sync.WaitGroup{}
-
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-
-		for i := 0; i < 0xff; i++ {
-			volatile.Inc(1)
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-
-		for i := 0; i < 0xff; i++ {
-			volatile.Get()
-		}
-	}()
-
-	wg.Wait()
-
 }
 
 func volatileChecking(newVolatile func(interface{}) Volatile) {
