@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func TestManager_Notification(t *testing.T) {
+func TestNetwork_Notification(t *testing.T) {
 	RegisterTestingT(t)
 
 	bufferSocket := ""
@@ -51,11 +51,11 @@ func TestManager_Notification(t *testing.T) {
 		{Failed: true, Origin: env.NetworkServiceEntity, Content: nil, Channel: "", Data: ``, Log: `WARN	unhandled notification origin (network_manager)`},
 		{Failed: true, Origin: env.CoreEntity, Content: "", Channel: "", Data: ``, Log: `WARN	unknown content type	{"packet": ""}`},
 
-		{Origin: env.CoreEntity, Content: object.NewCommandObject("command", "a", "b"), Channel: OnCommand, Data: `{"body":{"args":["a","b"],"command":"command"},"link_id":""}`, Log: `DEBUG	notification handled	{"notification": {}}`},
-		{Origin: env.ModuleServiceEntity, Content: object.NewCommandObject("command", "a"), Channel: OnCommand, Data: `{"body":{"args":["a"],"command":"command"},"link_id":""}`, Log: `DEBUG	notification handled	{"notification": {}}`},
-		{Origin: env.ModuleServiceEntity, Content: object.NewCommandObject("command"), Channel: OnCommand, Data: `{"body":{"args":[],"command":"command"},"link_id":""}`, Log: `DEBUG	notification handled	{"notification": {}}`},
-		{Origin: env.ModuleServiceEntity, Content: object.NewDataObject("name", 0), Channel: OnData, Data: `{"body":{"module":"name","value":0},"link_id":""}`, Log: `DEBUG	notification handled	{"notification": {}}`},
-		{Origin: env.ModuleServiceEntity, Content: object.NewErrorObject("origin", gosocketio.ErrorSendTimeout), Channel: OnError, Data: `{"body":{"origin":"origin","reason":"Timeout"},"link_id":""}`, Log: `DEBUG	notification handled	{"notification": {}}`},
+		{Origin: env.CoreEntity, Content: *object.NewCommandObject("command", "a", "b"), Channel: OnCommand, Data: `{"body":{"args":["a","b"],"command":"command"},"link_id":""}`},
+		{Origin: env.ModuleServiceEntity, Content: *object.NewCommandObject("command", "a"), Channel: OnCommand, Data: `{"body":{"args":["a"],"command":"command"},"link_id":""}`},
+		{Origin: env.ModuleServiceEntity, Content: *object.NewCommandObject("command"), Channel: OnCommand, Data: `{"body":{"args":[],"command":"command"},"link_id":""}`},
+		{Origin: env.ModuleServiceEntity, Content: *object.NewDataObject("name", 0), Channel: OnData, Data: `{"body":{"module":"name","value":0},"link_id":""}`},
+		{Origin: env.ModuleServiceEntity, Content: *object.NewErrorObject("origin", gosocketio.ErrorSendTimeout), Channel: OnError, Data: `{"body":{"origin":"origin","reason":"Timeout"},"link_id":""}`},
 	}
 
 	for _, tc := range testCases {

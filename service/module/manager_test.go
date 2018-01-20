@@ -61,29 +61,29 @@ func TestManager_Process(t *testing.T) {
 	Expect(mod.InSession).Should(BeFalse())
 	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(BeEmpty())
 
-	manager.notifications.Notify(notification.NewNotification(NetworkServiceEntity, ModuleServiceEntity, object.NewCommandObject(StartSessionCmd)))
+	manager.notifications.Notify(notification.NewNotification(NetworkServiceEntity, ModuleServiceEntity, *object.NewCommandObject(StartSessionCmd)))
 	Expect(manager.Process()).Should(Succeed())
 	Expect(mod.InSession).Should(BeTrue())
-	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, object.NewDataObject("test", "1"))))
+	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, *object.NewDataObject("test", "1"))))
 
 	Expect(manager.Process()).Should(Succeed())
-	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, object.NewDataObject("test", "2"))))
+	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, *object.NewDataObject("test", "2"))))
 
 	mod.ForceFailure = WarningLevel
 	Expect(manager.Process()).Should(Succeed())
-	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, object.NewErrorObject("manager_test.go:146", fmt.Errorf("forced failure")))))
+	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, *object.NewErrorObject("manager_test.go:146", fmt.Errorf("forced failure")))))
 
 	mod.ForceFailure = FatalLevel
 	Expect(manager.Process()).Should(Succeed())
-	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, object.NewErrorObject("manager_test.go:146", fmt.Errorf("forced failure")))))
+	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, *object.NewErrorObject("manager_test.go:146", fmt.Errorf("forced failure")))))
 	Expect(mod.State()).Should(Equal(StoppedState))
 
-	manager.notifications.Notify(notification.NewNotification(NetworkServiceEntity, ModuleServiceEntity, object.NewCommandObject(StartSessionCmd)))
+	manager.notifications.Notify(notification.NewNotification(NetworkServiceEntity, ModuleServiceEntity, *object.NewCommandObject(StartSessionCmd)))
 	Expect(manager.Process()).Should(Succeed())
 	Expect(mod.InSession).Should(BeTrue())
-	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, object.NewDataObject("test", "3"))))
+	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(ConsistOf(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, *object.NewDataObject("test", "3"))))
 
-	manager.notifications.Notify(notification.NewNotification(NetworkServiceEntity, ModuleServiceEntity, object.NewCommandObject(EndSessionCmd)))
+	manager.notifications.Notify(notification.NewNotification(NetworkServiceEntity, ModuleServiceEntity, *object.NewCommandObject(EndSessionCmd)))
 	Expect(manager.Process()).Should(Succeed())
 	Expect(mod.InSession).Should(BeFalse())
 	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(BeEmpty())
@@ -106,7 +106,7 @@ func TestManager_Stop(t *testing.T) {
 	Expect(mod.InSession).Should(BeFalse())
 	Expect(manager.notifications.Notifications(NetworkServiceEntity)).Should(BeEmpty())
 
-	manager.notifications.Notify(notification.NewNotification(NetworkServiceEntity, ModuleServiceEntity, object.NewCommandObject(StartSessionCmd)))
+	manager.notifications.Notify(notification.NewNotification(NetworkServiceEntity, ModuleServiceEntity, *object.NewCommandObject(StartSessionCmd)))
 	Expect(manager.Process()).Should(Succeed())
 	Expect(mod.InSession).Should(BeTrue())
 

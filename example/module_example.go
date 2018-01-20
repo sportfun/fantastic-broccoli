@@ -114,7 +114,7 @@ func (m *rpmGenerator) calcRpm() (float64, int) {
 
 func (m *rpmGenerator) Process() error {
 	if m.state != env.WorkingState || m.data == nil {
-		m.logger.Warn(warnSessionNotStarted)
+		//m.logger.Warn(warnSessionNotStarted)
 		return nil
 	}
 

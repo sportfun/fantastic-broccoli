@@ -71,7 +71,7 @@ func TestNetwork_Process(t *testing.T) {
 
 	Expect(network.Start(queue, logger)).Should(Succeed())
 
-	queue.Notify(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, object.NewDataObject("", "")))
+	queue.Notify(notification.NewNotification(ModuleServiceEntity, NetworkServiceEntity, *object.NewDataObject("", "")))
 	Expect(network.Process()).Should(MatchError("failed to emit message"))
 
 	Expect(network.Configure(&config.GAkisitorConfig{

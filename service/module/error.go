@@ -22,7 +22,7 @@ const (
 var pluginFailureLog = log.NewArgumentBinder("%s")
 
 func (service *Manager) pluginFailure(t pluginError, err error, pluginName string) {
-	obj := object.NewErrorObject(env.ModuleServiceEntity)
+	obj := *object.NewErrorObject(env.ModuleServiceEntity)
 
 	switch t {
 	case NoModule:
@@ -43,8 +43,8 @@ func (service *Manager) checkIf(mod module.Module, err error, fnc moduleError) b
 		return true
 	}
 
-	obj := object.NewErrorObject(env.ModuleServiceEntity)
-	fnc(service, mod, err, obj)
+	obj := *object.NewErrorObject(env.ModuleServiceEntity)
+	fnc(service, mod, err, &obj)
 	service.notifications.Notify(netBuilder.With(obj).Build())
 	return false
 }

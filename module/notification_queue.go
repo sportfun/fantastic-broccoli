@@ -44,7 +44,7 @@ func (queue *NotificationQueue) NotifyError(module Module, level string, format 
 	_, caller, line, _ := runtime.Caller(1)
 	origin := fmt.Sprintf("%s:%d", path.Base(caller), line)
 
-	errorObject := &ErrorObject{*object.NewErrorObject(origin, fmt.Errorf(format, a...)), level, module}
+	errorObject := ErrorObject{*object.NewErrorObject(origin, fmt.Errorf(format, a...)), level, module}
 	queue.notifications = append(queue.notifications, builder.With(errorObject).Build())
 }
 
@@ -52,7 +52,7 @@ func (queue *NotificationQueue) NotifyData(origin string, format string, a ...in
 	queue.locker.Lock()
 	defer queue.locker.Unlock()
 
-	dataObject := object.NewDataObject(origin, fmt.Sprintf(format, a...))
+	dataObject := *object.NewDataObject(origin, fmt.Sprintf(format, a...))
 	queue.notifications = append(queue.notifications, builder.With(dataObject).Build())
 }
 

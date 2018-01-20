@@ -26,10 +26,10 @@ func (core *Core) handle(n *notification.Notification) {
 }
 
 func netNotificationHandler(core *Core, n *notification.Notification) {
-	var commandObject *object.CommandObject
+	var commandObject object.CommandObject
 
 	switch obj := n.Content().(type) {
-	case *object.CommandObject:
+	case object.CommandObject:
 		commandObject = obj
 	default:
 		core.logger.Error(invalidNetworkNotification.More("content", n.Content()))

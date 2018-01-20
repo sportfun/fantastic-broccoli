@@ -34,10 +34,10 @@ func (service *Manager) handle(n *notification.Notification) {
 }
 
 func netNotificationHandler(service *Manager, n *notification.Notification) {
-	var commandObject *object.CommandObject
+	var commandObject object.CommandObject
 
 	switch obj := n.Content().(type) {
-	case *object.CommandObject:
+	case object.CommandObject:
 		commandObject = obj
 	default:
 		service.logger.Error(invalidNetworkNotification.More("content", n.Content()))

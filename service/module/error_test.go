@@ -38,7 +38,7 @@ func TestManager_PluginFailure(t *testing.T) {
 		ntfns := manager.notifications.Notifications(env.NetworkServiceEntity)
 		Expect(ntfns).Should(And(
 			HaveLen(1),
-			ContainElement(builder.With(object.NewErrorObject(env.ModuleServiceEntity, fmt.Errorf(tc.Reason))).Build()),
+			ContainElement(builder.With(*object.NewErrorObject(env.ModuleServiceEntity, fmt.Errorf(tc.Reason))).Build()),
 		))
 		Expect(buffer).Should(Equal("ERROR	" + tc.Reason))
 	}
@@ -50,7 +50,7 @@ func TestManager_ModuleError(t *testing.T) {
 	buffer := ""
 	manager := &Manager{logger: log.NewTest(&buffer), notifications: service.NewNotificationQueue()}
 	module := &tModule{name: "module name"}
-	obj := object.NewErrorObject("")
+	obj := *object.NewErrorObject("")
 
 	testCases := []struct {
 		Fnc    moduleError
@@ -64,7 +64,7 @@ func TestManager_ModuleError(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc.Fnc(manager, module, tc.Error, obj)
+		tc.Fnc(manager, module, tc.Error, &obj)
 		Expect(obj.Reason).Should(Equal(tc.Reason))
 	}
 }
@@ -100,7 +100,7 @@ func TestManager_CheckIf(t *testing.T) {
 		default:
 			Expect(ntfns).Should(And(
 				HaveLen(1),
-				ContainElement(builder.With(object.NewErrorObject(env.ModuleServiceEntity, fmt.Errorf(tc.Reason))).Build()),
+				ContainElement(builder.With(*object.NewErrorObject(env.ModuleServiceEntity, fmt.Errorf(tc.Reason))).Build()),
 			))
 		}
 	}

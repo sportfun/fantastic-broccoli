@@ -71,7 +71,7 @@ func postTestImpl(t *testing.T, nprocesses int, module module.Module, queue *mod
 
 	for _, n := range notifications {
 		Expect(n).Should(WithTransform(
-			func(n *notification.Notification) string { return n.Content().(*object.DataObject).Value.(string) },
+			func(n *notification.Notification) string { return n.Content().(object.DataObject).Value.(string) },
 			HaveLen(10),
 		))
 	}

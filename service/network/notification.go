@@ -7,6 +7,7 @@ import (
 	"github.com/sportfun/gakisitor/log"
 	"github.com/sportfun/gakisitor/notification"
 	"github.com/sportfun/gakisitor/notification/object"
+	"time"
 )
 
 var (
@@ -16,7 +17,8 @@ var (
 )
 
 func (service *Network) handle(n *notification.Notification) error {
-	service.logger.Debug(debugNotificationHandled.More("notification", *n))
+	//service.logger.Debug(debugNotificationHandled.More("notification", fmt.Sprintf("%#v", n)))
+	time.Sleep(5 * time.Millisecond)
 
 	switch string(n.From()) {
 	case env.ModuleServiceEntity:
@@ -33,12 +35,12 @@ func defaultNotificationHandler(service *Network, n *notification.Notification) 
 	var succeed = true
 
 	switch o := n.Content().(type) {
-	case *object.CommandObject:
-		succeed = service.emit(OnCommand, *o)
-	case *object.DataObject:
-		succeed = service.emit(OnData, *o)
-	case *object.ErrorObject:
-		succeed = service.emit(OnError, *o)
+	case object.CommandObject:
+		succeed = service.emit(OnCommand, o)
+	case object.DataObject:
+		succeed = service.emit(OnData, o)
+	case object.ErrorObject:
+		succeed = service.emit(OnError, o)
 	default:
 		service.logger.Warn(unknownContentType.More("packet", n.Content()))
 	}

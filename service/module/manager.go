@@ -109,8 +109,8 @@ func (service *Manager) Process() error {
 
 	for _, notif := range service.messages.Notifications() {
 		switch obj := notif.Content().(type) {
-		case *module.ErrorObject:
-			netBuilder.With(&obj.ErrorObject)
+		case module.ErrorObject:
+			netBuilder.With(obj.ErrorObject)
 
 			if obj.ErrorLevel() == env.FatalLevel {
 				mod := obj.From()
@@ -118,7 +118,7 @@ func (service *Manager) Process() error {
 					service.checkIf(mod, mod.Stop(), isStopped)
 				}
 			}
-		case *object.DataObject:
+		case object.DataObject:
 			netBuilder.With(obj)
 		default:
 			continue
