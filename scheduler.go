@@ -1,10 +1,10 @@
-package engine
+package main
 
 import (
-	"time"
-	"strings"
-	"reflect"
 	"log"
+	"reflect"
+	"strings"
+	"time"
 )
 
 // The scheduler is an instance used to manage other worker. If a worker die, it will be

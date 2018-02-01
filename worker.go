@@ -1,11 +1,11 @@
-package engine
+package main
 
 import (
+	"errors"
+	"log"
 	"reflect"
 	"sync"
-	"errors"
 	"time"
-	"log"
 )
 
 type (

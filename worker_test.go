@@ -1,16 +1,17 @@
-package engine
+package main
 
 import (
-	"testing"
 	"errors"
-	"time"
-	. "github.com/onsi/gomega"
-	"sync"
-	"runtime"
-	"reflect"
 	"fmt"
-	"math/rand"
 	"log"
+	"math/rand"
+	"reflect"
+	"runtime"
+	"sync"
+	"testing"
+	"time"
+
+	. "github.com/onsi/gomega"
 )
 
 var (

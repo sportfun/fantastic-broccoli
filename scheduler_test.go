@@ -1,13 +1,14 @@
-package engine
+package main
 
 import (
-	"testing"
-	"github.com/onsi/gomega/types"
-	. "github.com/onsi/gomega"
-	"reflect"
 	"fmt"
-	"time"
+	"reflect"
 	"runtime"
+	"testing"
+	"time"
+
+	. "github.com/onsi/gomega"
+	"github.com/onsi/gomega/types"
 )
 
 func TestScheduler_RegisterWorker(t *testing.T) {
