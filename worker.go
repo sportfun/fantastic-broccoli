@@ -1,4 +1,4 @@
-package main
+package gakisitor
 
 import (
 	"errors"
@@ -12,7 +12,7 @@ type (
 	signal byte
 	link map[string]*reflect.Value
 	linkMap map[string]link
-	workerFactory func(links linkMap, flow WorkerFlow) error
+	workerFactory func(links linkMap, flow workerFlow) error
 )
 
 // a worker is a container representing a goroutine. This container is used by the scheduler to
@@ -30,7 +30,7 @@ type worker struct {
 }
 
 // a flow structure contains all channels used by the worker to communicate with the scheduler.
-type WorkerFlow struct {
+type workerFlow struct {
 	shutdown <-chan interface{} // chan for worker shutdown
 	pulseIn  <-chan interface{} // chan for heartbeat system
 	pulseOut chan<- interface{} // chan for heartbeat system
@@ -48,7 +48,7 @@ func (worker *worker) Spawn() error {
 	worker.pulseInWorkerChannel = make(chan interface{})
 	worker.pulseOutWorkerChannel = make(chan interface{})
 
-	workerFlow := WorkerFlow{
+	workerFlow := workerFlow{
 		shutdown: worker.shutdownWorkerChannel,
 		pulseIn:  worker.pulseInWorkerChannel,
 		pulseOut: worker.pulseOutWorkerChannel,

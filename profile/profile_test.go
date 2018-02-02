@@ -1,4 +1,4 @@
-package main
+package profile
 
 import (
 	"fmt"
@@ -21,16 +21,16 @@ func TestProfile_Load(t *testing.T) {
 	}{
 		{"", "impossible to read the profile file: open :"},
 		{"./none", "impossible to read the profile file: open ./none:"},
-		{".resources/invalid.json", "impossible to unmarshal the profile file: invalid character 'u' looking for beginning of value"},
-		{".resources/default.json", ""},
+		{"../.resources/invalid.json", "impossible to unmarshal the profile file: invalid character 'u' looking for beginning of value"},
+		{"../.resources/default.json", ""},
 	} {
-		profile := profile{}
+		profile := Profile{}
 
 		if tcase.error == "" {
-			Expect(profile.load(tcase.file)).Should(Succeed())
+			Expect(profile.Load(tcase.file)).Should(Succeed())
 			Expect(profile.isLoaded).Should(BeTrue())
 		} else {
-			Expect(profile.load(tcase.file)).Should(MatchError(MatchRegexp(tcase.error)))
+			Expect(profile.Load(tcase.file)).Should(MatchError(MatchRegexp(tcase.error)))
 			Expect(profile.isLoaded).Should(BeFalse())
 		}
 		Expect(profile.file).Should(Equal(tcase.file))
@@ -51,16 +51,16 @@ func TestProfile_SubscribeAlteration(t *testing.T) {
 	}
 	defer func() { os.Remove(filename) }()
 
-	var prf = profile{file: filename}
+	var prf = Profile{file: filename}
 	var isAltered bool
 	var mutex sync.Mutex
 
 	// invalid subscription
-	watcher, err := prf.subscribeAlteration(nil)
+	watcher, err := prf.SubscribeAlteration(nil)
 	Expect(err).Should(MatchError("handler can't be nil"))
 
 	// valid subscription
-	watcher, err = prf.subscribeAlteration(func(_ *profile) {
+	watcher, err = prf.SubscribeAlteration(func(_ *Profile) {
 		mutex.Lock()
 		defer mutex.Unlock()
 		isAltered = true

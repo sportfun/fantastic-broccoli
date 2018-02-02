@@ -1,4 +1,4 @@
-package main
+package gakisitor
 
 import (
 	"fmt"
@@ -133,7 +133,7 @@ func TestScheduler_Run(t *testing.T) {
 	shutdown := make(chan interface{})
 	scheduler := &scheduler{linksCache: linkMap{}, workers: map[string]*worker{}, shutdownSchedulerChannel: shutdown}
 
-	scheduler.RegisterWorker("workerFailure", func(links linkMap, flow WorkerFlow) error { return errUnrealistic })
+	scheduler.RegisterWorker("workerFailure", func(links linkMap, flow workerFlow) error { return errUnrealistic })
 
 	func() {
 		defer func() { Expect(recover()).Should(Equal("failed to spawn 'workerFailure': " + errUnrealistic.Error())) }()

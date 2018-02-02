@@ -1,4 +1,4 @@
-package main
+package gakisitor
 
 import (
 	"errors"
@@ -22,7 +22,7 @@ var (
 	naiveWorkerFactoryBuilder = func(t *testing.T) workerFactory {
 		id := rand.Uint32()
 
-		return func(links linkMap, flow WorkerFlow) error {
+		return func(links linkMap, flow workerFlow) error {
 			//TODO: LOG :: Use *testing.T when the logger will be implemented
 			log.Printf("> [%d]				start simple worker", id)
 
@@ -45,7 +45,7 @@ var (
 	completeWorkerFactoryBuilder = func(t *testing.T, targetWorker, inName, outName string) workerFactory {
 		id := rand.Uint32()
 
-		return func(links linkMap, flow WorkerFlow) error {
+		return func(links linkMap, flow workerFlow) error {
 			//TODO: LOG :: Use *testing.T when the logger will be implemented
 			log.Printf("> [%d]				start worker", id)
 
@@ -86,7 +86,7 @@ func TestWorker_SpawnKill(t *testing.T) {
 		err           error
 	}{
 		{true, true, naiveWorkerFactoryBuilder(t), ErrWorkerAlreadySpawned},
-		{true, false, func(_ linkMap, _ WorkerFlow) error { return errUnrealistic }, errUnrealistic},
+		{true, false, func(_ linkMap, _ workerFlow) error { return errUnrealistic }, errUnrealistic},
 		{false, false, naiveWorkerFactoryBuilder(t), nil},
 	} {
 		worker := &worker{

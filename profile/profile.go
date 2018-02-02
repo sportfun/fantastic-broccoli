@@ -1,4 +1,5 @@
-package main
+// Package profile provides types used to configure the Gakisitor and its plugins.
+package profile
 
 import (
 	"encoding/json"
@@ -10,18 +11,19 @@ import (
 )
 
 type (
-	moduleRaw interface{}
+	// Raw type represents any type used to configure a plugin.
+	Raw interface{}
 
 	// The profile is the container representing the configuration of the
 	// Gakisitor. It contains all required information about network,
 	// scheduler and plugins.
-	profile struct {
+	Profile struct {
 		file     string // path of the current profile instance
 		isLoaded bool   // state of the profile. true if the profile is loaded, else false
 
 		LinkId string `json:"link_id"` // unique link id, used to identify the Gakisitor
 
-		// scheduler configuration
+		// Scheduler configuration.
 		Scheduler struct {
 			// information about the scheduler timing
 			Timing struct {
@@ -31,24 +33,27 @@ type (
 			} `json:"timing"`
 		} `json:"scheduler"`
 
-		// network configuration
+		// Network configuration
 		Network struct {
 			HostAddress string `json:"host_address"` // host address (IPv4 / IPv6)
 			Port        int    `json:"port"`         // host port
 			EnableSsl   bool   `json:"enable_ssl"`   // enable SSL (if required)
 		} `json:"network"`
 
-		// plugins configuration
-		Plugins []struct {
-			Name   string    `json:"name"`   // plugin name
-			Path   string    `json:"path"`   // plugin library path
-			Config moduleRaw `json:"config"` // plugin configuration
-		} `json:"plugins"`
+		// Plugins configuration
+		Plugins []Plugin `json:"plugins"`
+	}
+
+	// Plugin type describing the plugin profile.
+	Plugin struct {
+		Name   string `json:"name"`   // plugin name
+		Path   string `json:"path"`   // plugin library path
+		Config Raw    `json:"config"` // plugin configuration
 	}
 )
 
-// Load the profile from a file. The optional parameter change the internal profile file path if set
-func (profile *profile) load(file ...string) error {
+// Load the profile from a file. The optional parameter change the internal profile file path if set.
+func (profile *Profile) Load(file ...string) error {
 	profile.isLoaded = false
 
 	if len(file) > 0 {
@@ -70,8 +75,8 @@ func (profile *profile) load(file ...string) error {
 	return nil
 }
 
-// Add a handler called when the profile file was altered
-func (profile *profile) subscribeAlteration(handler func(profile *profile)) (*fsnotify.Watcher, error) {
+// Add an handler to the profile, called when the profile file was altered.
+func (profile *Profile) SubscribeAlteration(handler func(profile *Profile)) (*fsnotify.Watcher, error) {
 	if handler == nil {
 		return nil, fmt.Errorf("handler can't be nil")
 	}
