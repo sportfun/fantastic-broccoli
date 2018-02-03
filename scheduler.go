@@ -26,8 +26,9 @@ var (
 		linksCache:               linkMap{},
 		workers:                  map[string]*worker{},
 		shutdownSchedulerChannel: make(chan interface{}),
-	}                                   // Singleton instance of the scheduler
+	} // Singleton instance of the scheduler
 )
+
 // Register a new worker with its factory. It will be called and
 // instanced in a goroutine only when the scheduler was ready.
 func (scheduler *scheduler) RegisterWorker(name string, factory workerFactory) {

@@ -103,7 +103,7 @@ func TestScheduler_MapLinks(t *testing.T) {
 
 			for _, worker := range workers {
 				for linkedWorker, links := range worker.links {
-					for linkName, _ := range links {
+					for linkName := range links {
 						simplifiedLinks = append(simplifiedLinks, fmt.Sprintf("%s>%s>%s", worker.name, linkedWorker, linkName))
 					}
 				}

@@ -3,6 +3,7 @@ package profile
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,14 +15,14 @@ type (
 	// Raw type represents any type used to configure a plugin.
 	Raw interface{}
 
-	// The profile is the container representing the configuration of the
+	// Profile is the container representing the configuration of the
 	// Gakisitor. It contains all required information about network,
 	// scheduler and plugins.
 	Profile struct {
 		file     string // path of the current profile instance
 		isLoaded bool   // state of the profile. true if the profile is loaded, else false
 
-		LinkId string `json:"link_id"` // unique link id, used to identify the Gakisitor
+		LinkID string `json:"link_id"` // unique link id, used to identify the Gakisitor
 
 		// Scheduler configuration.
 		Scheduler struct {
@@ -44,7 +45,7 @@ type (
 		Plugins []Plugin `json:"plugins"`
 	}
 
-	// Plugin type describing the plugin profile.
+	// Plugin describes the plugin profile.
 	Plugin struct {
 		Name   string `json:"name"`   // plugin name
 		Path   string `json:"path"`   // plugin library path
@@ -52,7 +53,16 @@ type (
 	}
 )
 
-// Load the profile from a file. The optional parameter change the internal profile file path if set.
+// Errors which can be occur in the AccessTo function.
+var (
+	ErrEmptyAccessPath   = errors.New("empty access path")
+	ErrInvalidAccessPath = errors.New("invalid access path")
+	ErrInvalidIndexType  = errors.New("invalid index path type (must be a string or an int)")
+	ErrOutOfBoundIndex   = errors.New("out of bound index path")
+)
+
+// Load the profile from a file. The optional parameter change the internal profile
+// file path, if it already set.
 func (profile *Profile) Load(file ...string) error {
 	profile.isLoaded = false
 
@@ -75,7 +85,7 @@ func (profile *Profile) Load(file ...string) error {
 	return nil
 }
 
-// Add an handler to the profile, called when the profile file was altered.
+// Subscribe an handler, called when the profile file was altered.
 func (profile *Profile) SubscribeAlteration(handler func(profile *Profile)) (*fsnotify.Watcher, error) {
 	if handler == nil {
 		return nil, fmt.Errorf("handler can't be nil")
@@ -116,4 +126,45 @@ func (profile *Profile) SubscribeAlteration(handler func(profile *Profile)) (*fs
 	//TODO: LOG :: DEBUG - Subscription added on the profile monitoring
 	log.Printf("{profile[watcher]}[DEBUG]	Subscription added on the profile monitoring")
 	return watcher, nil
+}
+
+// Easily access to an item into the plugin profile raw.
+func (profile *Plugin) AccessTo(paths ...interface{}) (interface{}, error) {
+	if len(paths) == 0 {
+		return nil, ErrEmptyAccessPath
+	}
+
+	var currentNode = profile.Config
+	for _, path := range paths {
+		switch idx := path.(type) {
+		case string:
+			node, isObj := currentNode.(map[string]interface{})
+			if !isObj {
+				return currentNode, ErrInvalidAccessPath
+			}
+
+			var exists bool
+			currentNode, exists = node[idx]
+			if !exists {
+				return node, ErrInvalidAccessPath
+			}
+
+		case int:
+			node, isObj := currentNode.([]interface{})
+			if !isObj {
+				return currentNode, ErrInvalidAccessPath
+			}
+
+			if idx >= len(node) {
+				return currentNode, ErrOutOfBoundIndex
+			}
+			currentNode = node[idx]
+
+		default:
+			return currentNode, ErrInvalidIndexType
+		}
+
+	}
+
+	return currentNode, nil
 }

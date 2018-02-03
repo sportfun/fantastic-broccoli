@@ -9,13 +9,12 @@ import (
 )
 
 type (
-	signal byte
-	link map[string]*reflect.Value
-	linkMap map[string]link
+	link          map[string]*reflect.Value
+	linkMap       map[string]link
 	workerFactory func(links linkMap, flow workerFlow) error
 )
 
-// a worker is a container representing a goroutine. This container is used by the scheduler to
+// worker is a container representing a goroutine. This container is used by the scheduler to
 // 'manage' theses goroutine and try to prevent some failure (like panic or anything else).
 type worker struct {
 	name    string        // worker name
@@ -29,7 +28,7 @@ type worker struct {
 	pulseOutWorkerChannel chan interface{} // chan for heartbeat system
 }
 
-// a flow structure contains all channels used by the worker to communicate with the scheduler.
+// workerFlow contains all channels used by the worker to communicate with the scheduler.
 type workerFlow struct {
 	shutdown <-chan interface{} // chan for worker shutdown
 	pulseIn  <-chan interface{} // chan for heartbeat system
@@ -38,7 +37,7 @@ type workerFlow struct {
 
 var ErrWorkerAlreadySpawned = errors.New("worker already spawned")
 
-// spawn a new instance (goroutine) of the worker.
+// Spawn generates and launch a new instance (goroutine) of the worker.
 func (worker *worker) Spawn() error {
 	if worker.IsAlive() {
 		return ErrWorkerAlreadySpawned
@@ -97,8 +96,8 @@ func (worker *worker) Spawn() error {
 	return nil
 }
 
-// kill the worker. (it send a signal to stop it, but don't wait
-// if it will be handled)
+// Kill kills the worker (it send a signal to stop it, but don't wait
+// if it will be handled).
 func (worker *worker) Kill() {
 	defer func() { recover() }() // panic if shutdownWorkerChannel is closed
 
@@ -110,7 +109,10 @@ func (worker *worker) Kill() {
 	worker.alive = false
 	worker.sync.Unlock()
 
-	select {case worker.shutdownWorkerChannel <- true:default:} // Can't wait here (main 'thread')
+	select {
+	case worker.shutdownWorkerChannel <- true:
+	default:
+	} // Can't wait here (main 'thread')
 
 	close(worker.shutdownWorkerChannel)
 
@@ -118,7 +120,7 @@ func (worker *worker) Kill() {
 	log.Printf("{%s[worker]}[INFO]		Worker killed", worker.name)
 }
 
-// return if the worker is alive.
+// IsAlive return if the worker is alive.
 func (worker *worker) IsAlive() bool {
 	worker.sync.Lock()
 	defer worker.sync.Unlock()

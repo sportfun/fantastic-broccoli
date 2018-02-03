@@ -27,7 +27,9 @@ var (
 			log.Printf("> [%d]				start simple worker", id)
 
 			go func() {
-				defer func() { log.Printf("> [%d]				stop simple worker (shutdown)", id) }()
+				defer func() {
+					log.Printf("> [%d]				stop simple worker (shutdown)", id)
+				}()
 				for {
 					select {
 					case <-flow.shutdown:
@@ -50,7 +52,9 @@ var (
 			log.Printf("> [%d]				start worker", id)
 
 			go func() {
-				defer func() { log.Printf("> [%d]				stop worker (shutdown)", id) }()
+				defer func() {
+					log.Printf("> [%d]				stop worker (shutdown)", id)
+				}()
 				var in <-chan string = links[targetWorker][inName].Interface().(chan string)
 				var out chan<- string = links[targetWorker][outName].Interface().(chan string)
 

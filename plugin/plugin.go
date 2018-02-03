@@ -21,7 +21,7 @@ type State struct {
 	raw  interface{} // Additional and optional content (error or string)
 }
 
-// Predefined states
+// Predefined states.
 var (
 	// State code formats
 	// +---------+-----------------+--------------------------------------------------------------+
@@ -32,20 +32,20 @@ var (
 	// | Ex ~ EF | Error states    | The scheduler notify the server                              |
 	// | Fx ~ FF | Critical states | The scheduler try to restart the plugin && notify the server |
 	// +---------+-----------------+--------------------------------------------------------------+
-	Nil = State{0x00, "", nil}
+	NilState State
 
-	Running   State = State{0x11, "Currently running", nil}
-	InSession State = State{0x12, "Currently in session", nil}
-	Paused    State = State{0x13, "Currently paused", nil}
-	Stopped   State = State{0x14, "Currently stopped", nil}
+	RunningState   = State{0x11, "currently running", nil}
+	InSessionState = State{0x12, "currently in session", nil}
+	PausedState    = State{0x13, "currently paused", nil}
+	StoppedState   = State{0x14, "currently stopped", nil}
 
-	GPIODisconnection  State = State{0xE1, "GPIO has been disconnected", nil}
-	GPIOFailure        State = State{0xE2, "GPIO reading has failed", nil}
-	AggregationFailure State = State{0xE3, "Data aggregation has failed", nil}
-	ConversionFailure  State = State{0xE4, "Data conversion has failed", nil}
+	GPIODisconnectionState  = State{0xE1, "GPIO has been disconnected", nil}
+	GPIOFailureState        = State{0xE2, "GPIO reading has failed", nil}
+	AggregationFailureState = State{0xE3, "data aggregation has failed", nil}
+	ConversionFailureState  = State{0xE4, "data conversion has failed", nil}
 
-	GPIOPanic    State = State{0xF1, "GPIO critical error", nil}
-	PanicHandled State = State{0xF2, "Panic handled", nil}
+	GPIOPanicState    = State{0xF1, "GPIO critical error", nil}
+	HandledPanicState = State{0xF2, "panic handled", nil}
 )
 
 type (
@@ -54,7 +54,7 @@ type (
 
 	// Chan struct containing all channels used by the plugins.
 	Chan struct {
-		Data        chan<- string      // Used to send data (only JSON serializable data)
+		Data        chan<- interface{} // Used to send data (only JSON serializable data)
 		Status      chan<- State       // Used to send status
 		Instruction <-chan instruction // Used to read instruction from the gakisitor
 	}
@@ -82,7 +82,7 @@ type Plugin struct {
 	Instance func(profile profile.Plugin, log log.Log, channels Chan) error
 }
 
-// Create a custom state.
+// NewState creates a new custom state.
 func NewState(code byte, desc string, raw ...interface{}) State {
 	var sraw interface{}
 	if len(raw) > 0 {
@@ -91,16 +91,16 @@ func NewState(code byte, desc string, raw ...interface{}) State {
 	return State{code, desc, sraw}
 }
 
-// Return the state code.
+// Code return the state code.
 func (state State) Code() byte { return state.code }
 
-// Return the state description.
+// Code return the state description.
 func (state State) Desc() string { return state.desc }
 
-// Return the state raw.
+// Code return the state raw.
 func (state State) Raw() interface{} { return state.raw }
 
-// Compare two states.
+// Equal compare two states.
 func (state State) Equal(o interface{}) bool {
 	if s, ok := o.(State); ok {
 		return s.code == state.code
@@ -108,7 +108,7 @@ func (state State) Equal(o interface{}) bool {
 	return false
 }
 
-// Add raw to an existing state.
+// AddRaw add a raw to an existing state.
 func (state State) AddRaw(raw interface{}) State {
 	return State{state.code, state.desc, raw}
 }
