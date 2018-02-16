@@ -1,3 +1,0 @@
-package gakisitor
-
-func main() {}

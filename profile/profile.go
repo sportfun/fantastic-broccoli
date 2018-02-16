@@ -11,49 +11,47 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-type (
-	// Raw type represents any type used to configure a plugin.
-	Raw interface{}
+// Raw type represents any type used to configure a plugin.
+type Raw interface{}
 
-	// Profile is the container representing the configuration of the
-	// Gakisitor. It contains all required information about network,
-	// scheduler and plugins.
-	Profile struct {
-		file     string // path of the current profile instance
-		isLoaded bool   // state of the profile. true if the profile is loaded, else false
+// Profile is the container representing the configuration of the
+// Gakisitor. It contains all required information about network,
+// scheduler and plugins.
+type Profile struct {
+	file     string // path of the current profile instance
+	isLoaded bool   // state of the profile. true if the profile is loaded, else false
 
-		LinkID string `json:"link_id"` // unique link id, used to identify the Gakisitor
+	LinkID string `json:"link_id"` // unique link id, used to identify the Gakisitor
 
-		// Scheduler configuration.
-		Scheduler struct {
-			// information about the scheduler timing
-			Timing struct {
-				TTL int `json:"ttl"` // Time To Live. See the scheduler for more information
-				TTW int `json:"ttw"` // Time To Wait. See the scheduler for more information
-				TTR int `json:"ttr"` // Time To Refresh. See the scheduler for more information
-			} `json:"timing"`
-		} `json:"scheduler"`
+	// Scheduler configuration.
+	Scheduler struct {
+		// information about the scheduler timing
+		Timing struct {
+			TTL int `json:"ttl"` // Time To Live. See the scheduler for more information
+			TTW int `json:"ttw"` // Time To Wait. See the scheduler for more information
+			TTR int `json:"ttr"` // Time To Refresh. See the scheduler for more information
+		} `json:"timing"`
+	} `json:"scheduler"`
 
-		// Network configuration
-		Network struct {
-			HostAddress string `json:"host_address"` // host address (IPv4 / IPv6)
-			Port        int    `json:"port"`         // host port
-			EnableSsl   bool   `json:"enable_ssl"`   // enable SSL (if required)
-		} `json:"network"`
+	// Network configuration
+	Network struct {
+		HostAddress string `json:"host_address"` // host address (IPv4 / IPv6)
+		Port        int    `json:"port"`         // host port
+		EnableSsl   bool   `json:"enable_ssl"`   // enable SSL (if required)
+	} `json:"network"`
 
-		// Plugins configuration
-		Plugins []Plugin `json:"plugins"`
-	}
+	// Plugins configuration
+	Plugins []Plugin `json:"plugins"`
+}
 
-	// Plugin describes the plugin profile.
-	Plugin struct {
-		Name   string `json:"name"`   // plugin name
-		Path   string `json:"path"`   // plugin library path
-		Config Raw    `json:"config"` // plugin configuration
-	}
-)
+// Plugin describes the plugin profile.
+type Plugin struct {
+	Name   string `json:"name"`   // plugin name
+	Path   string `json:"path"`   // plugin library path
+	Config Raw    `json:"config"` // plugin configuration
+}
 
-// Errors which can be occur in the AccessTo function.
+// Errors which can be occur in AccessTo function.
 var (
 	ErrEmptyAccessPath   = errors.New("empty access path")
 	ErrInvalidAccessPath = errors.New("invalid access path")
@@ -61,7 +59,7 @@ var (
 	ErrOutOfBoundIndex   = errors.New("out of bound index path")
 )
 
-// Load the profile from a file. The optional parameter change the internal profile
+// Load loads the profile from a file. The optional parameter change the internal profile
 // file path, if it already set.
 func (profile *Profile) Load(file ...string) error {
 	profile.isLoaded = false
@@ -85,7 +83,7 @@ func (profile *Profile) Load(file ...string) error {
 	return nil
 }
 
-// Subscribe an handler, called when the profile file was altered.
+// SubscribeAlteration subscribes an handler, called when the profile file was altered.
 func (profile *Profile) SubscribeAlteration(handler func(profile *Profile)) (*fsnotify.Watcher, error) {
 	if handler == nil {
 		return nil, fmt.Errorf("handler can't be nil")

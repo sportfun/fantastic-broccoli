@@ -90,8 +90,6 @@ func ExamplePlugin_basic() {
 					}
 				}
 			}
-
-			return nil
 		},
 	}
 }

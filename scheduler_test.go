@@ -1,34 +1,39 @@
 package gakisitor
 
 import (
-	"fmt"
-	"reflect"
-	"runtime"
+	"context"
+	"errors"
+	"log"
+	"math/rand"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	. "github.com/onsi/gomega"
-	"github.com/onsi/gomega/types"
 )
 
 func TestScheduler_RegisterWorker(t *testing.T) {
 	RegisterTestingT(t)
-	scheduler := &scheduler{linksCache: linkMap{}, workers: map[string]*worker{}}
+
+	scheduler := &scheduler{linkCache: map[string]links{}, workers: map[string]*worker{}, ctx: context.Background(), deadSig: make(chan string)}
 
 	for _, tcase := range []struct {
 		name           string
-		factory        workerFactory
-		workersMatcher types.GomegaMatcher
-		panicMatcher   types.GomegaMatcher
+		factory        workerTask
+		workersMatcher OmegaMatcher
+		panicMatcher   OmegaMatcher
 	}{
-		{"", nil, BeEmpty(), Equal("worker name can't be empty")},
-		{"    ", nil, BeEmpty(), Equal("worker name can't be empty")},
-		{"::", nil, BeEmpty(), Equal(`worker name can't contain ':/\|"'?!@#$%^&*()+='`)},
-		{"worker1", nil, BeEmpty(), Equal("worker factory can't be nil")},
-		{"worker1", naiveWorkerFactoryBuilder(t), HaveLen(1), BeNil()},
-		{"worker1", naiveWorkerFactoryBuilder(t), HaveLen(1), Equal("worker 'worker1' already registered")},
-		{"    worker1   ", naiveWorkerFactoryBuilder(t), HaveLen(1), Equal("worker 'worker1' already registered")},
-		{"worker2", naiveWorkerFactoryBuilder(t), HaveLen(2), BeNil()},
+		{"", nil, BeEmpty(), Equal("worker name '' is invalid")},
+		{"    ", nil, BeEmpty(), Equal("worker name '' is invalid")},
+		{"::", nil, BeEmpty(), Equal("worker name '::' is invalid")},
+		{"worker", nil, BeEmpty(), Equal("worker task can't be nil")},
+		{"group/worker/1", nil, BeEmpty(), Equal("worker task can't be nil")},
+
+		{"group/worker/1", taskBuilder(triggerTicker(time.Microsecond), doNothing()), HaveLen(1), BeNil()},
+		{"group/worker/1", taskBuilder(triggerTicker(time.Microsecond), doNothing()), HaveLen(1), Equal("worker 'group/worker/1' already registered")},
+		{"    group/worker/1   ", taskBuilder(triggerTicker(time.Microsecond), doNothing()), HaveLen(1), Equal("worker 'group/worker/1' already registered")},
+
+		{"group/worker/2", taskBuilder(triggerTicker(time.Microsecond), doNothing()), HaveLen(2), BeNil()},
 	} {
 		func() {
 			defer func() { Expect(recover()).Should(tcase.panicMatcher) }()
@@ -37,154 +42,162 @@ func TestScheduler_RegisterWorker(t *testing.T) {
 		}()
 	}
 }
-
-func TestScheduler_RegisterLink(t *testing.T) {
+func TestScheduler_Run(t *testing.T) {
 	RegisterTestingT(t)
-	scheduler := &scheduler{linksCache: linkMap{}, workers: map[string]*worker{}}
-	nilValue := reflect.ValueOf(nil)
+
+	type workerDefinition struct {
+		name string
+		task workerTask
+	}
+	type linkDefinition struct {
+		origin      string
+		destination string
+		name        string
+	}
+	var unrealisticError = errors.New("unrealistic error")
 
 	for _, tcase := range []struct {
-		name         string
-		origin       string
-		destination  string
-		link         reflect.Value
-		linksMatcher types.GomegaMatcher
-		panicMatcher types.GomegaMatcher
+		workers       []workerDefinition
+		links         []linkDefinition
+		nWorker       int32
+		returnMatcher OmegaMatcher
 	}{
-		{"", "", "", nilValue, BeEmpty(), Equal("worker name can't be empty")},
-		{"", "::", "", nilValue, BeEmpty(), Equal(`worker name can't contain ':/\|"'?!@#$%^&*()+='`)},
-		{"", "worker1", "::", nilValue, BeEmpty(), Equal(`worker name can't contain ':/\|"'?!@#$%^&*()+='`)},
-		{"", "worker1", "worker1", nilValue, BeEmpty(), Equal("worker can't be linked with himself")},
-		{"", "worker1", "worker2", nilValue, BeEmpty(), Equal("worker link name can't be empty")},
-		{"link", "worker1", "worker2", reflect.ValueOf(0), BeEmpty(), Equal("worker link must be a channel")},
-		{"link", "worker1", "worker2", reflect.ValueOf(make(chan interface{})), And(HaveLen(1), HaveKey("worker2:worker1")), BeNil()},
-		{"link", "worker1", "worker2", reflect.ValueOf(make(chan interface{})), And(HaveLen(1), HaveKey("worker2:worker1")), BeNil()},
-		{"link", "worker2", "worker1", reflect.ValueOf(make(chan interface{})), And(HaveLen(1), HaveKey("worker2:worker1")), BeNil()},
-		{"link", "worker1", "worker2", reflect.ValueOf(make(chan int)), And(HaveLen(1), HaveKey("worker2:worker1")), Equal("worker link 'link' already exists between 'worker1' and 'worker2', but type is different")},
-		{"link", "worker3", "worker2", reflect.ValueOf(make(chan chan string)), And(HaveLen(2), HaveKey("worker3:worker2")), BeNil()},
+		{
+			[]workerDefinition{
+				{"worker", errorTask(unrealisticError)},
+			},
+			[]linkDefinition{},
+			0,
+			Equal(errors.New("worker 'worker' has been restarted too many times")),
+		},
+		{
+			[]workerDefinition{
+				{"worker", panicTask(unrealisticError)},
+			},
+			[]linkDefinition{},
+			0,
+			Equal(errors.New("worker 'worker' has been restarted too many times")),
+		},
+
+		{
+			[]workerDefinition{
+				{"test/worker/1", taskBuilder(triggerLinks("test/worker/2", "<"), doPingLinks("test/worker/2", ">"))},
+				{"test/worker/2", taskBuilder(triggerLinks("test/worker/1", ">"), doPingLinks("test/worker/1", "<"))},
+				{"test/worker/3", taskBuilder(triggerTicker(time.Second), doNothing())},
+			},
+			[]linkDefinition{
+				{"test/worker/1", "test/worker/2", ">"},
+				{"test/worker/1", "test/worker/2", "<"},
+			},
+			3,
+			BeNil(),
+		},
 	} {
+		ctx, cancel := context.WithCancel(context.Background())
+		scheduler := &scheduler{workers: map[string]*worker{}, ctx: ctx, deadSig: make(chan string)}
+
+		for _, worker := range tcase.workers {
+			scheduler.RegisterWorker(worker.name, worker.task)
+		}
+
 		func() {
-			defer func() { Expect(recover()).Should(tcase.panicMatcher) }()
-			scheduler.RegisterLink(tcase.origin, tcase.destination, tcase.name, tcase.link)
-			Expect(scheduler.linksCache).Should(tcase.linksMatcher)
+			go func() {
+				time.Sleep(5 * time.Millisecond)
+				Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(tcase.nWorker))
+				cancel()
+			}()
+
+			Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(int32(0)))
+			Expect(scheduler.Run()).Should(tcase.returnMatcher)
+			time.Sleep(time.Millisecond)
+			Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(int32(0)))
 		}()
 	}
 }
 
-func TestScheduler_MapLinks(t *testing.T) {
-	RegisterTestingT(t)
-	scheduler := &scheduler{linksCache: linkMap{}, workers: map[string]*worker{}}
+// Tasks generation
+var onlineWorker = new(int32)
 
-	scheduler.RegisterWorker("worker1", naiveWorkerFactoryBuilder(t))
-	scheduler.RegisterLink("worker1", "worker2", "_", reflect.ValueOf(make(chan interface{})))
+func taskBuilder(trigger func() <-chan interface{}, do func(interface{}, map[string]links, uint32)) workerTask {
+	id := rand.Uint32()
 
-	func() {
-		defer func() { Expect(recover()).Should(Equal("worker 'worker2' not registered")) }()
-		scheduler.mapLinks()
-	}()
-	scheduler.linksCache = linkMap{}
+	return func(ctx context.Context, links map[string]links) error {
+		//TODO: LOG :: Use *testing.T when the logger will be implemented
+		log.Printf("{worker#%d}			Start worker", id)
+		atomic.AddInt32(onlineWorker, 1)
+		defer func() {
+			//TODO: LOG :: Use *testing.T when the logger will be implemented
+			log.Printf("{worker#%d}			Stop worker", id)
+			atomic.AddInt32(onlineWorker, -1)
+		}()
 
-	scheduler.RegisterWorker("worker2", naiveWorkerFactoryBuilder(t))
-	scheduler.RegisterWorker("worker3", naiveWorkerFactoryBuilder(t))
-	scheduler.RegisterLink("worker1", "worker2", ".", reflect.ValueOf(make(chan interface{})))
-	scheduler.RegisterLink("worker1", "worker2", "..", reflect.ValueOf(make(chan interface{})))
+		for {
+			select {
+			case <-ctx.Done():
+				return nil
 
-	scheduler.RegisterLink("worker1", "worker3", "...", reflect.ValueOf(make(chan interface{})))
-	scheduler.RegisterLink("worker3", "worker2", "....", reflect.ValueOf(make(chan interface{})))
-
-	func() {
-		defer func() { Expect(recover()).Should(BeNil()) }()
-		scheduler.mapLinks()
-	}()
-
-	Expect(scheduler.workers).Should(WithTransform(
-		func(workers map[string]*worker) []string {
-			var simplifiedLinks []string
-
-			for _, worker := range workers {
-				for linkedWorker, links := range worker.links {
-					for linkName := range links {
-						simplifiedLinks = append(simplifiedLinks, fmt.Sprintf("%s>%s>%s", worker.name, linkedWorker, linkName))
-					}
+			case v, o := <-trigger(links):
+				if !o {
+					log.Printf("{worker#%d}			trigger closed", id)
+					return nil
 				}
+				do(v, links, id)
 			}
-			return simplifiedLinks
-		},
-		ConsistOf(
-			"worker1>worker2>.",
-			"worker1>worker2>..",
-			"worker1>worker3>...",
+		}
+		return nil
+	}
+}
+func errorTask(err error) workerTask {
+	id := rand.Uint32()
 
-			"worker2>worker1>.",
-			"worker2>worker1>..",
-			"worker2>worker3>....",
+	return func(ctx context.Context, links map[string]links) error {
+		//TODO: LOG :: Use *testing.T when the logger will be implemented
+		log.Printf("{worker#%d}			Start worker", id)
+		defer func() {
+			//TODO: LOG :: Use *testing.T when the logger will be implemented
+			log.Printf("{worker#%d}			Stop worker", id)
+		}()
 
-			"worker3>worker1>...",
-			"worker3>worker2>....",
-		),
-	))
+		return err
+	}
+}
+func panicTask(err error) workerTask {
+	id := rand.Uint32()
+
+	return func(ctx context.Context, links map[string]links) error {
+		//TODO: LOG :: Use *testing.T when the logger will be implemented
+		log.Printf("{worker#%d}			Start worker", id)
+		defer func() {
+			//TODO: LOG :: Use *testing.T when the logger will be implemented
+			log.Printf("{worker#%d}			Stop worker", id)
+		}()
+
+		panic(err)
+	}
 }
 
-func TestScheduler_Run(t *testing.T) {
-	RegisterTestingT(t)
-	TTL = 25 * time.Microsecond
-	numGoroutine := runtime.NumGoroutine()
-
-	shutdown := make(chan interface{})
-	scheduler := &scheduler{linksCache: linkMap{}, workers: map[string]*worker{}, shutdownSchedulerChannel: shutdown}
-
-	scheduler.RegisterWorker("workerFailure", func(links linkMap, flow workerFlow) error { return errUnrealistic })
-
-	func() {
-		defer func() { Expect(recover()).Should(Equal("failed to spawn 'workerFailure': " + errUnrealistic.Error())) }()
-		scheduler.Run()
-	}()
-	scheduler.workers = map[string]*worker{}
-
-	scheduler.RegisterWorker("worker1", completeWorkerFactoryBuilder(t, "worker2", "<", ">"))
-	scheduler.RegisterWorker("worker2", completeWorkerFactoryBuilder(t, "worker1", ">", "<"))
-	scheduler.RegisterLink("worker1", "worker2", ">", reflect.ValueOf(make(chan string)))
-	scheduler.RegisterLink("worker1", "worker2", "<", reflect.ValueOf(make(chan string)))
-
-	go func() {
-		time.Sleep(25 * time.Millisecond)
-		shutdown <- nil
-	}()
-	scheduler.Run()
-
-	Eventually(func() int { return runtime.NumGoroutine() }, time.Second).Should(Equal(numGoroutine), "go routine not ended") // clean all goroutine
+func triggerTicker(d time.Duration) func(map[string]links) <-chan interface{} {
+	return func(links map[string]links) <-chan interface{} {
+		trigger := make(chan interface{})
+		go func() { time.Sleep(d); trigger <- time.Now() }()
+		return trigger
+	}
+}
+func triggerLinks(targetWorker, in string) func(map[string]links) <-chan interface{} {
+	return func(links map[string]links) <-chan interface{} {
+		return links[targetWorker][in]
+	}
 }
 
-func TestScheduler_RunWithStuck(t *testing.T) {
-	RegisterTestingT(t)
-	TTL = time.Millisecond
-	TTR = 500 * time.Microsecond
-	numGoroutine := runtime.NumGoroutine()
-
-	shutdown := make(chan interface{})
-	scheduler := &scheduler{linksCache: linkMap{}, workers: map[string]*worker{}, shutdownSchedulerChannel: shutdown}
-
-	in := make(chan string)
-	out := make(chan string)
-	scheduler.RegisterWorker("worker1", completeWorkerFactoryBuilder(t, "worker2", "<", ">"))
-	scheduler.RegisterWorker("worker2", naiveWorkerFactoryBuilder(t))
-	scheduler.RegisterLink("worker1", "worker2", "<", reflect.ValueOf(out))
-	scheduler.RegisterLink("worker1", "worker2", ">", reflect.ValueOf(in))
-
-	go func() {
-		Eventually(func() int { return runtime.NumGoroutine() }, 25*time.Millisecond).Should(Equal(numGoroutine + 6)) // 2 + 2 * (worker + heartbeat)
-
-		out <- "..."                                                                                                  // stuck the worker 1
-		Eventually(func() int { return runtime.NumGoroutine() }, 25*time.Millisecond).Should(Equal(numGoroutine + 7)) // 2 + 2 * (worker + heartbeat) + stuck_worker
-
-		<-in                                                                                                          // unstuck the worker
-		Eventually(func() int { return runtime.NumGoroutine() }, 25*time.Millisecond).Should(Equal(numGoroutine + 6)) // 2 + 2 * (worker + heartbeat)
-	}()
-	go func() {
-		time.Sleep(250 * time.Millisecond)
-		shutdown <- nil
-	}()
-	scheduler.Run()
-
-	Eventually(func() int { return runtime.NumGoroutine() }, time.Second).Should(Equal(numGoroutine), "go routine not ended") // clean all goroutine
+func doNothing() func(interface{}, map[string]links, uint32) {
+	return func(v interface{}, links map[string]links, id uint32) {
+		log.Printf("{worker#%d}			do nothing", id)
+	}
+}
+func doPingLinks(targetWorker, out string) func(interface{}, map[string]links, uint32) {
+	return func(v interface{}, links map[string]links, id uint32) {
+		log.Printf("{worker#%d}			message from '%s' handled", id, targetWorker)
+		links[targetWorker][out] <- v
+		log.Printf("{worker#%d}			message sent to '%s'", id, targetWorker)
+	}
 }
