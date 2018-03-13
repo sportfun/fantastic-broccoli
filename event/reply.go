@@ -10,32 +10,17 @@ type ReplyHandler interface {
 }
 
 type syncReply struct{ ReplyConsumer }
-type asyncReply struct{ *syncReply }
+type asyncReply struct{ ReplyConsumer }
 
 type ReplyConsumer func(interface{}, error)
 
-var ErrReplyTimeout = errors.New("reply handler has timeout")
+var ErrReplyTimeout = errors.New("reply has timeout")
 
 func SyncReplyHandler(consumer ReplyConsumer) ReplyHandler  { return &syncReply{consumer} }
-func AsyncReplyHandler(consumer ReplyConsumer) ReplyHandler { return &asyncReply{&syncReply{consumer}} }
+func AsyncReplyHandler(consumer ReplyConsumer) ReplyHandler { return &asyncReply{consumer} }
 
 func (r *syncReply) consume(c <-chan interface{}, e <-chan error, err error, timeout time.Duration) {
-	if err != nil {
-		r.ReplyConsumer(nil, err)
-	}
-
-	select {
-	case v, o := <-c:
-		if o {
-			r.ReplyConsumer(v, nil)
-		}
-	case e, o := <-e:
-		if o {
-			r.ReplyConsumer(nil, e)
-		}
-	case <-time.After(timeout):
-		r.ReplyConsumer(nil, ErrReplyTimeout)
-	}
+	consume(r.ReplyConsumer, c, e, err, timeout)
 }
 
 func (r *asyncReply) consume(c <-chan interface{}, e <-chan error, err error, timeout time.Duration) {
@@ -43,5 +28,25 @@ func (r *asyncReply) consume(c <-chan interface{}, e <-chan error, err error, ti
 		r.ReplyConsumer(nil, err)
 	}
 
-	go r.syncReply.consume(c, e, nil, timeout)
+	go consume(r.ReplyConsumer, c, e, nil, timeout)
+}
+
+func consume(r ReplyConsumer, c <-chan interface{}, e <-chan error, err error, timeout time.Duration) {
+	if err != nil {
+		r(nil, err)
+		return
+	}
+
+	select {
+	case v, o := <-c:
+		if o {
+			r(v, nil)
+		}
+	case e, o := <-e:
+		if o {
+			r(nil, e)
+		}
+	case <-time.After(timeout):
+		r(nil, ErrReplyTimeout)
+	}
 }
