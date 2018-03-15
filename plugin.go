@@ -53,4 +53,4 @@ func (plg *plugin) unsubscribe() {
 
 func (plg *plugin) loadPlugin(profile profile.Plugin) {}
 
-func (plg *plugin) busInstructionHandler(event event.Event, err error) {}
+func (plg *plugin) busInstructionHandler(event *event.Event, err error) {}

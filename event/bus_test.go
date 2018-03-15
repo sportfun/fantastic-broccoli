@@ -40,13 +40,14 @@ func TestBus_Unsubscribe(t *testing.T) {
 
 	var x int32
 	handlerA := func(_ *Event, err error) {
-		if err == ErrChannelClosed {
+		if err == ErrSubscriberClosed {
+			t.Log("ok-")
 			atomic.AddInt32(&x, -1)
 		} else {
 			atomic.AddInt32(&x, 1)
 		}
 	}
-	handlerB := func(*Event, error) { atomic.AddInt32(&x, 1) }
+	handlerB := func(*Event, error) { t.Log("ok"); atomic.AddInt32(&x, 1) }
 
 	bus := Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}}
 	bus.Subscribe(":unsubscribe", handlerA)

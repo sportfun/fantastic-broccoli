@@ -1,4 +1,4 @@
-package gakisitor
+package main
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sportfun/gakisitor/event"
+	"github.com/sportfun/main/event"
 )
 
 type workerContextKey string
@@ -66,7 +66,6 @@ func (scheduler *scheduler) Run() (err error) {
 		//TODO: LOG (defer) :: INFO - scheduler stopped
 		log.Printf("{scheduler}[INFO]			Stop scheduler")
 	}()
-	defer func() {}()
 
 	for name := range scheduler.workers {
 		scheduler.spawnWorker(name)

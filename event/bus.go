@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 	"runtime"
 	"sync"
@@ -33,13 +32,15 @@ const publishTimeout = 25 * time.Millisecond
 const replyTimeout = 25 * time.Millisecond
 
 var ErrPublishTimeout = errors.New("publish timeout")
+var ErrSubscriberClosed = errors.New("subscriber closed")
 var ErrChannelNotFound = errors.New("channel not found")
-var ErrChannelClosed = errors.New("channel currently closed")
 var ErrChannelSubscriberNotFound = errors.New("channel subscriber not found")
 var ErrChannelSubscriberAlreadyExists = errors.New("channel subscriber already exists")
 
 func (event *Event) Message() interface{}      { return event.payload }
 func (event *Event) Reply() chan<- interface{} { return event.reply }
+
+func NewBus() *Bus { return &Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}} }
 
 func (bus *Bus) Publish(channel string, data interface{}, handler ReplyHandler) {
 	if _, exists := bus.subscribers[channel]; !exists {
@@ -68,13 +69,12 @@ func (bus *Bus) Publish(channel string, data interface{}, handler ReplyHandler) 
 	}
 }
 
-// TODO: Manage already exists
 func (bus *Bus) Subscribe(channel string, handler EventConsumer) error {
 	ch := make(chan *Event)
 	ctx, cnl := context.WithCancel(context.Background())
 
 	go func(channel <-chan *Event, ctx context.Context) {
-		defer handler(nil, ErrChannelClosed)
+		defer handler(nil, ErrSubscriberClosed)
 
 		for {
 			select {
@@ -90,7 +90,7 @@ func (bus *Bus) Subscribe(channel string, handler EventConsumer) error {
 		}
 	}(ch, ctx)
 
-	id := fmt.Sprintf("%s:%s", channel, runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name())
+	id := id(channel, handler)
 
 	bus.sync.Lock()
 	defer bus.sync.Unlock()
@@ -108,19 +108,19 @@ func (bus *Bus) Unsubscribe(channel string, handler EventConsumer) error {
 	if sub, exists := bus.subscribers[channel]; !exists {
 		return ErrChannelNotFound
 	} else {
-		id := fmt.Sprintf("%s:%s", channel, runtime.FuncForPC(reflect.ValueOf(handler).Pointer()).Name())
+		id := id(channel, handler)
 
 		for i, sbcr := range sub {
 			if sbcr.id == id {
 				bus.sync.Lock()
-				defer bus.sync.Unlock()
 				sbcr.cancel()
-				sub = append(sub[:i], sub[i+1:]...)
+				bus.subscribers[channel] = append(sub[:i], sub[i+1:]...)
 				delete(bus.ids, id)
 
 				if len(sub) == 0 {
 					delete(bus.subscribers, channel)
 				}
+				bus.sync.Unlock()
 				return nil
 			}
 		}
@@ -128,3 +128,5 @@ func (bus *Bus) Unsubscribe(channel string, handler EventConsumer) error {
 		return ErrChannelSubscriberNotFound
 	}
 }
+
+func id(c string, h interface{}) string { return c + ":" + runtime.FuncForPC(reflect.ValueOf(h).Pointer()).Name() }

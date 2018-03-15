@@ -11,7 +11,7 @@ package plugin
 import (
 	"context"
 
-	"github.com/sportfun/gakisitor/profile"
+	"github.com/sportfun/main/profile"
 )
 
 // Instruction type (only accessed in this package to prevent custom instructions).
