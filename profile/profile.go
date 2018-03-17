@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -25,12 +24,11 @@ type Profile struct {
 
 	// Scheduler configuration.
 	Scheduler struct {
-		// information about the scheduler timing
-		Timing struct {
-			TTL int `json:"ttl"` // Time To Live. See the scheduler for more information
-			TTW int `json:"ttw"` // Time To Wait. See the scheduler for more information
-			TTR int `json:"ttr"` // Time To Refresh. See the scheduler for more information
-		} `json:"timing"`
+		// information about worker failure
+		Worker struct {
+			Retry    int `json:"retry"`    // how many time the scheduler restart a worker with a 'failed' tag before shutdown
+			Interval int `json:"interval"` // in which interval a worker which restart is tagged has failed (in ms)
+		} `json:"worker"`
 	} `json:"scheduler"`
 
 	// Network configuration
@@ -78,13 +76,11 @@ func (profile *Profile) Load(file ...string) error {
 	}
 	profile.isLoaded = true
 
-	//TODO: LOG :: DEBUG - Profile successfully loaded
-	log.Printf("{profile[loading]}[DEBUG]	Profile %s successfully loaded (%#v)", profile.file, profile)
 	return nil
 }
 
 // SubscribeAlteration subscribes an handler, called when the profile file was altered.
-func (profile *Profile) SubscribeAlteration(handler func(profile *Profile)) (*fsnotify.Watcher, error) {
+func (profile *Profile) SubscribeAlteration(handler func(profile *Profile, err error)) (*fsnotify.Watcher, error) {
 	if handler == nil {
 		return nil, fmt.Errorf("handler can't be nil")
 	}
@@ -106,23 +102,16 @@ func (profile *Profile) SubscribeAlteration(handler func(profile *Profile)) (*fs
 			select {
 			case event := <-watcher.Events:
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					//TODO: LOG :: DEBUG - Alteration handled of the profile file
-					log.Printf("{profile[watcher]}[DEBUG]	Alteration handled on the profile file")
-					handler(profile)
+					handler(profile, nil)
 				}
 			case err, open := <-watcher.Errors:
 				if !open {
-					//TODO: LOG :: WARN - Profile file monitoring stopped
-					log.Printf("{profile[watcher]}[WARN]	Profile file monitoring stopped")
 					return
 				}
-				//TODO: LOG :: ERROR - Error during profile file monitoring
-				log.Printf("{profile[watcher]}[ERROR]	Error during profile file monitoring: %s", err)
+				handler(nil, err)
 			}
 		}
 	}()
-	//TODO: LOG :: DEBUG - Subscription added on the profile monitoring
-	log.Printf("{profile[watcher]}[DEBUG]	Subscription added on the profile monitoring")
 	return watcher, nil
 }
 

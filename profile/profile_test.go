@@ -61,7 +61,7 @@ func TestProfile_SubscribeAlteration(t *testing.T) {
 	Expect(err).Should(MatchError("handler can't be nil"))
 
 	// valid subscription
-	watcher, err = prf.SubscribeAlteration(func(_ *Profile) {
+	watcher, err = prf.SubscribeAlteration(func(_ *Profile, _ error) {
 		mutex.Lock()
 		defer mutex.Unlock()
 		isAltered = true

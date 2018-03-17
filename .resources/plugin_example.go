@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/sportfun/main/plugin"
-	"github.com/sportfun/main/profile"
+	"github.com/sportfun/gakisitor/plugin"
+	"github.com/sportfun/gakisitor/profile"
 	"context"
 	"time"
 )
@@ -11,11 +11,11 @@ var Plugin = plugin.Plugin{
 	Name: "Plugin Example",
 	Instance: func(ctx context.Context, profile profile.Plugin, channels plugin.Chan) error {
 		var inSession bool
-		var state = plugin.RunningState
+		var state = plugin.IdleState
 		dataMarshallable := struct {
-			A int     `json:"a"`
-			B float64 `json:"b"`
-		}{0, 0.0}
+			A int       `json:"a"`
+			B time.Time `json:"b"`
+		}{0, time.Now()}
 
 		// configuration value shared into the profile (Config > ManyItems > ThisItem)
 		_, e := profile.AccessTo("ManyItems", "ThisItem")
@@ -23,6 +23,8 @@ var Plugin = plugin.Plugin{
 			return e
 		}
 
+		dataTicker := time.Tick(200 * time.Millisecond)
+		statusTicker := time.Tick(10 * time.Second)
 		// plugin main loop
 		for {
 			select {
@@ -45,14 +47,19 @@ var Plugin = plugin.Plugin{
 					state = plugin.InSessionState
 				case plugin.StopSessionInstruction:
 					inSession = false
-					state = plugin.StoppedState
+					state = plugin.IdleState
 				}
 
 				// example of data sending
-			case <-time.Tick(time.Millisecond):
+			case <-dataTicker:
 				if inSession {
+					dataMarshallable.B = time.Now()
 					channels.Data <- dataMarshallable
 				}
+
+				// example of status sending
+			case <-statusTicker:
+				channels.Status <- state
 			}
 		}
 	},

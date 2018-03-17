@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
 	"github.com/pkg/errors"
-	"github.com/sportfun/main/event"
-	. "github.com/sportfun/main/protocol/v1.0"
-	"log"
+	"github.com/sportfun/gakisitor/event/bus"
+	. "github.com/sportfun/gakisitor/protocol/v1.0"
 )
 
 func init() {
@@ -23,13 +23,13 @@ const (
 
 type network struct {
 	client       *gosocketio.Client
-	bus          *event.Bus
+	bus          *bus.Bus
 	disconnected chan struct{}
 }
 
 var errNetworkDisconnected = errors.New("client disconnected")
 
-func networkTask(ctx context.Context, bus *event.Bus) error {
+func networkTask(ctx context.Context, bus *bus.Bus) error {
 	var err error
 	var net network
 
@@ -75,29 +75,27 @@ func (net *network) unsubscribe() {
 }
 
 func (net *network) onConnectionHandler(*gosocketio.Channel) {
-	//TODO: LOG :: INFO - Successfully connected to X:Y
-	log.Printf("{network}[INFO]			Successfully connected to %s:%d", Profile.Network.HostAddress, Profile.Network.Port)
+	log.Infof("Successfully connected to %s:%d", Profile.Network.HostAddress, Profile.Network.Port) //LOG :: INFO - Successfully connected to {host}:{port}
 }
 
 func (net *network) onDisconnectionHandler(*gosocketio.Channel) {
-	//TODO: LOG :: INFO - Client disconnected
-	log.Printf("{network}[INFO]			Disconnected from %s:%d", Profile.Network.HostAddress, Profile.Network.Port)
+	log.Infof("Disconnected from %s:%d", Profile.Network.HostAddress, Profile.Network.Port) //LOG :: INFO - Client disconnected
 	close(net.disconnected)
 }
 
 func (net *network) onCommandHandler(_ *gosocketio.Channel, p CommandPacket) {
-	net.bus.Publish(":instruction", p.Body.Command, event.SyncReplyHandler(func(_ interface{}, e error) {
-		if e != nil && e != event.ErrReplyTimeout {
-			//TODO: LOG :: ERROR - Failed to publish: X
-			log.Printf("{network}[ERROR]			Failed to publish: %s", e)
+	net.bus.Publish(":instruction", p.Body.Command, bus.SyncReplyHandler(func(_ interface{}, e error) {
+		if e != nil && e != bus.ErrReplyTimeout {
+			log.Errorf("Failed to publish: %s", e) //LOG :: ERROR - Failed to publish: X
 		}
 	}))
 }
 
-func (net *network) busDataHandler(event *event.Event, err error) {
+func (net *network) busDataHandler(event *bus.Event, err error) {
 	if err != nil {
-		//TODO: LOG :: ERROR - Bus handler fo ':data' failed: X
-		log.Printf("{network}[ERROR]			Bus handler for ':data' failed: %s", err)
+		if err != bus.ErrSubscriberClosed {
+			log.Errorf("Bus handler for ':data' failed: %s", err) //LOG :: ERROR - Bus handler for ':data' failed: {error}
+		}
 		return
 	}
 
@@ -105,8 +103,7 @@ func (net *network) busDataHandler(event *event.Event, err error) {
 		name  string
 		value interface{}
 	}); !valid {
-		//TODO: LOG :: ERROR - Invalid plugin data: X
-		log.Printf("{network}[ERROR]			Invalid data type: %v", event.Message())
+		log.Errorf("Invalid data type: %#v", event.Message()) //LOG :: ERROR - Invalid data type: {message}
 	} else {
 		if err := net.client.Emit(
 			Channels[Data],
@@ -118,25 +115,24 @@ func (net *network) busDataHandler(event *event.Event, err error) {
 				}{Module: data.name, Value: data.value},
 			},
 		); err != nil {
-			//TODO: LOG :: ERROR - Failed to send message to the server: X
-			log.Printf("{network}[ERROR]			Failed to send message to the server: %s", err)
+			log.Errorf("Failed to send message to the server: %s", err) //LOG :: ERROR - Failed to send message to the server: {error}
 		}
 	}
 }
 
-func (net *network) busErrorHandler(ev *event.Event, er error) {
-	if er != nil {
-		//TODO: LOG :: ERROR - Bus handler fo ':error' failed: X
-		log.Printf("{network}[ERROR]			Bus handler for ':error' failed: %s", er)
+func (net *network) busErrorHandler(event *bus.Event, err error) {
+	if err != nil {
+		if err != bus.ErrSubscriberClosed {
+			log.Errorf("Bus handler for ':error' failed: %s", err) //LOG :: ERROR - Bus handler for ':data' failed: {error}
+		}
 		return
 	}
 
-	if error, valid := ev.Message().(struct {
+	if error, valid := event.Message().(struct {
 		origin string
 		error  error
 	}); !valid {
-		//TODO: LOG :: ERROR - Invalid error type: X
-		log.Printf("{network}[ERROR]			Invalid error type: %v", ev.Message())
+		log.Errorf("Invalid error type: %v", event.Message()) //LOG :: ERROR - Invalid error type: {message}
 	} else {
 		if err := net.client.Emit(
 			Channels[Error],
@@ -148,8 +144,7 @@ func (net *network) busErrorHandler(ev *event.Event, er error) {
 				}{Origin: error.origin, Reason: error.error.Error()},
 			},
 		); err != nil {
-			//TODO: LOG :: ERROR - Failed to send message to the server: X
-			log.Printf("{network}[ERROR]			Failed to send message to the server: %s", err)
+			log.Errorf("Failed to send message to the server: %s", err) //LOG :: ERROR - Failed to send message to the server: {error}
 		}
 	}
 }

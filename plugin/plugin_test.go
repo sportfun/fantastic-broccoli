@@ -12,7 +12,7 @@ func ExamplePlugin_basic() {
 		Name: "ExamplePlugin",
 		Instance: func(ctx context.Context, profile profile.Plugin, channels Chan) error {
 			var inSession bool
-			var state = RunningState
+			var state = IdleState
 			dataMarshallable := struct {
 				A int     `json:"a"`
 				B float64 `json:"b"`
@@ -46,7 +46,7 @@ func ExamplePlugin_basic() {
 						state = InSessionState
 					case StopSessionInstruction:
 						inSession = false
-						state = RunningState
+						state = IdleState
 					}
 
 					// example of data sending

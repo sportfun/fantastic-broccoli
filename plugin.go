@@ -3,15 +3,15 @@ package main
 import (
 	"context"
 	"errors"
-
-	"github.com/sportfun/main/event"
-	. "github.com/sportfun/main/plugin"
-	"github.com/sportfun/main/profile"
-	"log"
-	sysplugin "plugin"
 	"fmt"
-	. "github.com/sportfun/main/protocol/v1.0"
+	sysplugin "plugin"
 	"sync"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/sportfun/gakisitor/event/bus"
+	. "github.com/sportfun/gakisitor/plugin"
+	"github.com/sportfun/gakisitor/profile"
+	. "github.com/sportfun/gakisitor/protocol/v1.0"
 )
 
 func init() {
@@ -24,11 +24,11 @@ type pluginDefinition struct {
 	cancel   func()
 }
 type plugin struct {
-	bus     *event.Bus
+	bus     *bus.Bus
 	plugins map[string]*pluginDefinition
 
 	data        chan interface{}
-	status      chan State
+	status      chan interface{}
 	instruction []chan<- Instruction
 	sync        sync.Mutex
 
@@ -37,16 +37,16 @@ type plugin struct {
 
 var errNoPluginLoaded = errors.New("no plugin loaded")
 
-func pluginTask(ctx context.Context, bus *event.Bus) error {
+func pluginTask(ctx context.Context, bus *bus.Bus) error {
 	var err error
-	var plg plugin
-
-	plg.plugins = map[string]*pluginDefinition{}
-	plg.sync = sync.Mutex{}
-	plg.bus = bus
-	plg.deadSig = make(chan string)
-	plg.status = make(chan State)
-	plg.data = make(chan interface{})
+	var plg = plugin{
+		bus:     bus,
+		plugins: map[string]*pluginDefinition{},
+		data:    make(chan interface{}),
+		status:  make(chan interface{}),
+		sync:    sync.Mutex{},
+		deadSig: make(chan string),
+	}
 
 	for _, plugin := range Profile.Plugins {
 		plg.load(plugin)
@@ -71,6 +71,9 @@ func pluginTask(ctx context.Context, bus *event.Bus) error {
 			return nil
 		case data := <-plg.data:
 			plg.bus.Publish(":data", data, nil)
+		case status := <-plg.status:
+			//TODO: Manage states
+			log.Infof("Status received: %v", status)
 		case name := <-plg.deadSig:
 			//TODO: Check if it broken (reset too quickly) ... If yes, disable it and check if plugin are available
 			plg.run(plg.plugins[name], ctx)
@@ -106,38 +109,38 @@ func (plg *plugin) load(profile profile.Plugin) {
 		},
 	} {
 		if err := step(); err != nil {
-			//TODO: LOG :: ERROR - Failed to load plugin X: Y
-			log.Printf("{plugin}[ERROR]			Failed to load plugin '%s': %s", profile.Name, err)
+			log.Errorf("Failed to load plugin '%s': %s", profile.Name, err) //LOG :: ERROR - Failed to load plugin {name}: {err}
 			return
 		}
 	}
 
-	//TODO: LOG :: INFO - Plugin X successfully loaded
-	log.Printf("{plugin}[INFO]			Plugin '%s' successfully loaded", profile.Name)
-
+	log.Infof("Plugin %s successfully loaded", profile.Name) //LOG :: INFO - Plugin {name} successfully loaded
 	plg.plugins[v.Name] = &pluginDefinition{instance: v, profile: profile, cancel: nil}
 }
 
-func (plg *plugin) run(pluginX *pluginDefinition, parent context.Context) {
+func (plg *plugin) run(def *pluginDefinition, parent context.Context) {
 	ctx, cnl := context.WithCancel(parent)
 
-	pluginX.cancel = cnl
-	go func(pluginY *Plugin, profile profile.Plugin, ctx context.Context) {
+	def.cancel = cnl
+	go func(p *Plugin, profile profile.Plugin, ctx context.Context) {
 		data := make(chan interface{})
 		go func(in <-chan interface{}, out chan<- interface{}) {
 			for v := range in {
 				out <- struct {
 					name  string
 					value interface{}
-				}{name: pluginY.Name, value: v}
+				}{name: p.Name, value: v}
 			}
 		}(data, plg.data)
 		defer func(c chan interface{}) { close(c) }(data)
 
 		status := make(chan State)
-		go func(in <-chan State, out chan<- State) {
+		go func(in <-chan State, out chan<- interface{}) {
 			for v := range in {
-				out <- v
+				out <- struct {
+					name  string
+					state State
+				}{name: p.Name, state: v}
 			}
 		}(status, plg.status)
 		defer func(c chan State) { close(c) }(status)
@@ -157,23 +160,22 @@ func (plg *plugin) run(pluginX *pluginDefinition, parent context.Context) {
 			}
 		}(plg, inst)
 
-		if err := pluginY.Instance(ctx, profile, Chan{Data: data, Status: status, Instruction: inst}); err != nil {
-			//TODO: LOG :: ERROR - Plugin has crashed: X
-			log.Printf("{plugin#%s}[ERROR]		Plugin has crashed: %s", pluginY.Name, err.Error())
+		//TODO: Manage panic
+		if err := p.Instance(ctx, profile, Chan{Data: data, Status: status, Instruction: inst}); err != nil {
+			log.Errorf("Plugin '%s' has crashed: %s", p.Name, err) //LOG :: ERROR - Plugin {name} has crashed: {err}
 			plg.bus.Publish(":error", struct {
 				origin string
 				error  error
-			}{origin: pluginY.Name, error: err}, nil)
+			}{origin: p.Name, error: err}, nil)
 		}
 
-		plg.deadSig <- pluginY.Name
-	}(pluginX.instance, pluginX.profile, ctx)
+		plg.deadSig <- p.Name
+	}(def.instance, def.profile, ctx)
 }
 
-func (plg *plugin) busInstructionHandler(event *event.Event, err error) {
+func (plg *plugin) busInstructionHandler(event *bus.Event, err error) {
 	if inst, exists := Instructions[event.Message().(string)]; !exists {
-		//TODO: LOG :: ERROR - Unknown instruction X
-		log.Printf("{network}[ERROR]				Unknown instruction '%s'", event.Message().(string))
+		log.Errorf("Unknown instruction '%s'", event.Message().(string)) //LOG :: ERROR - Unknown instruction {message}
 	} else {
 		plg.sync.Lock()
 		defer plg.sync.Unlock()

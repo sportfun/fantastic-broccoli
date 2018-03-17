@@ -4,17 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"regexp"
 	"strings"
 	"sync/atomic"
 	"time"
 
-	"github.com/sportfun/main/event"
+	log "github.com/Sirupsen/logrus"
+	"github.com/sportfun/gakisitor/event/bus"
 )
 
 type workerContextKey string
-type workerTask func(ctx context.Context, bus *event.Bus) error
+type workerTask func(ctx context.Context, bus *bus.Bus) error
 
 type worker struct {
 	run workerTask
@@ -25,7 +25,7 @@ type worker struct {
 
 type scheduler struct {
 	workers map[string]*worker
-	bus     *event.Bus
+	bus     *bus.Bus
 
 	ctx     context.Context
 	deadSig chan string
@@ -51,20 +51,17 @@ func (scheduler *scheduler) RegisterWorker(name string, task workerTask) {
 		run:      task,
 		numRetry: new(int32),
 	}
-	//TODO: LOG :: INFO - Worker X registered
-	log.Printf("{scheduler}[INFO]			Worker '%s' registered", name)
+	log.Infof("Worker '%s' registered", name) //LOG :: INFO - Worker {name} registered
 }
 
 // Prepare and start the worker scheduler.
 func (scheduler *scheduler) Run() (err error) {
-	//TODO: LOG :: INFO - Start scheduler
-	log.Printf("{scheduler}[INFO]			Start scheduler")
+	log.Infof("Start scheduler") //LOG :: INFO - Start scheduler
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprint(r))
 		}
-		//TODO: LOG (defer) :: INFO - scheduler stopped
-		log.Printf("{scheduler}[INFO]			Stop scheduler")
+		log.Infof("Stop scheduler") //LOG (defer) :: INFO - scheduler stopped
 	}()
 
 	for name := range scheduler.workers {
@@ -85,6 +82,7 @@ func (scheduler *scheduler) Run() (err error) {
 	}
 }
 
+// spawnWorker launch worker with the own manager
 func (scheduler *scheduler) spawnWorker(name string) {
 	worker, exists := scheduler.workers[name]
 	ctx := context.WithValue(scheduler.ctx, workerContextKey("name"), name)
@@ -93,16 +91,15 @@ func (scheduler *scheduler) spawnWorker(name string) {
 		panic("worker '" + name + "' doesn't exists")
 	}
 
-	if atomic.LoadInt32(worker.numRetry) > 5 {
+	if atomic.LoadInt32(worker.numRetry) > int32(Profile.Scheduler.Worker.Retry) {
 		panic("worker '" + name + "' has been restarted too many times")
 	}
 
 	go func(name string) {
 		defer func(name string) {
 			if r := recover(); r != nil {
-				//TODO: LOG :: ERROR - Worker '{name}' has panicked: {reason}
-				log.Printf("{scheduler}[ERROR]			Worker '%s' has panicked: '%s'", name, r)
-				if time.Since(worker.lastRetry) < time.Second {
+				log.Fatalf("Worker '%s' has panicked: %s", name, r) //LOG :: ERROR - Worker '{name}' has panicked: {reason}
+				if time.Since(worker.lastRetry) < time.Millisecond*time.Duration(Profile.Scheduler.Worker.Interval) {
 					atomic.AddInt32(worker.numRetry, 1)
 				} else {
 					atomic.AddInt32(worker.numRetry, -1)
@@ -113,9 +110,8 @@ func (scheduler *scheduler) spawnWorker(name string) {
 		}(name)
 
 		if err := worker.run(ctx, scheduler.bus); err != nil {
-			//TODO: LOG :: ERROR - Worker '{name}' has failed: {reason}
-			log.Printf("{scheduler}[ERROR]			Worker '%s' has failed: '%s'", name, err)
-			if time.Since(worker.lastRetry) < time.Second {
+			log.Errorf("Worker '%s' has failed: %s", name, err) //LOG :: ERROR - Worker '{name}' has failed: {reason}
+			if time.Since(worker.lastRetry) < 2*time.Second {
 				atomic.AddInt32(worker.numRetry, 1)
 			} else {
 				atomic.AddInt32(worker.numRetry, -1)
@@ -124,13 +120,13 @@ func (scheduler *scheduler) spawnWorker(name string) {
 			scheduler.deadSig <- name
 			return
 		}
-		//TODO: LOG :: INFO - Worker '{name}' successfully stopped
-		log.Printf("{scheduler}[INFO]			Worker '%s' successfully stopped", name)
+		log.Infof("Worker '%s' successfully stopped", name) //LOG :: INFO - Worker '{name}' successfully stopped
 	}(name)
 
-	//TODO: LOG :: INFO - Worker '{name}' has been launched
-	log.Printf("{scheduler}[ERROR]			Worker '%s' has been launched", name)
+	log.Infof("Worker '%s' has been launched", name) //LOG :: INFO - Worker '{name}' has been launched
 }
+
+// workerValidity check if a worker name is valid
 func (scheduler *scheduler) workerValidity(names ...string) {
 	for _, name := range names {
 		if !workerNameFilter.MatchString(name) {

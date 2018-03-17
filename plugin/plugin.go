@@ -11,7 +11,7 @@ package plugin
 import (
 	"context"
 
-	"github.com/sportfun/main/profile"
+	"github.com/sportfun/gakisitor/profile"
 )
 
 // Instruction type.

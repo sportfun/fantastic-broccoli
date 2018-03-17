@@ -21,10 +21,9 @@ var (
 	// +---------+-----------------+--------------------------------------------------------------+
 	NilState State
 
-	RunningState   = State{0x11, "currently running", nil}
+	IdleState      = State{0x11, "currently idle", nil}
 	InSessionState = State{0x12, "currently in session", nil}
 	PausedState    = State{0x13, "currently paused", nil}
-	StoppedState   = State{0x14, "currently stopped", nil}
 
 	GPIODisconnectionState  = State{0xE1, "GPIO has been disconnected", nil}
 	GPIOFailureState        = State{0xE2, "GPIO reading has failed", nil}

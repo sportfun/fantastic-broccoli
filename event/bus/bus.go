@@ -1,4 +1,4 @@
-package event
+package bus
 
 import (
 	"context"
@@ -40,7 +40,7 @@ var ErrChannelSubscriberAlreadyExists = errors.New("channel subscriber already e
 func (event *Event) Message() interface{}      { return event.payload }
 func (event *Event) Reply() chan<- interface{} { return event.reply }
 
-func NewBus() *Bus { return &Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}} }
+func New() *Bus { return &Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}} }
 
 func (bus *Bus) Publish(channel string, data interface{}, handler ReplyHandler) {
 	if _, exists := bus.subscribers[channel]; !exists {

@@ -1,6 +1,6 @@
 package v1_0
 
-import "github.com/sportfun/main/plugin"
+import "github.com/sportfun/gakisitor/plugin"
 
 type CommandPacket struct {
 	LinkId string `json:"link_id"`
