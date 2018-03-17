@@ -1,5 +1,7 @@
 package v1_0
 
+import "github.com/sportfun/main/plugin"
+
 type CommandPacket struct {
 	LinkId string `json:"link_id"`
 	Body struct {
@@ -38,7 +40,7 @@ var Channels = map[channelID]string{
 	Error:   "error",
 }
 
-var Instructions = map[string]struct{}{
-	"start_session": {},
-	"end_session":   {},
+var Instructions = map[string]plugin.Instruction{
+	"start_session": plugin.StartSessionInstruction,
+	"end_session":   plugin.StopSessionInstruction,
 }

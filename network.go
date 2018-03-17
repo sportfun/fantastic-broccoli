@@ -86,20 +86,21 @@ func (net *network) onDisconnectionHandler(*gosocketio.Channel) {
 }
 
 func (net *network) onCommandHandler(_ *gosocketio.Channel, p CommandPacket) {
-	if _, exists := Instructions[p.Body.Command]; !exists {
-		//TODO: LOG :: ERROR - Unknown instruction X
-		log.Printf("{network}[ERROR]				Unknown instruction '%s'", p.Body.Command)
-	} else {
-		net.bus.Publish(":instruction", p.Body, event.SyncReplyHandler(func(_ interface{}, e error) {
-			if e != nil && e != event.ErrReplyTimeout {
-				//TODO: LOG :: ERROR - Failed to publish: X
-				log.Printf("{network}[ERROR]			Failed to publish: %s", e)
-			}
-		}))
-	}
+	net.bus.Publish(":instruction", p.Body.Command, event.SyncReplyHandler(func(_ interface{}, e error) {
+		if e != nil && e != event.ErrReplyTimeout {
+			//TODO: LOG :: ERROR - Failed to publish: X
+			log.Printf("{network}[ERROR]			Failed to publish: %s", e)
+		}
+	}))
 }
 
 func (net *network) busDataHandler(event *event.Event, err error) {
+	if err != nil {
+		//TODO: LOG :: ERROR - Bus handler fo ':data' failed: X
+		log.Printf("{network}[ERROR]			Bus handler for ':data' failed: %s", err)
+		return
+	}
+
 	if data, valid := event.Message().(struct {
 		name  string
 		value interface{}
@@ -123,16 +124,22 @@ func (net *network) busDataHandler(event *event.Event, err error) {
 	}
 }
 
-func (net *network) busErrorHandler(event *event.Event, err error) {
-	if error, valid := event.Message().(struct {
+func (net *network) busErrorHandler(ev *event.Event, er error) {
+	if er != nil {
+		//TODO: LOG :: ERROR - Bus handler fo ':error' failed: X
+		log.Printf("{network}[ERROR]			Bus handler for ':error' failed: %s", er)
+		return
+	}
+
+	if error, valid := ev.Message().(struct {
 		origin string
 		error  error
 	}); !valid {
 		//TODO: LOG :: ERROR - Invalid error type: X
-		log.Printf("{network}[ERROR]			Invalid error type: %v", event.Message())
+		log.Printf("{network}[ERROR]			Invalid error type: %v", ev.Message())
 	} else {
 		if err := net.client.Emit(
-			Channels[Data],
+			Channels[Error],
 			ErrorPacket{
 				LinkId: Profile.LinkID,
 				Body: struct {

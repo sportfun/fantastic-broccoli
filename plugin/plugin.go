@@ -14,21 +14,21 @@ import (
 	"github.com/sportfun/main/profile"
 )
 
-// Instruction type (only accessed in this package to prevent custom instructions).
-type instruction byte
+// Instruction type.
+type Instruction byte
 
 // Chan struct containing all channels used by the plugins.
 type Chan struct {
 	Data        chan<- interface{} // Used to send data (only JSON serializable data)
 	Status      chan<- State       // Used to send status
-	Instruction <-chan instruction // Used to read instruction from the gakisitor
+	Instruction <-chan Instruction // Used to read instruction from the gakisitor
 }
 
 // Instruction list (instructions are immutable to prevent custom instructions)
 const (
-	StatusPluginInstruction instruction = 0x01 // Send a the current status
-	StartSessionInstruction instruction = 0x10 // Start a game session (you MUST retrieve user input during this session)
-	StopSessionInstruction  instruction = 0x1F // Stop the game session (you MUST stop your retrieving user input)
+	StatusPluginInstruction Instruction = 0x01 // Send a the current status
+	StartSessionInstruction Instruction = 0x10 // Start a game session (you MUST retrieve user input during this session)
+	StopSessionInstruction  Instruction = 0x1F // Stop the game session (you MUST stop your retrieving user input)
 )
 
 // Plugin structure used to extend the Gakisitor functionality
