@@ -46,10 +46,10 @@ func NewState(code byte, desc string, raw ...interface{}) State {
 // Code return the state code.
 func (state State) Code() byte { return state.code }
 
-// Code return the state description.
+// Desc return the state description.
 func (state State) Desc() string { return state.desc }
 
-// Code return the state raw.
+// Raw return the state raw.
 func (state State) Raw() interface{} { return state.raw }
 
 // Equal compare two states (compare only state codes).

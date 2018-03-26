@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/sportfun/main/profile"
+	"github.com/sportfun/gakisitor/profile"
 )
 
 func ExamplePlugin_basic() {

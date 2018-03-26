@@ -13,9 +13,8 @@ import (
 // Raw type represents any type used to configure a plugin.
 type Raw interface{}
 
-// Profile is the container representing the configuration of the
-// Gakisitor. It contains all required information about network,
-// scheduler and plugins.
+// Profile represents the configuration of the Gakisitor. It contains all
+// required information about network, scheduler and plugins.
 type Profile struct {
 	file     string // path of the current profile instance
 	isLoaded bool   // state of the profile. true if the profile is loaded, else false
@@ -57,8 +56,8 @@ var (
 	ErrOutOfBoundIndex   = errors.New("out of bound index path")
 )
 
-// Load loads the profile from a file. The optional parameter change the internal profile
-// file path, if it already set.
+// Load loads the profile from a file. The optional parameter change the
+// internal profile file path, if it already set.
 func (profile *Profile) Load(file ...string) error {
 	profile.isLoaded = false
 

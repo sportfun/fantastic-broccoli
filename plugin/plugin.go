@@ -17,14 +17,14 @@ import (
 // Instruction type.
 type Instruction byte
 
-// Chan struct containing all channels used by the plugins.
+// Chan provides container with all channels used by the plugins.
 type Chan struct {
 	Data        chan<- interface{} // Used to send data (only JSON serializable data)
 	Status      chan<- State       // Used to send status
 	Instruction <-chan Instruction // Used to read instruction from the gakisitor
 }
 
-// Instruction list (instructions are immutable to prevent custom instructions)
+// Instructions list.
 const (
 	StatusPluginInstruction Instruction = 0x01 // Send a the current status
 	StartSessionInstruction Instruction = 0x10 // Start a game session (you MUST retrieve user input during this session)
