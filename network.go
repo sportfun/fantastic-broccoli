@@ -93,7 +93,7 @@ func (net *network) onCommandHandler(_ *gosocketio.Channel, p CommandPacket) {
 
 func (net *network) busDataHandler(event *bus.Event, err error) {
 	if err != nil {
-		if err != bus.ErrSubscriberClosed {
+		if err != bus.ErrSubscriberDeleted {
 			log.Errorf("Bus handler for ':data' failed: %s", err) //LOG :: ERROR - Bus handler for ':data' failed: {error}
 		}
 		return
@@ -122,7 +122,7 @@ func (net *network) busDataHandler(event *bus.Event, err error) {
 
 func (net *network) busErrorHandler(event *bus.Event, err error) {
 	if err != nil {
-		if err != bus.ErrSubscriberClosed {
+		if err != bus.ErrSubscriberDeleted {
 			log.Errorf("Bus handler for ':error' failed: %s", err) //LOG :: ERROR - Bus handler for ':data' failed: {error}
 		}
 		return

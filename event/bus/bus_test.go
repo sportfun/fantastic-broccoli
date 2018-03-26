@@ -1,13 +1,22 @@
 package bus
 
 import (
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	. "github.com/onsi/gomega"
 )
+
+func TestEvent(t *testing.T) {
+	RegisterTestingT(t)
+
+	rep := make(chan interface{})
+	evnt := Event{payload: "payload", reply: rep}
+	Expect(evnt.Message()).Should(Equal("payload"))
+	go func() { evnt.Reply() <- nil }()
+	Expect(<-rep).Should(BeNil())
+}
 
 func TestBus_Subscribe(t *testing.T) {
 	RegisterTestingT(t)
@@ -16,7 +25,7 @@ func TestBus_Subscribe(t *testing.T) {
 	handlerA := func(*Event, error) { atomic.AddInt32(&x, 1) }
 	handlerB := func(*Event, error) { handlerA(nil, nil) }
 
-	bus := Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}}
+	bus := New()
 	bus.Subscribe(":subscribe", handlerA)
 	bus.Subscribe(":subscribe", handlerB)
 
@@ -29,7 +38,7 @@ func TestBus_Subscribe_error(t *testing.T) {
 
 	handler := func(*Event, error) {}
 
-	bus := Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}}
+	bus := New()
 	bus.Subscribe(":subscribe", handler)
 
 	Expect(bus.Subscribe(":subscribe", handler)).Should(MatchError(ErrChannelSubscriberAlreadyExists))
@@ -40,7 +49,7 @@ func TestBus_Unsubscribe(t *testing.T) {
 
 	var x int32
 	handlerA := func(_ *Event, err error) {
-		if err == ErrSubscriberClosed {
+		if err == ErrSubscriberDeleted {
 			t.Log("ok-")
 			atomic.AddInt32(&x, -1)
 		} else {
@@ -49,7 +58,7 @@ func TestBus_Unsubscribe(t *testing.T) {
 	}
 	handlerB := func(*Event, error) { t.Log("ok"); atomic.AddInt32(&x, 1) }
 
-	bus := Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}}
+	bus := New()
 	bus.Subscribe(":unsubscribe", handlerA)
 	bus.Subscribe(":unsubscribe", handlerB)
 	bus.Unsubscribe(":unsubscribe", handlerA)
@@ -63,7 +72,7 @@ func TestBus_Unsubscribe_closeChannel(t *testing.T) {
 
 	handler := func(*Event, error) {}
 
-	bus := Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}}
+	bus := New()
 	bus.Subscribe(":unsubscribe", handler)
 	bus.Unsubscribe(":unsubscribe", handler)
 
@@ -78,7 +87,7 @@ func TestBus_Unsubscribe_error(t *testing.T) {
 	handlerA := func(*Event, error) {}
 	handlerB := func(*Event, error) {}
 
-	bus := Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}}
+	bus := New()
 	bus.Subscribe(":unsubscribe", handlerA)
 
 	Expect(bus.Unsubscribe("::", nil)).Should(MatchError(ErrChannelNotFound))
@@ -92,7 +101,7 @@ func TestBus_SyncPublish(t *testing.T) {
 	var x int32
 	handler := func(event *Event, err error) { event.Reply() <- int32(1) }
 
-	bus := Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}}
+	bus := New()
 	bus.Subscribe(":sync", handler)
 	bus.Publish(":sync", nil, SyncReplyHandler(func(data interface{}, err error) { atomic.AddInt32(&x, data.(int32)) }))
 
@@ -105,9 +114,18 @@ func TestBus_AsyncPublish(t *testing.T) {
 	var x int32
 	handler := func(event *Event, err error) { event.Reply() <- int32(1) }
 
-	bus := Bus{subscribers: map[string][]subscriber{}, ids: map[string]interface{}{}, sync: sync.Mutex{}}
+	bus := New()
 	bus.Subscribe(":async", handler)
 	bus.Publish(":async", nil, AsyncReplyHandler(func(data interface{}, err error) { time.Sleep(time.Second); atomic.AddInt32(&x, data.(int32)) }))
 
 	Expect(atomic.LoadInt32(&x)).Should(Equal(int32(0)))
+}
+
+func TestBus_Publish_error(t *testing.T) {
+	RegisterTestingT(t)
+
+	bus := New()
+	bus.Publish(":error", nil, SyncReplyHandler(func(data interface{}, err error) {
+		Expect(err).Should(MatchError(ErrChannelNotFound))
+	}))
 }
