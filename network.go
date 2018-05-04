@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/graarh/golang-socketio"
@@ -76,6 +77,19 @@ func (net *network) unsubscribe() {
 
 func (net *network) onConnectionHandler(*gosocketio.Channel) {
 	log.Infof("Successfully connected to %s:%d", Profile.Network.HostAddress, Profile.Network.Port) //LOG :: INFO - Successfully connected to {host}:{port}
+	if err := net.client.Emit(
+		Channels[Command],
+		CommandPacket{
+			Type:   "hardware",
+			LinkId: Profile.LinkID,
+			Body: struct {
+				Command string        `json:"command"`
+				Args    []interface{} `json:"args"`
+			}{Command: "link", Args: nil},
+		},
+	); err != nil {
+		panic(fmt.Sprintf("Failed to send message to the server: %s", err)) //Panic - Failed to send message to the server: {error}
+	}
 }
 
 func (net *network) onDisconnectionHandler(*gosocketio.Channel) {
@@ -108,6 +122,7 @@ func (net *network) busDataHandler(event *bus.Event, err error) {
 		if err := net.client.Emit(
 			Channels[Data],
 			DataPacket{
+				Type:   "hardware",
 				LinkId: Profile.LinkID,
 				Body: struct {
 					Module string      `json:"module"`
@@ -128,7 +143,7 @@ func (net *network) busErrorHandler(event *bus.Event, err error) {
 		return
 	}
 
-	if error, valid := event.Message().(struct {
+	if err, valid := event.Message().(struct {
 		origin string
 		error  error
 	}); !valid {
@@ -137,11 +152,12 @@ func (net *network) busErrorHandler(event *bus.Event, err error) {
 		if err := net.client.Emit(
 			Channels[Error],
 			ErrorPacket{
+				Type:   "hardware",
 				LinkId: Profile.LinkID,
 				Body: struct {
 					Origin string `json:"origin"`
 					Reason string `json:"reason"`
-				}{Origin: error.origin, Reason: error.error.Error()},
+				}{Origin: err.origin, Reason: err.error.Error()},
 			},
 		); err != nil {
 			log.Errorf("Failed to send message to the server: %s", err) //LOG :: ERROR - Failed to send message to the server: {error}

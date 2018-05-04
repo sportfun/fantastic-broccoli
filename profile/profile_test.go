@@ -16,7 +16,7 @@ import (
 func TestProfile_Load(t *testing.T) {
 	RegisterTestingT(t)
 
-	for _, tcase := range []struct {
+	cases := []struct {
 		file  string
 		error string
 	}{
@@ -24,17 +24,19 @@ func TestProfile_Load(t *testing.T) {
 		{"./none", "impossible to read the profile file: open ./none:"},
 		{"../.resources/invalid.json", "impossible to unmarshal the profile file: invalid character 'u' looking for beginning of value"},
 		{"../.resources/default.json", ""},
-	} {
+	}
+
+	for _, test := range cases {
 		profile := Profile{}
 
-		if tcase.error == "" {
-			Expect(profile.Load(tcase.file)).Should(Succeed())
+		if test.error == "" {
+			Expect(profile.Load(test.file)).Should(Succeed())
 			Expect(profile.isLoaded).Should(BeTrue())
 		} else {
-			Expect(profile.Load(tcase.file)).Should(MatchError(MatchRegexp(tcase.error)))
+			Expect(profile.Load(test.file)).Should(MatchError(MatchRegexp(test.error)))
 			Expect(profile.isLoaded).Should(BeFalse())
 		}
-		Expect(profile.file).Should(Equal(tcase.file))
+		Expect(profile.file).Should(Equal(test.file))
 	}
 }
 
@@ -112,7 +114,7 @@ func TestPlugin_AccessTo(t *testing.T) {
 }`
 	Expect(json.Unmarshal([]byte(jsonConfig), &profile.Config)).Should(Succeed())
 
-	for _, tcase := range []struct {
+	cases := []struct {
 		path  []interface{}
 		value interface{}
 		error error
@@ -138,16 +140,18 @@ func TestPlugin_AccessTo(t *testing.T) {
 		{[]interface{}{"2", 0}, map[string]interface{}{"2[0].0": nil, "2[0].1": nil}, nil},
 		{[]interface{}{"2", 0, "2[0].0"}, nil, nil},
 		{[]interface{}{"2", 1, "2[1].0"}, nil, nil},
-	} {
-		v, err := profile.AccessTo(tcase.path...)
-		if tcase.error != nil {
-			Expect(err).Should(MatchError(tcase.error))
+	}
+
+	for _, test := range cases {
+		v, err := profile.AccessTo(test.path...)
+		if test.error != nil {
+			Expect(err).Should(MatchError(test.error))
 		} else {
 			Expect(err).Should(Succeed())
-			if tcase.value == nil {
+			if test.value == nil {
 				Expect(v).Should(BeNil())
 			} else {
-				Expect(v).Should(Equal(tcase.value))
+				Expect(v).Should(Equal(test.value))
 			}
 		}
 	}

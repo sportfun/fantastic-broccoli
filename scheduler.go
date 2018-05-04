@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"runtime/debug"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -98,7 +99,7 @@ func (scheduler *scheduler) spawnWorker(name string) {
 	go func(name string) {
 		defer func(name string) {
 			if r := recover(); r != nil {
-				log.Fatalf("Worker '%s' has panicked: %s", name, r) //LOG :: ERROR - Worker '{name}' has panicked: {reason}
+				log.WithField("stacktrace", string(debug.Stack())).Errorf("Worker '%s' has failed: %s (%s)", name, r) //LOG :: ERROR - Worker '{name}' has failed: {reason}
 				if time.Since(worker.lastRetry) < time.Millisecond*time.Duration(Profile.Scheduler.Worker.Interval) {
 					atomic.AddInt32(worker.numRetry, 1)
 				} else {
@@ -110,15 +111,7 @@ func (scheduler *scheduler) spawnWorker(name string) {
 		}(name)
 
 		if err := worker.run(ctx, scheduler.bus); err != nil {
-			log.Errorf("Worker '%s' has failed: %s", name, err) //LOG :: ERROR - Worker '{name}' has failed: {reason}
-			if time.Since(worker.lastRetry) < 2*time.Second {
-				atomic.AddInt32(worker.numRetry, 1)
-			} else {
-				atomic.AddInt32(worker.numRetry, -1)
-			}
-			worker.lastRetry = time.Now()
-			scheduler.deadSig <- name
-			return
+			panic(err)
 		}
 		log.Infof("Worker '%s' successfully stopped", name) //LOG :: INFO - Worker '{name}' successfully stopped
 	}(name)

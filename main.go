@@ -22,11 +22,11 @@ var Profile = &profile.Profile{
 	}{HostAddress: "localhost", Port: 8080, EnableSsl: false},
 	Scheduler: struct {
 		Worker struct {
-			Retry    int `json:"retry"`;
+			Retry    int `json:"retry"`
 			Interval int `json:"interval"`
 		} `json:"worker"`
 	}{Worker: struct {
-		Retry    int `json:"retry"`;
+		Retry    int `json:"retry"`
 		Interval int `json:"interval"`
 	}{Retry: 5, Interval: 2000}},
 	Plugins: []profile.Plugin{
