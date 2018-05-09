@@ -39,6 +39,12 @@ type Profile struct {
 
 	// Plugins configuration
 	Plugins []Plugin `json:"plugins"`
+
+	// Log configuration
+	Log struct {
+		Format string `json:"format"`
+		Path   string `json:"path"`
+	}
 }
 
 // Plugin describes the plugin profile.
@@ -101,6 +107,7 @@ func (profile *Profile) SubscribeAlteration(handler func(profile *Profile, err e
 			select {
 			case event := <-watcher.Events:
 				if event.Op&fsnotify.Write == fsnotify.Write {
+					profile.Load(profile.file)
 					handler(profile, nil)
 				}
 			case err, open := <-watcher.Errors:

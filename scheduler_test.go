@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	. "github.com/onsi/gomega"
 	"github.com/sportfun/gakisitor/event/bus"
 	"github.com/sportfun/gakisitor/profile"

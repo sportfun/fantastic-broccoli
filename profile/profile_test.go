@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -55,8 +56,7 @@ func TestProfile_SubscribeAlteration(t *testing.T) {
 	defer func() { os.Remove(filename) }()
 
 	var prf = Profile{file: filename}
-	var isAltered bool
-	var mutex sync.Mutex
+	var alterations = int32(0)
 
 	// invalid subscription
 	watcher, err := prf.SubscribeAlteration(nil)
@@ -64,25 +64,21 @@ func TestProfile_SubscribeAlteration(t *testing.T) {
 
 	// valid subscription
 	watcher, err = prf.SubscribeAlteration(func(_ *Profile, _ error) {
-		mutex.Lock()
-		defer mutex.Unlock()
-		isAltered = true
+		atomic.AddInt32(&alterations, 1)
 	})
 	Expect(err).Should(Succeed())
 	defer func() { watcher.Close() }()
 
-	// goroutine to edit the file
-	go func() {
-		time.Sleep(time.Millisecond)
+	wg := sync.WaitGroup{}
+	nAlt := rand.New(rand.NewSource(int64(time.Now().Nanosecond()))).Intn(20)
+	wg.Add(nAlt)
+	for i := 0; i < nAlt; i++ {
 		ioutil.WriteFile(filename, uid, 0644)
-	}()
+	}
 
 	// check if the file was altered
-	Eventually(func() bool {
-		mutex.Lock()
-		defer mutex.Unlock()
-		return isAltered
-	}, 25*time.Millisecond).Should(BeTrue())
+	duration := time.Duration(nAlt*50) * time.Millisecond
+	Eventually(func() int { return int(atomic.LoadInt32(&alterations)) }, duration).Should(Equal(nAlt*2))
 }
 
 func TestPlugin_AccessTo(t *testing.T) {

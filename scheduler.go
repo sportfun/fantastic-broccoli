@@ -7,10 +7,11 @@ import (
 	"regexp"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/sportfun/gakisitor/event/bus"
 )
 
@@ -30,6 +31,10 @@ type scheduler struct {
 
 	ctx     context.Context
 	deadSig chan string
+
+	workerRetryMax      int32
+	workerRetryInterval time.Duration
+	workerOnline        sync.WaitGroup
 }
 
 // List of valid chars in the worker name
@@ -52,19 +57,35 @@ func (scheduler *scheduler) RegisterWorker(name string, task workerTask) {
 		run:      task,
 		numRetry: new(int32),
 	}
-	log.Infof("Worker '%s' registered", name) //LOG :: INFO - Worker {name} registered
+	log.Debugf("Worker '%s' registered", name) // LOG :: Debug - Worker {name} registered
 }
 
-// Prepare and start the worker scheduler.
-func (scheduler *scheduler) Run() (err error) {
-	log.Infof("Start scheduler") //LOG :: INFO - Start scheduler
+// Start the worker scheduler.
+func (scheduler *scheduler) Run() (<-chan bool) {
+	var restart = make(chan bool)
+
+	go func(stopped chan<- bool) {
+		err := scheduler.runUntilClosed()
+		if err != nil {
+			log.Error(err)
+			restart <- false
+		} else {
+			restart <- true
+		}
+	}(restart)
+	return restart
+}
+
+func (scheduler *scheduler) runUntilClosed() (err error) {
+	log.Infof("Start scheduler") // LOG :: INFO - Start scheduler
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprint(r))
 		}
-		log.Infof("Stop scheduler") //LOG (defer) :: INFO - scheduler stopped
+		log.Infof("Stop scheduler") // LOG (defer) :: INFO - scheduler stopped
 	}()
 
+	scheduler.workerOnline = sync.WaitGroup{}
 	for name := range scheduler.workers {
 		scheduler.spawnWorker(name)
 	}
@@ -72,6 +93,9 @@ func (scheduler *scheduler) Run() (err error) {
 	for {
 		select {
 		case <-scheduler.ctx.Done():
+			log.Debug("Closed by context, wait all workers")
+			scheduler.workerOnline.Wait()
+			log.Debug("All workers stopped, stop scheduler")
 			return
 
 		case name, open := <-scheduler.deadSig:
@@ -92,15 +116,16 @@ func (scheduler *scheduler) spawnWorker(name string) {
 		panic("worker '" + name + "' doesn't exists")
 	}
 
-	if atomic.LoadInt32(worker.numRetry) > int32(Profile.Scheduler.Worker.Retry) {
+	if atomic.LoadInt32(worker.numRetry) > scheduler.workerRetryMax {
 		panic("worker '" + name + "' has been restarted too many times")
 	}
 
+	scheduler.workerOnline.Add(1)
 	go func(name string) {
 		defer func(name string) {
 			if r := recover(); r != nil {
-				log.WithField("stacktrace", string(debug.Stack())).Errorf("Worker '%s' has failed: %s (%s)", name, r) //LOG :: ERROR - Worker '{name}' has failed: {reason}
-				if time.Since(worker.lastRetry) < time.Millisecond*time.Duration(Profile.Scheduler.Worker.Interval) {
+				log.WithField("stacktrace", string(debug.Stack())).Errorf("Worker '%s' has failed: %s", name, r) // LOG :: ERROR - Worker '{name}' has failed: {reason}
+				if time.Since(worker.lastRetry) < scheduler.workerRetryInterval {
 					atomic.AddInt32(worker.numRetry, 1)
 				} else {
 					atomic.AddInt32(worker.numRetry, -1)
@@ -109,14 +134,15 @@ func (scheduler *scheduler) spawnWorker(name string) {
 				scheduler.deadSig <- name
 			}
 		}(name)
+		defer func() { scheduler.workerOnline.Done() }()
 
 		if err := worker.run(ctx, scheduler.bus); err != nil {
 			panic(err)
 		}
-		log.Infof("Worker '%s' successfully stopped", name) //LOG :: INFO - Worker '{name}' successfully stopped
+		log.Infof("Worker '%s' successfully stopped", name) // LOG :: INFO - Worker '{name}' successfully stopped
 	}(name)
 
-	log.Infof("Worker '%s' has been launched", name) //LOG :: INFO - Worker '{name}' has been launched
+	log.Infof("Worker '%s' has been launched", name) // LOG :: INFO - Worker '{name}' has been launched
 }
 
 // workerValidity check if a worker name is valid

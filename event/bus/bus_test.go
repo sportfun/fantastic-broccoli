@@ -30,7 +30,7 @@ func TestBus_Subscribe(t *testing.T) {
 	bus.Subscribe(":subscribe", handlerB)
 
 	bus.Publish(":subscribe", nil, nil)
-	Eventually(func() int32 { return atomic.LoadInt32(&x) }, time.Millisecond).Should(Equal(int32(2)))
+	Eventually(func() int32 { return atomic.LoadInt32(&x) }, 150*time.Millisecond).Should(Equal(int32(2)))
 }
 
 func TestBus_Subscribe_error(t *testing.T) {
@@ -50,7 +50,6 @@ func TestBus_Unsubscribe(t *testing.T) {
 	var x int32
 	handlerA := func(_ *Event, err error) {
 		if err == ErrSubscriberDeleted {
-			t.Log("ok-")
 			atomic.AddInt32(&x, -1)
 		} else {
 			atomic.AddInt32(&x, 1)
@@ -64,7 +63,7 @@ func TestBus_Unsubscribe(t *testing.T) {
 	bus.Unsubscribe(":unsubscribe", handlerA)
 	bus.Publish(":unsubscribe", nil, nil)
 
-	Eventually(func() int32 { return atomic.LoadInt32(&x) }, time.Millisecond).Should(Equal(int32(0)))
+	Eventually(func() int32 { return atomic.LoadInt32(&x) }, 150*time.Millisecond).Should(Equal(int32(0)))
 }
 
 func TestBus_Unsubscribe_closeChannel(t *testing.T) {

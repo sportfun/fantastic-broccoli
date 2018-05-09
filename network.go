@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/graarh/golang-socketio"
 	"github.com/graarh/golang-socketio/transport"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"github.com/sportfun/gakisitor/event/bus"
 	. "github.com/sportfun/gakisitor/protocol/v1.0"
 )
 
 func init() {
-	Scheduler.RegisterWorker("network", networkTask)
+	Gakisitor.RegisterWorker("network", networkTask)
 }
 
 const (
@@ -37,7 +37,7 @@ func networkTask(ctx context.Context, bus *bus.Bus) error {
 	net.disconnected = make(chan struct{})
 	net.bus = bus
 	if net.client, err = gosocketio.Dial(
-		gosocketio.GetUrl(Profile.Network.HostAddress, Profile.Network.Port, Profile.Network.EnableSsl),
+		gosocketio.GetUrl(Gakisitor.Network.HostAddress, Gakisitor.Network.Port, Gakisitor.Network.EnableSsl),
 		transport.GetDefaultWebsocketTransport(),
 	); err != nil {
 		return err
@@ -76,31 +76,31 @@ func (net *network) unsubscribe() {
 }
 
 func (net *network) onConnectionHandler(*gosocketio.Channel) {
-	log.Infof("Successfully connected to %s:%d", Profile.Network.HostAddress, Profile.Network.Port) //LOG :: INFO - Successfully connected to {host}:{port}
+	log.Infof("Successfully connected to %s:%d", Gakisitor.Network.HostAddress, Gakisitor.Network.Port) // LOG :: INFO - Successfully connected to {host}:{port}
 	if err := net.client.Emit(
 		Channels[Command],
 		CommandPacket{
 			Type:   "hardware",
-			LinkId: Profile.LinkID,
+			LinkId: Gakisitor.LinkID,
 			Body: struct {
 				Command string        `json:"command"`
 				Args    []interface{} `json:"args"`
 			}{Command: "link", Args: nil},
 		},
 	); err != nil {
-		panic(fmt.Sprintf("Failed to send message to the server: %s", err)) //Panic - Failed to send message to the server: {error}
+		panic(fmt.Sprintf("Failed to send message to the server: %s", err)) // Panic - Failed to send message to the server: {error}
 	}
 }
 
 func (net *network) onDisconnectionHandler(*gosocketio.Channel) {
-	log.Infof("Disconnected from %s:%d", Profile.Network.HostAddress, Profile.Network.Port) //LOG :: INFO - Client disconnected
+	log.Infof("Disconnected from %s:%d", Gakisitor.Network.HostAddress, Gakisitor.Network.Port) // LOG :: INFO - Client disconnected
 	close(net.disconnected)
 }
 
 func (net *network) onCommandHandler(_ *gosocketio.Channel, p CommandPacket) {
 	net.bus.Publish(":instruction", p.Body.Command, bus.SyncReplyHandler(func(_ interface{}, e error) {
 		if e != nil && e != bus.ErrReplyTimeout {
-			log.Errorf("Failed to publish: %s", e) //LOG :: ERROR - Failed to publish: X
+			log.Errorf("Failed to publish: %s", e) // LOG :: ERROR - Failed to publish: X
 		}
 	}))
 }
@@ -108,7 +108,7 @@ func (net *network) onCommandHandler(_ *gosocketio.Channel, p CommandPacket) {
 func (net *network) busDataHandler(event *bus.Event, err error) {
 	if err != nil {
 		if err != bus.ErrSubscriberDeleted {
-			log.Errorf("Bus handler for ':data' failed: %s", err) //LOG :: ERROR - Bus handler for ':data' failed: {error}
+			log.Errorf("Bus handler for ':data' failed: %s", err) // LOG :: ERROR - Bus handler for ':data' failed: {error}
 		}
 		return
 	}
@@ -117,20 +117,20 @@ func (net *network) busDataHandler(event *bus.Event, err error) {
 		name  string
 		value interface{}
 	}); !valid {
-		log.Errorf("Invalid data type: %#v", event.Message()) //LOG :: ERROR - Invalid data type: {message}
+		log.Errorf("Invalid data type: %#v", event.Message()) // LOG :: ERROR - Invalid data type: {message}
 	} else {
 		if err := net.client.Emit(
 			Channels[Data],
 			DataPacket{
 				Type:   "hardware",
-				LinkId: Profile.LinkID,
+				LinkId: Gakisitor.LinkID,
 				Body: struct {
 					Module string      `json:"module"`
 					Value  interface{} `json:"value"`
 				}{Module: data.name, Value: data.value},
 			},
 		); err != nil {
-			log.Errorf("Failed to send message to the server: %s", err) //LOG :: ERROR - Failed to send message to the server: {error}
+			log.Errorf("Failed to send message to the server: %s", err) // LOG :: ERROR - Failed to send message to the server: {error}
 		}
 	}
 }
@@ -138,7 +138,7 @@ func (net *network) busDataHandler(event *bus.Event, err error) {
 func (net *network) busErrorHandler(event *bus.Event, err error) {
 	if err != nil {
 		if err != bus.ErrSubscriberDeleted {
-			log.Errorf("Bus handler for ':error' failed: %s", err) //LOG :: ERROR - Bus handler for ':data' failed: {error}
+			log.Errorf("Bus handler for ':error' failed: %s", err) // LOG :: ERROR - Bus handler for ':error' failed: {error}
 		}
 		return
 	}
@@ -147,20 +147,20 @@ func (net *network) busErrorHandler(event *bus.Event, err error) {
 		origin string
 		error  error
 	}); !valid {
-		log.Errorf("Invalid error type: %v", event.Message()) //LOG :: ERROR - Invalid error type: {message}
+		log.Errorf("Invalid error type: %v", event.Message()) // LOG :: ERROR - Invalid error type: {message}
 	} else {
 		if err := net.client.Emit(
 			Channels[Error],
 			ErrorPacket{
 				Type:   "hardware",
-				LinkId: Profile.LinkID,
+				LinkId: Gakisitor.LinkID,
 				Body: struct {
 					Origin string `json:"origin"`
 					Reason string `json:"reason"`
 				}{Origin: err.origin, Reason: err.error.Error()},
 			},
 		); err != nil {
-			log.Errorf("Failed to send message to the server: %s", err) //LOG :: ERROR - Failed to send message to the server: {error}
+			log.Errorf("Failed to send message to the server: %s", err) // LOG :: ERROR - Failed to send message to the server: {error}
 		}
 	}
 }
