@@ -46,6 +46,16 @@ func TestScheduler_RegisterWorker(t *testing.T) {
 		}()
 	}
 }
+func TestScheduler_Run(t *testing.T) {
+	RegisterTestingT(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	sch := &scheduler{workers: map[string]*worker{}, bus: bus.New(), ctx: ctx, deadSig: make(chan string), workerRetryMax: 5, workerRetryInterval: 200 * time.Millisecond}
+
+	sch.RegisterWorker("t/worker", panicTask(errors.New("unrealistic error")))
+	Expect(<-sch.Run()).Should(BeFalse())
+	cancel()
+}
 func TestScheduler_Run_DirectCall(t *testing.T) {
 	RegisterTestingT(t)
 
@@ -105,16 +115,6 @@ func TestScheduler_Run_DirectCall(t *testing.T) {
 		time.Sleep(100 * time.Millisecond)
 		Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(int32(0)))
 	}
-}
-func TestScheduler_Run(t *testing.T) {
-	RegisterTestingT(t)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	sch := &scheduler{workers: map[string]*worker{}, bus: bus.New(), ctx: ctx, deadSig: make(chan string), workerRetryMax: 5, workerRetryInterval: 200 * time.Millisecond}
-
-	sch.RegisterWorker("t/worker", panicTask(errors.New("unrealistic error")))
-	Expect(<-sch.Run()).Should(BeFalse())
-	cancel()
 }
 
 // Tasks generation
