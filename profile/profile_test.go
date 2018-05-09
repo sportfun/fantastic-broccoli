@@ -1,17 +1,12 @@
 package profile
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"math/rand"
-	"os"
-	"sync"
-	"sync/atomic"
-	"testing"
-	"time"
+"encoding/json"
+"testing"
 
-	. "github.com/onsi/gomega"
+
+
+. "github.com/onsi/gomega"
 )
 
 func TestProfile_Load(t *testing.T) {
@@ -39,46 +34,6 @@ func TestProfile_Load(t *testing.T) {
 		}
 		Expect(profile.file).Should(Equal(test.file))
 	}
-}
-
-func TestProfile_SubscribeAlteration(t *testing.T) {
-	RegisterTestingT(t)
-
-	// create unique filename
-	uid := make([]byte, 16)
-	rand.New(rand.NewSource(int64(time.Now().Nanosecond()))).Read(uid)
-	filename := fmt.Sprintf("%x%x%x%x%x.json", uid[:4], uid[4:6], uid[6:8], uid[8:10], uid[10:])
-
-	// create the file
-	if _, err := os.Create(filename); err != nil {
-		t.Fatalf("failed to create %s: %s", filename, err)
-	}
-	defer func() { os.Remove(filename) }()
-
-	var prf = Profile{file: filename}
-	var alterations = int32(0)
-
-	// invalid subscription
-	watcher, err := prf.SubscribeAlteration(nil)
-	Expect(err).Should(MatchError("handler can't be nil"))
-
-	// valid subscription
-	watcher, err = prf.SubscribeAlteration(func(_ *Profile, _ error) {
-		atomic.AddInt32(&alterations, 1)
-	})
-	Expect(err).Should(Succeed())
-	defer func() { watcher.Close() }()
-
-	wg := sync.WaitGroup{}
-	nAlt := rand.New(rand.NewSource(int64(time.Now().Nanosecond()))).Intn(20)
-	wg.Add(nAlt)
-	for i := 0; i < nAlt; i++ {
-		ioutil.WriteFile(filename, uid, 0644)
-	}
-
-	// check if the file was altered
-	duration := time.Duration(nAlt*500) * time.Millisecond
-	Eventually(func() int { return int(atomic.LoadInt32(&alterations)) }, duration).Should(Equal(nAlt * 2))
 }
 
 func TestPlugin_AccessTo(t *testing.T) {

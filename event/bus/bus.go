@@ -71,15 +71,15 @@ func New() *Bus { return &Bus{subscribers: map[string][]subscriber{}, ids: map[s
 // Publish publish a message to a channel. A reply handler can be provided in
 // order to receive reply and/or catch errors.
 func (bus *Bus) Publish(channel string, data interface{}, handler ReplyHandler) {
+	bus.sync.Lock()
+	defer bus.sync.Unlock()
+
 	if _, exists := bus.subscribers[channel]; !exists {
 		if handler != nil {
 			handler.consume(nil, nil, ErrChannelNotFound, 0)
 		}
 		return
 	}
-
-	bus.sync.Lock()
-	defer bus.sync.Unlock()
 
 	for _, evChannel := range bus.subscribers[channel] {
 		event := &Event{payload: data, reply: make(chan interface{}), error: make(chan error)}
@@ -100,6 +100,15 @@ func (bus *Bus) Publish(channel string, data interface{}, handler ReplyHandler) 
 // Subscribe links an handler to a channel. See EventConsumer for more
 // information about the handler.
 func (bus *Bus) Subscribe(channel string, handler EventConsumer) error {
+	id := id(channel, handler)
+
+	bus.sync.Lock()
+	defer bus.sync.Unlock()
+
+	if _, exists := bus.ids[id]; exists {
+		return ErrChannelSubscriberAlreadyExists
+	}
+
 	ch := make(chan *Event)
 	ctx, cnl := context.WithCancel(context.Background())
 
@@ -120,14 +129,6 @@ func (bus *Bus) Subscribe(channel string, handler EventConsumer) error {
 		}
 	}(ch, ctx)
 
-	id := id(channel, handler)
-
-	bus.sync.Lock()
-	defer bus.sync.Unlock()
-
-	if _, exists := bus.ids[id]; exists {
-		return ErrChannelSubscriberAlreadyExists
-	}
 
 	bus.subscribers[channel] = append(bus.subscribers[channel], subscriber{id: id, ch: ch, cancel: cnl})
 	bus.ids[id] = nil
@@ -138,6 +139,9 @@ func (bus *Bus) Subscribe(channel string, handler EventConsumer) error {
 // linked with a channel are removed, the channel will be removed (and can
 // create ErrChannelNotFound errors during publishing on the channel).
 func (bus *Bus) Unsubscribe(channel string, handler EventConsumer) error {
+	bus.sync.Lock()
+	defer bus.sync.Unlock()
+
 	if sub, exists := bus.subscribers[channel]; !exists {
 		return ErrChannelNotFound
 	} else {
@@ -145,7 +149,6 @@ func (bus *Bus) Unsubscribe(channel string, handler EventConsumer) error {
 
 		for i, sbcr := range sub {
 			if sbcr.id == id {
-				bus.sync.Lock()
 				sbcr.cancel()
 				if len(sub) == 1 {
 					delete(bus.subscribers, channel)
@@ -154,7 +157,6 @@ func (bus *Bus) Unsubscribe(channel string, handler EventConsumer) error {
 				}
 				delete(bus.ids, id)
 
-				bus.sync.Unlock()
 				return nil
 			}
 		}

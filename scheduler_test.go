@@ -94,11 +94,11 @@ func TestScheduler_Run(t *testing.T) {
 			sch.RegisterWorker(worker.name, worker.task)
 		}
 
-		go func() {
+		go func(nWorker int32) {
 			time.Sleep(100 * time.Millisecond)
-			Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(test.nWorker))
+			Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(nWorker))
 			cancel()
-		}()
+		}(test.nWorker)
 
 		Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(int32(0)))
 		Expect(sch.runUntilClosed()).Should(test.returnMatcher)
