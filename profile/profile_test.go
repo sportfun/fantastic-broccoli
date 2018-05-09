@@ -77,8 +77,8 @@ func TestProfile_SubscribeAlteration(t *testing.T) {
 	}
 
 	// check if the file was altered
-	duration := time.Duration(nAlt*50) * time.Millisecond
-	Eventually(func() int { return int(atomic.LoadInt32(&alterations)) }, duration).Should(Equal(nAlt*2))
+	duration := time.Duration(nAlt*500) * time.Millisecond
+	Eventually(func() int { return int(atomic.LoadInt32(&alterations)) }, duration).Should(Equal(nAlt * 2))
 }
 
 func TestPlugin_AccessTo(t *testing.T) {

@@ -9,20 +9,14 @@ import (
 	"testing"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	. "github.com/onsi/gomega"
+	log "github.com/sirupsen/logrus"
 	"github.com/sportfun/gakisitor/event/bus"
-	"github.com/sportfun/gakisitor/profile"
 )
-
-type tWriter struct{ *testing.T }
-
-func (w *tWriter) Write(p []byte) (n int, err error) { w.T.Logf(string(p)); return len(p), nil }
 
 func TestScheduler_RegisterWorker(t *testing.T) {
 	RegisterTestingT(t)
 
-	log.SetOutput(&tWriter{t})
 	sch := &scheduler{workers: map[string]*worker{}, bus: bus.New(), ctx: context.Background(), deadSig: make(chan string)}
 
 	cases := []struct {
@@ -55,18 +49,6 @@ func TestScheduler_RegisterWorker(t *testing.T) {
 func TestScheduler_Run(t *testing.T) {
 	RegisterTestingT(t)
 
-	Profile = &profile.Profile{
-		Scheduler: struct {
-			Worker struct {
-				Retry    int `json:"retry"`;
-				Interval int `json:"interval"`
-			} `json:"worker"`
-		}{Worker: struct {
-			Retry    int `json:"retry"`;
-			Interval int `json:"interval"`
-		}{Retry: 5, Interval: 2000}},
-	}
-	log.SetOutput(&tWriter{t})
 	type workerDefinition struct {
 		name string
 		task workerTask
@@ -106,7 +88,7 @@ func TestScheduler_Run(t *testing.T) {
 
 	for _, test := range cases {
 		ctx, cancel := context.WithCancel(context.Background())
-		sch := &scheduler{workers: map[string]*worker{}, bus: bus.New(), ctx: ctx, deadSig: make(chan string)}
+		sch := &scheduler{workers: map[string]*worker{}, bus: bus.New(), ctx: ctx, deadSig: make(chan string), workerRetryMax: 5, workerRetryInterval: 200 * time.Millisecond}
 
 		for _, worker := range test.workers {
 			sch.RegisterWorker(worker.name, worker.task)
@@ -119,7 +101,7 @@ func TestScheduler_Run(t *testing.T) {
 		}()
 
 		Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(int32(0)))
-		Expect(sch.Run()).Should(test.returnMatcher)
+		Expect(sch.runUntilClosed()).Should(test.returnMatcher)
 		time.Sleep(100 * time.Millisecond)
 		Expect(atomic.LoadInt32(onlineWorker)).Should(Equal(int32(0)))
 	}
