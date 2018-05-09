@@ -7,7 +7,7 @@ import (
 	sysplugin "plugin"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/sportfun/gakisitor/event/bus"
 	. "github.com/sportfun/gakisitor/plugin"
 	"github.com/sportfun/gakisitor/profile"
@@ -64,26 +64,23 @@ func pluginTask(ctx context.Context, bus *bus.Bus) error {
 	}
 
 	for _, plugin := range plg.plugins {
-		plg.run(plugin, ctx)
+		plg.run(ctx, plugin)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			log.Debug("Closed by context, wait all plugins")
+			logrus.Debug("Closed by context, wait all plugins")
 			plg.active.Wait()
-			log.Debug("All plugins stopped")
+			logrus.Debug("All plugins stopped")
 			plg.active.Wait()
 			return nil
 		case data := <-plg.data:
 			plg.bus.Publish(":data", data, nil)
 		case status := <-plg.status:
-			// TODO: Manage states
-			log.Infof("Status received: %v", status)
+			logrus.Infof("Status received: %v", status)
 		case name := <-plg.deadSig:
-			// TODO: Check if it broken (reset too quickly) ... If yes, disable it and check if plugin are available
-			plg.run(plg.plugins[name], ctx)
-			// TODO: Add signal state management
+			plg.run(ctx, plg.plugins[name])
 		}
 	}
 }
@@ -115,24 +112,24 @@ func (plg *plugin) load(profile profile.Plugin) {
 		},
 	} {
 		if err := step(); err != nil {
-			log.Errorf("Failed to load plugin '%s': %s", profile.Name, err) // LOG :: ERROR - Failed to load plugin {name}: {err}
+			logrus.Errorf("Failed to load plugin '%s': %s", profile.Name, err) // LOG :: ERROR - Failed to load plugin {name}: {err}
 			return
 		}
 	}
 
-	log.Infof("Plugin %s successfully loaded", profile.Name) // LOG :: INFO - Plugin {name} successfully loaded
+	logrus.Infof("Plugin %s successfully loaded", profile.Name) // LOG :: INFO - Plugin {name} successfully loaded
 	plg.plugins[v.Name] = &pluginDefinition{instance: v, profile: profile, cancel: nil}
 }
 
-func (plg *plugin) run(def *pluginDefinition, parent context.Context) {
-	ctx, cnl := context.WithCancel(parent)
+func (plg *plugin) run(parentCtx context.Context, def *pluginDefinition) {
+	ctx, cnl := context.WithCancel(parentCtx)
 
 	def.cancel = cnl
 	plg.active.Add(1)
 	go func(p *Plugin, profile profile.Plugin, ctx context.Context) {
 		defer func(p *plugin) {
 			if err := recover(); err != nil {
-				log.Errorf("Panic recovered into plugin service: %s", err) // LOG :: ERROR - Panic recovered into plugin service: {reason}
+				logrus.Errorf("Panic recovered into plugin service: %s", err) // LOG :: ERROR - Panic recovered into plugin service: {reason}
 			}
 		}(plg)
 		defer func() { plg.deadSig <- profile.Name }()
@@ -177,7 +174,7 @@ func (plg *plugin) run(def *pluginDefinition, parent context.Context) {
 		}(plg, inst)
 
 		if err := p.Instance(ctx, profile, Chan{Data: data, Status: status, Instruction: inst}); err != nil {
-			log.Errorf("Plugin '%s' has crashed: %s", p.Name, err) // LOG :: ERROR - Plugin {name} has crashed: {err}
+			logrus.Errorf("Plugin '%s' has crashed: %s", p.Name, err) // LOG :: ERROR - Plugin {name} has crashed: {err}
 			plg.bus.Publish(":error", struct {
 				origin string
 				error  error
@@ -189,13 +186,13 @@ func (plg *plugin) run(def *pluginDefinition, parent context.Context) {
 func (plg *plugin) busInstructionHandler(event *bus.Event, err error) {
 	if err != nil {
 		if err != bus.ErrSubscriberDeleted {
-			log.Errorf("Bus handler for ':instruction' failed: %s", err) // LOG :: ERROR - Bus handler for ':instruction' failed: {error}
+			logrus.Errorf("Bus handler for ':instruction' failed: %s", err) // LOG :: ERROR - Bus handler for ':instruction' failed: {error}
 		}
 		return
 	}
 
 	if inst, exists := Instructions[event.Message().(string)]; !exists {
-		log.Errorf("Unknown instruction '%s'", event.Message().(string)) // LOG :: ERROR - Unknown instruction {message}
+		logrus.Errorf("Unknown instruction '%s'", event.Message().(string)) // LOG :: ERROR - Unknown instruction {message}
 	} else {
 		plg.sync.Lock()
 		defer plg.sync.Unlock()

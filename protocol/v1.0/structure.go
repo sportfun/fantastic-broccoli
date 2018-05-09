@@ -4,8 +4,8 @@ import "github.com/sportfun/gakisitor/plugin"
 
 // CommandPacket implements the command packet of the protocol.
 type CommandPacket struct {
-	Type string `json:"type"`
-	LinkId string `json:"link_id"`
+	Type   string `json:"type"`
+	LinkID string `json:"link_id"`
 	Body struct {
 		Command string        `json:"command"`
 		Args    []interface{} `json:"args"`
@@ -41,7 +41,7 @@ const (
 	Error
 )
 
-// List of channel names
+// Channels contains channel names
 var Channels = map[channelID]string{
 	Command: "command",
 	Data:    "data",
@@ -49,7 +49,7 @@ var Channels = map[channelID]string{
 }
 
 
-// List of protocol instructions
+// Instructions contains instruction names
 var Instructions = map[string]plugin.Instruction{
 	"start_session": plugin.StartSessionInstruction,
 	"end_session":   plugin.StopSessionInstruction,

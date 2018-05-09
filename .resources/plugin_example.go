@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// Plugin exports the example plugin
 var Plugin = plugin.Plugin{
 	Name: "Plugin Example",
 	Instance: func(ctx context.Context, profile profile.Plugin, channels plugin.Chan) error {

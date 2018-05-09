@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/sportfun/gakisitor/event/bus"
 )
 
@@ -57,7 +57,7 @@ func (scheduler *scheduler) RegisterWorker(name string, task workerTask) {
 		run:      task,
 		numRetry: new(int32),
 	}
-	log.Debugf("Worker '%s' registered", name) // LOG :: Debug - Worker {name} registered
+	logrus.Debugf("Worker '%s' registered", name) // LOG :: Debug - Worker {name} registered
 }
 
 // Start the worker scheduler.
@@ -67,7 +67,7 @@ func (scheduler *scheduler) Run() (<-chan bool) {
 	go func(stopped chan<- bool) {
 		err := scheduler.runUntilClosed()
 		if err != nil {
-			log.Error(err)
+			logrus.Error(err)
 			restart <- false
 		} else {
 			restart <- true
@@ -77,12 +77,12 @@ func (scheduler *scheduler) Run() (<-chan bool) {
 }
 
 func (scheduler *scheduler) runUntilClosed() (err error) {
-	log.Infof("Start scheduler") // LOG :: INFO - Start scheduler
+	logrus.Infof("Start scheduler") // LOG :: INFO - Start scheduler
 	defer func() {
 		if r := recover(); r != nil {
 			err = errors.New(fmt.Sprint(r))
 		}
-		log.Infof("Stop scheduler") // LOG (defer) :: INFO - scheduler stopped
+		logrus.Infof("Stop scheduler") // LOG (defer) :: INFO - scheduler stopped
 	}()
 
 	scheduler.workerOnline = sync.WaitGroup{}
@@ -93,9 +93,9 @@ func (scheduler *scheduler) runUntilClosed() (err error) {
 	for {
 		select {
 		case <-scheduler.ctx.Done():
-			log.Debug("Closed by context, wait all workers")
+			logrus.Debug("Closed by context, wait all workers")
 			scheduler.workerOnline.Wait()
-			log.Debug("All workers stopped, stop scheduler")
+			logrus.Debug("All workers stopped, stop scheduler")
 			return
 
 		case name, open := <-scheduler.deadSig:
@@ -124,7 +124,7 @@ func (scheduler *scheduler) spawnWorker(name string) {
 	go func(name string) {
 		defer func(name string) {
 			if r := recover(); r != nil {
-				log.WithField("stacktrace", string(debug.Stack())).Errorf("Worker '%s' has failed: %s", name, r) // LOG :: ERROR - Worker '{name}' has failed: {reason}
+				logrus.WithField("stacktrace", string(debug.Stack())).Errorf("Worker '%s' has failed: %s", name, r) // LOG :: ERROR - Worker '{name}' has failed: {reason}
 				if time.Since(worker.lastRetry) < scheduler.workerRetryInterval {
 					atomic.AddInt32(worker.numRetry, 1)
 				} else {
@@ -139,10 +139,10 @@ func (scheduler *scheduler) spawnWorker(name string) {
 		if err := worker.run(ctx, scheduler.bus); err != nil {
 			panic(err)
 		}
-		log.Infof("Worker '%s' successfully stopped", name) // LOG :: INFO - Worker '{name}' successfully stopped
+		logrus.Infof("Worker '%s' successfully stopped", name) // LOG :: INFO - Worker '{name}' successfully stopped
 	}(name)
 
-	log.Infof("Worker '%s' has been launched", name) // LOG :: INFO - Worker '{name}' has been launched
+	logrus.Infof("Worker '%s' has been launched", name) // LOG :: INFO - Worker '{name}' has been launched
 }
 
 // workerValidity check if a worker name is valid

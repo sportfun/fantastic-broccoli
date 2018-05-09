@@ -121,7 +121,7 @@ func (profile *Profile) SubscribeAlteration(handler func(profile *Profile, err e
 	return watcher, nil
 }
 
-// Easily access to an item into the plugin profile raw.
+// AccessTo allows to access to an item into the plugin profile raw.
 func (profile *Plugin) AccessTo(paths ...interface{}) (interface{}, error) {
 	if len(paths) == 0 {
 		return nil, ErrEmptyAccessPath

@@ -129,7 +129,6 @@ func (bus *Bus) Subscribe(channel string, handler EventConsumer) error {
 		}
 	}(ch, ctx)
 
-
 	bus.subscribers[channel] = append(bus.subscribers[channel], subscriber{id: id, ch: ch, cancel: cnl})
 	bus.ids[id] = nil
 	return nil
@@ -142,11 +141,8 @@ func (bus *Bus) Unsubscribe(channel string, handler EventConsumer) error {
 	bus.sync.Lock()
 	defer bus.sync.Unlock()
 
-	if sub, exists := bus.subscribers[channel]; !exists {
-		return ErrChannelNotFound
-	} else {
+	if sub, exists := bus.subscribers[channel]; exists {
 		id := id(channel, handler)
-
 		for i, sbcr := range sub {
 			if sbcr.id == id {
 				sbcr.cancel()
@@ -160,9 +156,10 @@ func (bus *Bus) Unsubscribe(channel string, handler EventConsumer) error {
 				return nil
 			}
 		}
-
 		return ErrChannelSubscriberNotFound
 	}
+
+	return ErrChannelNotFound
 }
 
 // id is an internal method to create unique id from the channel and the handler.

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	fluentd "github.com/joonix/log"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/sportfun/gakisitor/event/bus"
 	"github.com/sportfun/gakisitor/profile"
 	"github.com/takama/daemon"
@@ -16,11 +16,12 @@ import (
 )
 
 const (
-	ServiceName = "gakisitor"
-	ServiceDesc = "Sportsfun user action acquisition service"
+	serviceName = "gakisitor"
+	serviceDesc = "Sportsfun user action acquisition service"
 )
 
 var (
+	// Gakisitor is the main instance of the service
 	Gakisitor = struct {
 		daemon.Daemon
 		profile.Profile
@@ -65,35 +66,35 @@ func command(cmd string) (string, error) {
 }
 func prepare() {
 	// Configure logger
-	log.SetLevel(log.InfoLevel)
+	logrus.SetLevel(logrus.InfoLevel)
 	if debugEnabled {
-		log.SetLevel(log.DebugLevel)
+		logrus.SetLevel(logrus.DebugLevel)
 	}
 
 	switch Gakisitor.Log.Format {
 	case "text":
-		log.SetFormatter(&log.TextFormatter{})
+		logrus.SetFormatter(&logrus.TextFormatter{})
 	case "fluentd":
-		log.SetFormatter(&fluentd.FluentdFormatter{})
+		logrus.SetFormatter(&fluentd.FluentdFormatter{})
 	case "system":
-		log.SetFormatter(&prefixed.TextFormatter{})
+		logrus.SetFormatter(&prefixed.TextFormatter{})
 	default:
-		log.SetFormatter(&log.JSONFormatter{})
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
 
 	switch Gakisitor.Log.Path {
 	case "stdout":
-		log.SetOutput(os.Stdout)
+		logrus.SetOutput(os.Stdout)
 	case "stderr":
-		log.SetOutput(os.Stderr)
+		logrus.SetOutput(os.Stderr)
 	case "":
-		out, err := os.Open("/var/log/gakisitor.log")
+		out, err := os.Open("/var/logrus/gakisitor.logrus")
 		exitIfFail(err)
-		log.SetOutput(out)
+		logrus.SetOutput(out)
 	default:
 		out, err := os.Open(Gakisitor.Log.Path)
 		exitIfFail(err)
-		log.SetOutput(out)
+		logrus.SetOutput(out)
 	}
 }
 
@@ -105,7 +106,7 @@ func main() {
 	flag.Parse()
 
 	// Create daemon
-	Gakisitor.Daemon, err = daemon.New(ServiceName, ServiceDesc)
+	Gakisitor.Daemon, err = daemon.New(serviceName, serviceDesc)
 	exitIfFail(err)
 
 	// If received any kind of command, manage it
@@ -128,7 +129,7 @@ func main() {
 	Gakisitor.SubscribeAlteration(func(profile *profile.Profile, err error) {
 		// If error, stop all
 		if err != nil {
-			log.Errorf("Failed with file events: %s", err)
+			logrus.Errorf("Failed with file events: %s", err)
 			cancel()
 			return
 		}
@@ -152,8 +153,9 @@ func main() {
 
 		restart := Gakisitor.scheduler.Run()
 		if !<-restart {
-			log.Infof("Stop service '%s'", ServiceDesc)
+			logrus.Infof("Stop service '%s'", serviceDesc)
 			break
 		}
 	}
+	cancel()
 }
