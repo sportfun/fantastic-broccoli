@@ -71,14 +71,14 @@ func TestProfile_SubscribeAlteration(t *testing.T) {
 	defer func() { watcher.Close() }()
 
 	nAlt := rand.New(rand.NewSource(int64(time.Now().Nanosecond()))).Intn(20)
-	wg.Add(nAlt*2)
+	wg.Add(nAlt)
 	for i := 0; i < nAlt; i++ {
 		ioutil.WriteFile(filename, uid, 0644)
 	}
 
 	// check if the file was altered
 	wg.Wait()
-	Expect(int(atomic.LoadInt32(&alterations))).Should(Equal(nAlt * 2))
+	Expect(int(atomic.LoadInt32(&alterations))).Should(Equal(nAlt))
 
 	os.Remove(filename)
 }
