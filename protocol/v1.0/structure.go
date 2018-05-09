@@ -14,7 +14,7 @@ type CommandPacket struct {
 
 // DataPacket implements the data packet of the protocol.
 type DataPacket struct {
-	Type string `json:"type"`
+	Type   string `json:"type"`
 	LinkId string `json:"link_id"`
 	Body struct {
 		Module string      `json:"module"`
@@ -24,8 +24,8 @@ type DataPacket struct {
 
 // ErrorPacket implements the error packet of the protocol.
 type ErrorPacket struct {
-	Type string `json:"type"`
-	LinkId string `json:"link_id"`
+	Type   string `json:"type"`
+	LinkID string `json:"link_id"`
 	Body struct {
 		Origin string `json:"origin"`
 		Reason string `json:"reason"`
@@ -47,7 +47,6 @@ var Channels = map[channelID]string{
 	Data:    "data",
 	Error:   "error",
 }
-
 
 // Instructions contains instruction names
 var Instructions = map[string]plugin.Instruction{

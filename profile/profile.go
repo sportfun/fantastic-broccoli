@@ -107,8 +107,11 @@ func (profile *Profile) SubscribeAlteration(handler func(profile *Profile, err e
 			select {
 			case event := <-watcher.Events:
 				if event.Op&fsnotify.Write == fsnotify.Write {
-					profile.Load(profile.file)
-					handler(profile, nil)
+					if err := profile.Load(profile.file); err != nil {
+						handler(profile, err)
+					} else {
+						handler(profile, nil)
+					}
 				}
 			case err, open := <-watcher.Errors:
 				if !open {

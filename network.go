@@ -153,7 +153,7 @@ func (net *network) busErrorHandler(event *bus.Event, err error) {
 			Channels[Error],
 			ErrorPacket{
 				Type:   "hardware",
-				LinkId: Gakisitor.LinkID,
+				LinkID: Gakisitor.LinkID,
 				Body: struct {
 					Origin string `json:"origin"`
 					Reason string `json:"reason"`
