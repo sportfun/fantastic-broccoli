@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"os"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -55,30 +54,30 @@ func TestProfile_SubscribeAlteration(t *testing.T) {
 	}
 
 	var prf = Profile{file: filename}
-	var alterations = int32(0)
 
 	// invalid subscription
 	watcher, err := prf.SubscribeAlteration(nil)
 	Expect(err).Should(MatchError("handler can't be nil"))
 
 	// valid subscription
-	wg := sync.WaitGroup{}
+	sync := sync.Mutex{}
+	altered := false
 	watcher, err = prf.SubscribeAlteration(func(*Profile, error) {
-		atomic.AddInt32(&alterations, 1)
-		wg.Done()
+		sync.Lock()
+		defer sync.Unlock()
+		altered = true
 	})
 	Expect(err).Should(Succeed())
 	defer func() { watcher.Close() }()
 
-	nAlt := rand.New(rand.NewSource(int64(time.Now().Nanosecond()))).Intn(20)
-	wg.Add(nAlt)
-	for i := 0; i < nAlt; i++ {
-		ioutil.WriteFile(filename, uid, 0644)
-	}
+	ioutil.WriteFile(filename, uid, 0644)
 
 	// check if the file was altered
-	wg.Wait()
-	Expect(int(atomic.LoadInt32(&alterations))).Should(Equal(nAlt))
+	Eventually(func() bool {
+		sync.Lock()
+		defer sync.Unlock()
+		return altered
+	}).Should(BeTrue())
 
 	os.Remove(filename)
 }

@@ -88,11 +88,11 @@ func prepare() {
 	case "stderr":
 		logrus.SetOutput(os.Stderr)
 	case "":
-		out, err := os.Open("/var/logrus/gakisitor.logrus")
+		out, err := os.OpenFile("/var/logrus/gakisitor.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		exitIfFail(err)
 		logrus.SetOutput(out)
 	default:
-		out, err := os.Open(Gakisitor.Log.Path)
+		out, err := os.OpenFile(Gakisitor.Log.Path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		exitIfFail(err)
 		logrus.SetOutput(out)
 	}
