@@ -76,6 +76,7 @@ func (scheduler *scheduler) Run() (<-chan bool) {
 	return restart
 }
 
+// runUntilClosed starts all workers and restart broke/crashed workers.
 func (scheduler *scheduler) runUntilClosed() (err error) {
 	logrus.Infof("Start scheduler") // LOG :: INFO - Start scheduler
 	defer func() {

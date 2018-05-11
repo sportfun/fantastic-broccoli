@@ -1,3 +1,4 @@
+// Package plugin_test provides tools used to tests plugins.
 package plugin_test
 
 import (

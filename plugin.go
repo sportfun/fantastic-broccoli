@@ -85,10 +85,12 @@ func pluginTask(ctx context.Context, bus *bus.Bus) error {
 	}
 }
 
+// unsubscribe unsubscribes all bus handler.
 func (plg *plugin) unsubscribe() {
 	plg.bus.Unsubscribe(":instruction", plg.busInstructionHandler)
 }
 
+// load loads one plugin.
 func (plg *plugin) load(profile profile.Plugin) {
 	var p *sysplugin.Plugin
 	var s sysplugin.Symbol
@@ -121,6 +123,7 @@ func (plg *plugin) load(profile profile.Plugin) {
 	plg.plugins[v.Name] = &pluginDefinition{instance: v, profile: profile, cancel: nil}
 }
 
+// run manages one plugin.
 func (plg *plugin) run(parentCtx context.Context, def *pluginDefinition) {
 	ctx, cnl := context.WithCancel(parentCtx)
 
@@ -183,6 +186,7 @@ func (plg *plugin) run(parentCtx context.Context, def *pluginDefinition) {
 	}(def.instance, def.profile, ctx)
 }
 
+// busInstructionHandler handles event from ':instruction' on the event bus.
 func (plg *plugin) busInstructionHandler(event *bus.Event, err error) {
 	if err != nil {
 		if err != bus.ErrSubscriberDeleted {

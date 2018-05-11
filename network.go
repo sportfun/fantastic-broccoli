@@ -68,6 +68,7 @@ func networkTask(ctx context.Context, bus *bus.Bus) error {
 	}
 }
 
+// unsubscribe unsubscribes all bus handlers.
 func (net *network) unsubscribe() {
 	net.bus.Unsubscribe(":data", net.busDataHandler)
 	net.bus.Unsubscribe(":error", net.busErrorHandler)
@@ -75,6 +76,8 @@ func (net *network) unsubscribe() {
 	net.client.Close()
 }
 
+// onConnectionHandler handles connection from socketIO and
+// sent signal to the server.
 func (net *network) onConnectionHandler(*gosocketio.Channel) {
 	logrus.Infof("Successfully connected to %s:%d", Gakisitor.Network.HostAddress, Gakisitor.Network.Port) // LOG :: INFO - Successfully connected to {host}:{port}
 	if err := net.client.Emit(
@@ -92,11 +95,13 @@ func (net *network) onConnectionHandler(*gosocketio.Channel) {
 	}
 }
 
+// onDisconnectionHandler handles disconnection from socketIO.
 func (net *network) onDisconnectionHandler(*gosocketio.Channel) {
 	logrus.Infof("Disconnected from %s:%d", Gakisitor.Network.HostAddress, Gakisitor.Network.Port) // LOG :: INFO - Client disconnected
 	close(net.disconnected)
 }
 
+// onCommandHandler handles command from socketIO.
 func (net *network) onCommandHandler(_ *gosocketio.Channel, p CommandPacket) {
 	net.bus.Publish(":instruction", p.Body.Command, bus.SyncReplyHandler(func(_ interface{}, e error) {
 		if e != nil && e != bus.ErrReplyTimeout {
@@ -105,6 +110,7 @@ func (net *network) onCommandHandler(_ *gosocketio.Channel, p CommandPacket) {
 	}))
 }
 
+// busDataHandler handles event from ':data' on the event bus.
 func (net *network) busDataHandler(event *bus.Event, err error) {
 	if err != nil {
 		if err != bus.ErrSubscriberDeleted {
@@ -135,6 +141,7 @@ func (net *network) busDataHandler(event *bus.Event, err error) {
 	}
 }
 
+// busErrorHandler handles event from ':error' on the event bus.
 func (net *network) busErrorHandler(event *bus.Event, err error) {
 	if err != nil {
 		if err != bus.ErrSubscriberDeleted {

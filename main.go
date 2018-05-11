@@ -1,3 +1,4 @@
+// Main package of the Gakisitor software
 package main
 
 import (
@@ -48,6 +49,7 @@ func exitIfFail(err error) {
 	}
 }
 
+// command manages Gakisitor command
 func command(cmd string) (string, error) {
 	switch cmd {
 	case "install":
@@ -64,6 +66,7 @@ func command(cmd string) (string, error) {
 		return fmt.Sprintf("Usage: %s install | remove | start | stop | status", os.Args[0]), nil
 	}
 }
+// prepare configures logger
 func prepare() {
 	// Configure logger
 	logrus.SetLevel(logrus.InfoLevel)
