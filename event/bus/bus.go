@@ -1,4 +1,4 @@
-// Package event/bus provides communication tools used by Gakisitor's services.
+// Package bus provides communication tools used by Gakisitor's services.
 package bus
 
 import (
