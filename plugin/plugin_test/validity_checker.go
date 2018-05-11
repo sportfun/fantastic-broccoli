@@ -12,11 +12,15 @@ import (
 	"github.com/sportfun/gakisitor/profile"
 )
 
+
+// PluginTestDesc contains an example of a test plugin configuration and a
+// matcher to test values, used by the PluginValidityChecker.
 type PluginTestDesc struct {
 	ConfigJSON   string
 	ValueChecker OmegaMatcher
 }
 
+// PluginValidityChecker checks if the plugin works as expected
 func PluginValidityChecker(t *testing.T, pluginInstance *plugin.Plugin, desc PluginTestDesc) {
 	RegisterTestingT(t)
 
@@ -38,7 +42,7 @@ func PluginValidityChecker(t *testing.T, pluginInstance *plugin.Plugin, desc Plu
 	}
 	Expect(json.Unmarshal([]byte(desc.ConfigJSON), &profile.Config)).To(Succeed())
 
-	var isFinished int32 = 0
+	var isFinished int32
 	go func() {
 		Expect(pluginInstance.Instance(ctx, profile, channels)).To(Succeed())
 		atomic.AddInt32(&isFinished, 1)
