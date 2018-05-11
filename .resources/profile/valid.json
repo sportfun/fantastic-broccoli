@@ -1,0 +1,27 @@
+{
+  "link_id": "6e920d2c-28c8-4667-8b5c-14769ef023e2",
+  "scheduler": {
+    "timing": {
+      "ttl": 50000,
+      "ttw": 1500,
+      "ttr": 5000
+    }
+  },
+  "network": {
+    "host_address": "127.0.0.1",
+    "port": 8080,
+    "ssl": false
+  },
+  "modules": [
+    {
+      "name": "example",
+      "path": "example.gkplugin.so",
+      "config": {
+        "rpm.min": 0,
+        "rpm.max": 1200.0,
+        "rpm.step": 250,
+        "rpm.precision": 1000
+      }
+    }
+  ]
+}

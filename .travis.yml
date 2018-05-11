@@ -8,16 +8,16 @@ go:
   - 1.9.2
 
 install:
-  - go get -u github.com/schrej/godacov
-  - go get -u github.com/haya14busa/goverage
-  - go get ./...
+  - go get -v -u github.com/schrej/godacov
+  - go get -v -u github.com/haya14busa/goverage
+  - go get -t -v ./...
 
 before_script:
   - curl -H User-Agent:bot -H Content-Type:application/json -d "{\"username\":\"Travis CI\",\"avatar_url\":\"http://i.imgur.com/kOfUGNS.png\",\"embeds\":[{\"color\":15588927,\"author\":{\"name\":\"Build $TRAVIS_JOB_NUMBER - Pending\",\"url\":\"https://travis-ci.org/$TRAVIS_REPO_SLUG/jobs/$TRAVIS_JOB_ID\"},\"title\":\"$TRAVIS_REPO_SLUG:$TRAVIS_BRANCH\",\"url\":\"https://github.com/$TRAVIS_REPO_SLUG/tree/$TRAVIS_BRANCH\",\"description\":\"[${TRAVIS_COMMIT:0:7}](https://github.com/$TRAVIS_REPO_SLUG/commit/$TRAVIS_COMMIT) $TRAVIS_COMMIT_MESSAGE\",\"footer\":{\"text\":\"$(date +%c)\"}}]}" https://discordapp.com/api/webhooks/$DISCORD_WEBHOOK_CHANNEL_ID/$DISCORD_WEBHOOK_TOKEN
 
 script:
-  - go build -buildmode=plugin -o .resources/example.so ./example
-  - go build -buildmode=plugin -o .resources/example_no_export.so ./example/module_example.go ./example/rpm_engine.go
+#  - go build -buildmode=plugin -o .resources/example.so ./example
+#  - go build -buildmode=plugin -o .resources/example_no_export.so ./example/module_example.go ./example/rpm_engine.go
   - travis_retry go test -race -timeout 5m -v ./...
   - travis_retry goverage -v -coverprofile=coverage.out ./...
   - godacov -t $CODACY_TOKEN -r ./coverage.out -c $TRAVIS_COMMIT
