@@ -22,8 +22,8 @@ func TestProfile_Load(t *testing.T) {
 	}{
 		{"", "impossible to read the profile file: open :"},
 		{"./none", "impossible to read the profile file: open ./none:"},
-		{"../.resources/invalid.json", "impossible to unmarshal the profile file: invalid character 'u' looking for beginning of value"},
-		{"../.resources/default.json", ""},
+		{"../.resources/profile/invalid.json", "impossible to unmarshal the profile file: invalid character 'u' looking for beginning of value"},
+		{"../.resources/profile/valid.json", ""},
 	}
 
 	for _, test := range cases {

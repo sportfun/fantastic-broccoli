@@ -1,4 +1,4 @@
-package main
+package plugin
 
 import (
 	"github.com/sportfun/gakisitor/plugin"
@@ -25,7 +25,6 @@ var Plugin = plugin.Plugin{
 		}
 
 		dataTicker := time.Tick(200 * time.Millisecond)
-		statusTicker := time.Tick(10 * time.Second)
 		// plugin main loop
 		for {
 			select {
@@ -57,10 +56,6 @@ var Plugin = plugin.Plugin{
 					dataMarshallable.B = time.Now()
 					channels.Data <- dataMarshallable
 				}
-
-				// example of status sending
-			case <-statusTicker:
-				channels.Status <- state
 			}
 		}
 	},
