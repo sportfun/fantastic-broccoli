@@ -114,7 +114,7 @@ func main() {
 
 	// If received any kind of command, manage it
 	if len(flag.Args()) > 0 {
-		status, err := command(flag.Args()[1])
+		status, err := command(flag.Args()[0])
 		switch {
 		case err != nil:
 			exitIfFail(err)
