@@ -113,7 +113,7 @@ func main() {
 	exitIfFail(err)
 
 	// If received any kind of command, manage it
-	if len(flag.Args()) > 1 {
+	if len(flag.Args()) > 0 {
 		status, err := command(flag.Args()[1])
 		switch {
 		case err != nil:
@@ -161,4 +161,5 @@ func main() {
 		}
 	}
 	cancel()
+	os.Exit(1)
 }
