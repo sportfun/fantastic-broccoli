@@ -4,7 +4,6 @@ package plugin_test
 import (
 	"context"
 	"encoding/json"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/sportfun/gakisitor/plugin"
 	"github.com/sportfun/gakisitor/profile"
 )
-
 
 // PluginTestDesc contains an example of a test plugin configuration and a
 // matcher to test values, used by the PluginValidityChecker.
@@ -43,27 +41,37 @@ func PluginValidityChecker(t *testing.T, pluginInstance *plugin.Plugin, desc Plu
 	}
 	Expect(json.Unmarshal([]byte(desc.ConfigJSON), &profile.Config)).To(Succeed())
 
-	var isFinished int32
 	go func() {
-		Expect(pluginInstance.Instance(ctx, profile, channels)).To(Succeed())
-		atomic.AddInt32(&isFinished, 1)
+		time.Sleep(15 * time.Second)
+		panic("Plugin test has timeout (> 15s)")
 	}()
 
-	chInst <- plugin.StatusPluginInstruction
-	Expect(<-chStat).To(Equal(plugin.IdleState))
+	go func() {
+		chInst <- plugin.StatusPluginInstruction
+		goExpect(<-chStat, Equal(plugin.IdleState))
 
-	chInst <- plugin.StartSessionInstruction
-	chInst <- plugin.StatusPluginInstruction
-	Expect(<-chStat).To(Equal(plugin.InSessionState))
+		chInst <- plugin.StartSessionInstruction
+		chInst <- plugin.StatusPluginInstruction
+		goExpect(<-chStat, Equal(plugin.InSessionState))
 
-	Expect(<-chData).To(desc.ValueChecker)
-	Expect(<-chData).To(desc.ValueChecker)
+		// clean fist data
+		<-chData
+		for i := 0; i < 5; i++ {
+			goExpect(<-chData, desc.ValueChecker)
+		}
 
-	chInst <- plugin.StopSessionInstruction
-	chInst <- plugin.StatusPluginInstruction
-	Expect(<-chStat).To(Equal(plugin.IdleState))
+		chInst <- plugin.StopSessionInstruction
+		chInst <- plugin.StatusPluginInstruction
+		Expect(<-chStat).To(Equal(plugin.IdleState))
 
-	cancel()
+		cancel()
+	}()
 
-	Eventually(func() bool { return atomic.LoadInt32(&isFinished) == 1 }, 5*time.Second).Should(BeTrue(), "Plugin Validity Checker as timeout (> 5s)")
+	Expect(pluginInstance.Instance(ctx, profile, channels)).Should(Succeed())
+}
+
+func goExpect(v interface{}, matcher OmegaMatcher) {
+	if succeed, _ := matcher.Match(v); !succeed {
+		panic(matcher.FailureMessage(v))
+	}
 }

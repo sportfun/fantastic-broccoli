@@ -16,6 +16,6 @@ func TestPlugin(t *testing.T) {
 				A int       `json:"a"`
 				B time.Time `json:"b"`
 			}).B
-		}, gomega.BeTemporally("~", time.Now(), 500*time.Millisecond)),
+		}, gomega.BeTemporally("~", time.Now(), 2*time.Second)),
 	})
 }
