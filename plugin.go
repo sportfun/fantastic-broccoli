@@ -6,6 +6,7 @@ import (
 	"fmt"
 	sysplugin "plugin"
 	"sync"
+        "runtime/debug"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sportfun/gakisitor/event/bus"
@@ -73,7 +74,7 @@ func pluginTask(ctx context.Context, bus *bus.Bus) error {
 			logrus.Debug("Closed by context, wait all plugins")
 			plg.active.Wait()
 			logrus.Debug("All plugins stopped")
-			plg.active.Wait()
+//			plg.active.Wait()
 			return nil
 		case data := <-plg.data:
 			plg.bus.Publish(":data", data, nil)
@@ -132,7 +133,7 @@ func (plg *plugin) run(parentCtx context.Context, def *pluginDefinition) {
 	go func(p *Plugin, profile profile.Plugin, ctx context.Context) {
 		defer func(p *plugin) {
 			if err := recover(); err != nil {
-				logrus.Errorf("Panic recovered into plugin service: %s", err) // LOG :: ERROR - Panic recovered into plugin service: {reason}
+				logrus.WithField("stacktrace", string(debug.Stack())).Errorf("Panic recovered into plugin service: %s", err) // LOG :: ERROR - Panic recovered into plugin service: {reason}
 			}
 		}(plg)
 		defer func() { plg.deadSig <- profile.Name }()
@@ -169,9 +170,14 @@ func (plg *plugin) run(parentCtx context.Context, def *pluginDefinition) {
 		defer func(p *plugin, c chan Instruction) {
 			p.sync.Lock()
 			defer p.sync.Unlock()
-			for i := len(p.instruction) - 1; i >= 0; i-- {
-				if p.instruction[i] == c {
-					p.instruction = append(p.instruction[:i-1], p.instruction[i:]...)
+                        if len(p.instruction) < 2 {
+				p.instruction = []chan<- Instruction{}
+			} else {
+				for i := len(p.instruction) - 1; i >= 0; i-- {
+					if p.instruction[i] == c {
+                                        	logrus.Infof("%d -> %d", len(p.instruction), i)
+						p.instruction = append(p.instruction[:i-1], p.instruction[i:]...)
+					}
 				}
 			}
 		}(plg, inst)
