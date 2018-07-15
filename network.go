@@ -12,6 +12,7 @@ import (
 	. "github.com/sportfun/gakisitor/protocol/v1.0"
 )
 
+// Register the network as a worker
 func init() {
 	Gakisitor.RegisterWorker("network", networkTask)
 }
