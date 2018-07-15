@@ -1,4 +1,3 @@
-# UPDATE README
 # GAkisitor [(SportsFun)](https://charlestati.github.io/eip-showcase/index.html)
 
 [![Version](https://img.shields.io/badge/version-alpha-orange.svg)](https://github.com/sportfun/gakisitor/milestones)
@@ -10,7 +9,20 @@
 
 GAkisitor is a Go service for connecting sports equipment to a SportsFun game session
 
-
+## TODO
+- README ~ Update plugin management
+  - What is a Gakisitor plugin
+  - How to develop a plugin
+    - Plugin structure
+    - Configuration (Definition)
+- Tests
+  - network:
+    - task_context_done
+    - task_disconnection
+  - plugin:
+    - task_context_done
+    - run_plugin
+    - handle_instruction
 
 ## Features
  * Connect sport equipments to a SportsFun play session
