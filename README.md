@@ -98,7 +98,7 @@ Of course, to work as a Golang plugin (and loaded by us), you need to compile th
 
 ### Example better than precept
 
-```JSON
+```
 {
   "link_id": "6e920d2c-28c8-4667-8b5c-14769ef023e2",  // unique identifier of the gakisitor instance
   "scheduler": {          // scheduler configuration
