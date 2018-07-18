@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"sync"
 	"testing"
@@ -24,11 +25,11 @@ type wsServerMock struct {
 
 func (s *wsServerMock) run(ctx context.Context) *sync.WaitGroup {
 	Gakisitor.Network.HostAddress = "127.0.0.1"
-	Gakisitor.Network.Port = 7482
+	Gakisitor.Network.Port = rand.Intn(2000) + 1000
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	srv := &http.Server{Addr: ":7482"}
+	srv := &http.Server{Addr: fmt.Sprintf(":%d", Gakisitor.Network.Port)}
 	srv.Handler = s.Server
 
 	go func() {
@@ -38,7 +39,10 @@ func (s *wsServerMock) run(ctx context.Context) *sync.WaitGroup {
 	go func() {
 		select {
 		case <-ctx.Done():
-			srv.Shutdown(nil)
+			err := srv.Shutdown(nil)
+			if err != nil {
+				panic(err)
+			}
 			wg.Done()
 		}
 	}()
@@ -54,6 +58,32 @@ func (s *wsServerMock) bind(method string, bind *interface{}) *sync.WaitGroup {
 		s.On(method, func(c *gosocketio.Channel, actual map[string]interface{}) { *bind = actual; wg.Done() })
 	}
 	return wg
+}
+
+func TestNetwork_Task_NoConnection(t *testing.T) {
+	gomega.RegisterTestingT(t)
+
+	b := bus.New()
+	gomega.Expect(networkTask(context.Background(), b)).ShouldNot(gomega.Succeed())
+}
+
+func TestNetwork_Task_ContextDone(t *testing.T) {
+	gomega.RegisterTestingT(t)
+
+	ctx, cnl := context.WithTimeout(context.Background(), time.Second)
+	s := &wsServerMock{Server: gosocketio.NewServer(transport.GetDefaultWebsocketTransport())}
+	wx := s.run(ctx)
+	b := bus.New()
+	time.Sleep(500 * time.Millisecond)
+
+	go func() {
+		time.Sleep(5 * time.Second)
+		cnl()
+		panic("watchdog: stucked task")
+	}()
+
+	gomega.Expect(networkTask(ctx, b)).Should(gomega.Succeed())
+	wx.Wait()
 }
 
 func TestNetwork_on_Dis_ConnectionHandler(t *testing.T) {
@@ -123,15 +153,14 @@ func TestNetwork_onCommandHandler(t *testing.T) {
 	Gakisitor.LinkID = "TestNetwork_onCommandHandler"
 	var message string
 
-	b := bus.New()
 	net := &network{
 		disconnected: make(chan struct{}),
-		bus:          b,
+		bus:          bus.New(),
 	}
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	b.Subscribe(":instruction", func(event *bus.Event, err error) {
+	net.bus.Subscribe(":instruction", func(event *bus.Event, err error) {
 		message = event.Message().(string)
 		wg.Done()
 	})
