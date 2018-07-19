@@ -127,6 +127,10 @@ func (plg *plugin) load(profile profile.Plugin) error {
 
 // run manages one plugin.
 func (plg *plugin) run(parentCtx context.Context, def *pluginDefinition) {
+	if def == nil {
+		return
+	}
+
 	ctx, cnl := context.WithCancel(parentCtx)
 
 	def.cancel = cnl

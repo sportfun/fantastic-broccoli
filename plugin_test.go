@@ -22,6 +22,24 @@ func skipCI(t *testing.T) {
 	}
 }
 
+func TestPlugin_Task(t *testing.T) {
+	skipCI(t)
+
+	gomega.RegisterTestingT(t)
+	Gakisitor.Plugins = append(Gakisitor.Plugins, profile.Plugin{
+		Name: "...",
+		Path: "plugin.so",
+	})
+
+	ctx, cnl := context.WithTimeout(context.Background(), time.Second)
+	go func() {
+		time.Sleep(15 * time.Second)
+		cnl()
+		panic("watchdog: stucked task")
+	}()
+	gomega.Expect(pluginTask(ctx, bus.New())).Should(gomega.Succeed())
+}
+
 func TestPlugin_Load(t *testing.T) {
 	skipCI(t)
 
