@@ -1,6 +1,6 @@
 # GAkisitor [(SportsFun)](https://charlestati.github.io/eip-showcase/index.html)
 
-[![Version](https://img.shields.io/badge/version-alpha-orange.svg)](https://github.com/sportfun/gakisitor/milestones)
+[![Version](https://img.shields.io/badge/version-v2.0.0-green.svg)](https://github.com/sportfun/gakisitor/releases/edit/v2.0)
 [![License](https://img.shields.io/github/license/mashape/apistatus.svg)](LICENSE)
 [![GoDoc](https://godoc.org/github.com/sportfun/gakisitor?status.svg)](https://godoc.org/github.com/sportfun/gakisitor)
 [![Build Status](https://travis-ci.org/sportfun/gakisitor.svg?branch=master)](https://travis-ci.org/sportfun/gakisitor)
