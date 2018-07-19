@@ -127,14 +127,3 @@ Of course, to work as a Golang plugin (and loaded by us), you need to compile th
   ]
 }
 ```
-
-## TODO
-
-- Tests
-  - network:
-    - task_context_done
-    - task_disconnection
-  - plugin:
-    - task_context_done
-    - run_plugin
-    - handle_instruction
