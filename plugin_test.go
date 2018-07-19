@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -14,7 +16,15 @@ import (
 	. "github.com/sportfun/gakisitor/protocol/v1.0"
 )
 
+func skipCI(t *testing.T) {
+	if os.Getenv("CI") != "" {
+		t.Skip("Skipping testing in CI environment")
+	}
+}
+
 func TestPlugin_Load(t *testing.T) {
+	skipCI(t)
+
 	gomega.RegisterTestingT(t)
 
 	plg := &plugin{
@@ -68,6 +78,49 @@ func TestPlugin_Load(t *testing.T) {
 			result.Should(gomega.MatchError(gomega.MatchRegexp(test.err)))
 		}
 	}
+}
+
+func TestPlugin_Run(t *testing.T) {
+	gomega.RegisterTestingT(t)
+
+	plg := plugin{
+		bus:     bus.New(),
+		plugins: map[string]*pluginDefinition{},
+		data:    make(chan interface{}),
+		status:  make(chan interface{}),
+		sync:    sync.Mutex{},
+		active:  sync.WaitGroup{},
+		deadSig: make(chan string),
+	}
+	ctx, cnl := context.WithCancel(context.Background())
+	started := sync.WaitGroup{}
+
+	started.Add(1)
+	plg.run(ctx, &pluginDefinition{
+		instance: &Plugin{
+			Instance: func(ctx context.Context, p profile.Plugin, c Chan) error {
+				started.Done()
+				select {
+				case <-ctx.Done():
+					return nil
+				}
+			},
+		},
+		profile: profile.Plugin{
+			Name: "...",
+		},
+	})
+
+	started.Wait()
+	gomega.Expect(plg.instruction).Should(gomega.HaveLen(1))
+	cnl()
+	plg.active.Wait()
+	time.Sleep(time.Second)
+
+	var x string
+	gomega.Expect(plg.instruction).Should(gomega.BeEmpty())
+	gomega.Expect(plg.deadSig).Should(gomega.Receive(&x))
+	gomega.Expect(x).Should(gomega.Equal("..."))
 }
 
 func TestPlugin_BusHandler(t *testing.T) {

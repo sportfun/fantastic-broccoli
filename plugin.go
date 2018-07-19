@@ -167,13 +167,17 @@ func (plg *plugin) run(parentCtx context.Context, def *pluginDefinition) {
 		plg.instruction = append(plg.instruction, inst)
 		plg.sync.Unlock()
 
-		defer func(c chan Instruction) { close(inst) }(inst)
 		defer func(p *plugin, c chan Instruction) {
 			p.sync.Lock()
 			defer p.sync.Unlock()
+			if len(p.instruction) == 1 {
+				p.instruction = nil
+			}
+
 			for i := len(p.instruction) - 1; i >= 0; i-- {
 				if p.instruction[i] == c {
 					p.instruction = append(p.instruction[:i-1], p.instruction[i:]...)
+					close(c)
 				}
 			}
 		}(plg, inst)
