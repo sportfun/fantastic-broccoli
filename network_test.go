@@ -77,7 +77,7 @@ func TestNetwork_Task_ContextDone(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 
 	go func() {
-		time.Sleep(5 * time.Second)
+		time.Sleep(15 * time.Second)
 		cnl()
 		panic("watchdog: stucked task")
 	}()
@@ -86,7 +86,7 @@ func TestNetwork_Task_ContextDone(t *testing.T) {
 	wx.Wait()
 }
 
-func TestNetwork_on_Dis_ConnectionHandler(t *testing.T) {
+func TestNetwork_WSHandler(t *testing.T) {
 	gomega.RegisterTestingT(t)
 	Gakisitor.LinkID = "TestNetwork_on_Dis_ConnectionHandler"
 
@@ -148,7 +148,7 @@ func TestNetwork_on_Dis_ConnectionHandler(t *testing.T) {
 	}
 }
 
-func TestNetwork_onCommandHandler(t *testing.T) {
+func TestNetwork_OnCommandHandler(t *testing.T) {
 	gomega.RegisterTestingT(t)
 	Gakisitor.LinkID = "TestNetwork_onCommandHandler"
 	var message string
@@ -178,7 +178,7 @@ func TestNetwork_onCommandHandler(t *testing.T) {
 	gomega.Expect(message).Should(gomega.Equal("INSTRUCTION"))
 }
 
-func TestNetwork_busHandler(t *testing.T) {
+func TestNetwork_BbusHandler(t *testing.T) {
 	gomega.RegisterTestingT(t)
 	Gakisitor.LinkID = "TestNetwork_busHandler"
 	waitOrTimeout := func(wg *sync.WaitGroup) {

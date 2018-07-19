@@ -51,7 +51,9 @@ func pluginTask(ctx context.Context, bus *bus.Bus) error {
 	}
 
 	for _, plugin := range Gakisitor.Plugins {
-		plg.load(plugin)
+		if err = plg.load(plugin); err != nil {
+			logrus.Errorf("Failed to load plugin '%s': %s", plugin.Name, err) // LOG :: ERROR - Failed to load plugin {name}: {err}
+		}
 	}
 
 	if len(plg.plugins) == 0 {
@@ -91,7 +93,7 @@ func (plg *plugin) unsubscribe() {
 }
 
 // load loads one plugin.
-func (plg *plugin) load(profile profile.Plugin) {
+func (plg *plugin) load(profile profile.Plugin) error {
 	var p *sysplugin.Plugin
 	var s sysplugin.Symbol
 	var v *Plugin
@@ -102,7 +104,7 @@ func (plg *plugin) load(profile profile.Plugin) {
 		func() error {
 			var valid bool
 			if v, valid = s.(*Plugin); !valid {
-				return fmt.Errorf("invalid symbol type (need %T, but get %T)", s, v)
+				return fmt.Errorf("invalid symbol type (need %T, but get %T)", v, s)
 			}
 			return nil
 		},
@@ -114,13 +116,13 @@ func (plg *plugin) load(profile profile.Plugin) {
 		},
 	} {
 		if err := step(); err != nil {
-			logrus.Errorf("Failed to load plugin '%s': %s", profile.Name, err) // LOG :: ERROR - Failed to load plugin {name}: {err}
-			return
+			return err
 		}
 	}
 
 	logrus.Infof("Plugin %s successfully loaded", profile.Name) // LOG :: INFO - Plugin {name} successfully loaded
 	plg.plugins[v.Name] = &pluginDefinition{instance: v, profile: profile, cancel: nil}
+	return nil
 }
 
 // run manages one plugin.
@@ -195,7 +197,10 @@ func (plg *plugin) busInstructionHandler(event *bus.Event, err error) {
 		return
 	}
 
-	if inst, exists := Instructions[event.Message().(string)]; !exists {
+	if name, valid := event.Message().(string); !valid {
+		logrus.Errorf("Invalid instruction type: %#v", event.Message()) // LOG :: ERROR - Invalid instruction type: {message}
+		return
+	} else if inst, exists := Instructions[name]; !exists {
 		logrus.Errorf("Unknown instruction '%s'", event.Message().(string)) // LOG :: ERROR - Unknown instruction {message}
 	} else {
 		plg.sync.Lock()
