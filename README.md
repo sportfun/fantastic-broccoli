@@ -27,7 +27,7 @@ A plugin is, hum ... here is the definition
 >
 > -- <cite>[Wikipedia](https://en.wikipedia.org/wiki/Plug-in_(computing))</cite>
 
-This awesome technology use the *"simple"* Golang plugin library to easily expend the Gakisitor functionnalities.dfsfsdf
+This awesome technology use the *"simple"* Golang plugin library to easily expend the Gakisitor functionnalities.
 
 I will describe you how to develop one in the next chapter "How to make a plugin in less than 54 steps ?".
 
