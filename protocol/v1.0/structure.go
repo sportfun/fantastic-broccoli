@@ -50,6 +50,6 @@ var Channels = map[channelID]string{
 
 // Instructions contains instruction names
 var Instructions = map[string]plugin.Instruction{
-	"start_session": plugin.StartSessionInstruction,
-	"end_session":   plugin.StopSessionInstruction,
+	"start_game": plugin.StartSessionInstruction,
+	"end_game":   plugin.StopSessionInstruction,
 }
