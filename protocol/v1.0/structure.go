@@ -6,7 +6,7 @@ import "github.com/sportfun/gakisitor/plugin"
 type CommandPacket struct {
 	Type   string `json:"type"`
 	LinkID string `json:"link_id"`
-	Body struct {
+	Body   struct {
 		Command string        `json:"command"`
 		Args    []interface{} `json:"args"`
 	} `json:"body"`
@@ -16,7 +16,7 @@ type CommandPacket struct {
 type DataPacket struct {
 	Type   string `json:"type"`
 	LinkId string `json:"link_id"`
-	Body struct {
+	Body   struct {
 		Module string      `json:"module"`
 		Value  interface{} `json:"value"`
 	} `json:"body"`
@@ -26,7 +26,7 @@ type DataPacket struct {
 type ErrorPacket struct {
 	Type   string `json:"type"`
 	LinkID string `json:"link_id"`
-	Body struct {
+	Body   struct {
 		Origin string `json:"origin"`
 		Reason string `json:"reason"`
 	} `json:"body"`
