@@ -6,6 +6,7 @@ import (
 	"fmt"
 	sysplugin "plugin"
 	"sync"
+        "runtime/debug"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sportfun/gakisitor/event/bus"
@@ -75,7 +76,7 @@ func pluginTask(ctx context.Context, bus *bus.Bus) error {
 			logrus.Debug("Closed by context, wait all plugins")
 			plg.active.Wait()
 			logrus.Debug("All plugins stopped")
-			plg.active.Wait()
+//			plg.active.Wait()
 			return nil
 		case data := <-plg.data:
 			plg.bus.Publish(":data", data, nil)
@@ -138,7 +139,7 @@ func (plg *plugin) run(parentCtx context.Context, def *pluginDefinition) {
 	go func(p *Plugin, profile profile.Plugin, ctx context.Context) {
 		defer func(p *plugin) {
 			if err := recover(); err != nil {
-				logrus.Errorf("Panic recovered into plugin service: %s", err) // LOG :: ERROR - Panic recovered into plugin service: {reason}
+				logrus.WithField("stacktrace", string(debug.Stack())).Errorf("Panic recovered into plugin service: %s", err) // LOG :: ERROR - Panic recovered into plugin service: {reason}
 			}
 		}(plg)
 		defer func() { plg.deadSig <- profile.Name }()
