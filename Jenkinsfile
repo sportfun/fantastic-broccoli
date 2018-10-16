@@ -1,10 +1,5 @@
 pipeline {
-  agent {
-    docker {
-      image 'golang:alpine3.8'
-    }
-
-  }
+  agent any
   stages {
     stage('Build gakisitor - AMD64') {
       agent {
