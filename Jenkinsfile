@@ -1,7 +1,7 @@
 pipeline {
   agent any
   stages {
-    stage('Build gakisitor - AMD64') {
+    stage('Build gakisitor') {
       agent {
         docker {
           image 'golang:alpine3.8'
@@ -9,11 +9,13 @@ pipeline {
 
       }
       steps {
-        dir(path: '/opt/sportfun/go') {
+        sh 'apk add --no-cache git'
+        dir(path: '/opt') {
           git(url: 'https://github.com/sportfun/gakisitor', branch: 'master', changelog: true)
+          sh '''cd gakisitor
+go build -o gakisitor .'''
         }
 
-        sh 'go build'
       }
     }
   }
